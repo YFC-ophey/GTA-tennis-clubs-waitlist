@@ -2,6 +2,8 @@
 
 A comprehensive system for scraping tennis club information from the Greater Toronto Area, combining automated web scraping with email outreach for missing data.
 
+> **⚠️ Important**: This scraper needs to run on your local machine (not in a restricted environment) to access tennis club websites. See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions.
+
 ## Features
 
 - **Automated Web Scraping**: Extracts information from 306+ tennis club websites
@@ -39,11 +41,7 @@ cd GTA-tennis-clubs-waitlist
 pip install -r requirements.txt
 ```
 
-### 3. Install Playwright Browsers
-
-```bash
-playwright install chromium
-```
+**Note**: The scraper uses `requests` and `BeautifulSoup` (no Playwright required), making it lightweight and easy to set up!
 
 ### 4. Configure Environment Variables
 
@@ -158,12 +156,14 @@ GOOGLE_SHEET_NAME=GTA Tennis Clubs Data
 ```
 GTA-tennis-clubs-waitlist/
 ├── main.py                          # Main orchestrator script
-├── scraper.py                       # Web scraping logic
+├── scraper_simple.py                # HTTP-based web scraper (primary)
+├── scraper.py                       # Playwright-based scraper (alternative)
 ├── email_agent.py                   # Email outreach automation
 ├── sheets_export.py                 # Google Sheets/CSV export
 ├── requirements.txt                 # Python dependencies
 ├── .env.example                     # Environment variables template
 ├── .gitignore                       # Git ignore file
+├── SETUP_GUIDE.md                   # Detailed setup instructions
 ├── GTA Tennis clubs data .xlsx      # Input: List of 306 clubs
 ├── results/                         # Output directory
 │   ├── scraped_data.json           # Scraped data (JSON)
@@ -174,15 +174,16 @@ GTA-tennis-clubs-waitlist/
 
 ## How It Works
 
-### 1. Web Scraping (`scraper.py`)
+### 1. Web Scraping (`scraper_simple.py`)
 
-- Uses **Playwright** for JavaScript-heavy websites
+- Uses **requests** + **BeautifulSoup** for reliable HTTP scraping
 - Extracts data using:
   - BeautifulSoup for HTML parsing
   - Regex patterns for specific data fields
   - Smart location extraction (city only)
 - Saves incrementally to prevent data loss
-- Respects rate limits (1 second between requests)
+- Respects rate limits (0.5 seconds between requests)
+- Handles SSL certificates automatically
 
 ### 2. Email Agent (`email_agent.py`)
 

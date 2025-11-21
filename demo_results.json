@@ -1,0 +1,67 @@
+[
+  {
+    "Club Name": "Sample Tennis Club 1",
+    "Location": "Toronto",
+    "Email": "info@sampletennis.com",
+    "Club Type": "Private",
+    "Membership Status": "Waitlist",
+    "Current Waitlist Length": "45",
+    "Number of Courts": "8",
+    "Court Surface": "Hard Court",
+    "Operating Season": "Year-round",
+    "Website URL": "https://example.com/club1",
+    "Scrape Status": "Success"
+  },
+  {
+    "Club Name": "Sample Tennis Club 2",
+    "Location": "Mississauga",
+    "Email": "contact@tennisclub2.ca",
+    "Club Type": "Community",
+    "Membership Status": "Open",
+    "Current Waitlist Length": "N/A",
+    "Number of Courts": "6",
+    "Court Surface": "Clay",
+    "Operating Season": "Summer",
+    "Website URL": "https://example.com/club2",
+    "Scrape Status": "Success"
+  },
+  {
+    "Club Name": "Sample Tennis Club 3",
+    "Location": "Oakville",
+    "Email": "N/A",
+    "Club Type": "Public",
+    "Membership Status": "Open",
+    "Current Waitlist Length": "N/A",
+    "Number of Courts": "4",
+    "Court Surface": "Hard Court",
+    "Operating Season": "Year-round",
+    "Website URL": "https://example.com/club3",
+    "Scrape Status": "Success"
+  },
+  {
+    "Club Name": "Sample Tennis Club 4",
+    "Location": "Brampton",
+    "Email": "membership@tennisclub4.com",
+    "Club Type": "Private",
+    "Membership Status": "Closed",
+    "Current Waitlist Length": "Yes (number not specified)",
+    "Number of Courts": "12",
+    "Court Surface": "Grass",
+    "Operating Season": "Seasonal",
+    "Website URL": "https://example.com/club4",
+    "Scrape Status": "Success"
+  },
+  {
+    "Club Name": "Sample Tennis Club 5",
+    "Location": "N/A",
+    "Email": "N/A",
+    "Club Type": "N/A",
+    "Membership Status": "N/A",
+    "Current Waitlist Length": "N/A",
+    "Number of Courts": "N/A",
+    "Court Surface": "N/A",
+    "Operating Season": "N/A",
+    "Website URL": "https://example.com/club5",
+    "Scrape Status": "Failed - Timeout"
+  }
+]

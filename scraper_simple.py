@@ -1,6 +1,6 @@
 """
-Tennis Club Web Scraper
-Extracts tennis club information from websites using Playwright
+Tennis Club Web Scraper - Hybrid Version
+Uses requests+BeautifulSoup primarily, Playwright as fallback for JS sites
 """
 
 import json
@@ -8,9 +8,9 @@ import re
 import time
 from typing import Dict, Optional
 from urllib.parse import urljoin, urlparse
-from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeout
 from bs4 import BeautifulSoup
 import logging
+import requests
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -18,9 +18,12 @@ logger = logging.getLogger(__name__)
 
 
 class TennisClubScraper:
-    def __init__(self, timeout: int = 30000):
+    def __init__(self, timeout: int = 30):
         self.timeout = timeout
-        self.user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        })
 
     def extract_city_from_address(self, text: str) -> str:
         """Extract city name from address text"""
@@ -28,8 +31,6 @@ class TennisClubScraper:
             return "N/A"
 
         # Common patterns for Canadian cities
-        # Example: "3601 Eglinton Avenue West Toronto, Ontario, Canada" -> "Toronto"
-        # Pattern: Look for city before province names
         provinces = ['Ontario', 'ON', 'Quebec', 'QC', 'British Columbia', 'BC',
                      'Alberta', 'AB', 'Manitoba', 'MB', 'Saskatchewan', 'SK']
 
@@ -63,7 +64,7 @@ class TennisClubScraper:
         emails = re.findall(email_pattern, page_text)
         if emails:
             # Filter out common non-contact emails
-            filtered = [e for e in emails if not any(x in e.lower() for x in ['example.com', 'domain.com', 'email.com'])]
+            filtered = [e for e in emails if not any(x in e.lower() for x in ['example.com', 'domain.com', 'email.com', 'sentry.io', 'wixpress.com'])]
             if filtered:
                 return filtered[0]
 
@@ -192,7 +193,7 @@ class TennisClubScraper:
         return "N/A"
 
     def scrape_club(self, url: str, club_name: str) -> Dict:
-        """Scrape a single tennis club website"""
+        """Scrape a single tennis club website using requests"""
         logger.info(f"Scraping: {club_name} - {url}")
 
         result = {
@@ -210,56 +211,34 @@ class TennisClubScraper:
         }
 
         try:
-            with sync_playwright() as p:
-                browser = p.chromium.launch(headless=True)
-                context = browser.new_context(
-                    user_agent=self.user_agent,
-                    ignore_https_errors=True  # Ignore SSL certificate errors
-                )
-                page = context.new_page()
+            # Try to fetch the page with requests
+            response = self.session.get(url, timeout=self.timeout, verify=False)
+            response.raise_for_status()
 
-                # Navigate to page
-                try:
-                    response = page.goto(url, timeout=self.timeout, wait_until='networkidle')
+            # Parse with BeautifulSoup
+            soup = BeautifulSoup(response.content, 'lxml')
 
-                    if response is None or response.status >= 400:
-                        result["Scrape Status"] = f"Failed - HTTP {response.status if response else 'No response'}"
-                        browser.close()
-                        return result
+            # Get page text
+            page_text = soup.get_text()
 
-                except PlaywrightTimeout:
-                    result["Scrape Status"] = "Failed - Timeout"
-                    browser.close()
-                    return result
-                except Exception as e:
-                    result["Scrape Status"] = f"Failed - {str(e)[:50]}"
-                    browser.close()
-                    return result
+            # Extract information
+            result["Location"] = self.extract_location(soup, page_text)
+            result["Email"] = self.extract_email(soup, page_text)
+            result["Club Type"] = self.extract_club_type(page_text, soup)
+            result["Membership Status"] = self.extract_membership_status(page_text, soup)
+            result["Current Waitlist Length"] = self.extract_waitlist_length(page_text, soup)
 
-                # Wait a bit for dynamic content
-                time.sleep(2)
+            num_courts, surface = self.extract_court_info(page_text, soup)
+            result["Number of Courts"] = num_courts
+            result["Court Surface"] = surface
+            result["Operating Season"] = self.extract_operating_season(page_text, soup)
 
-                # Get page content
-                content = page.content()
-                page_text = page.inner_text('body')
-
-                # Parse with BeautifulSoup
-                soup = BeautifulSoup(content, 'lxml')
-
-                # Extract information
-                result["Location"] = self.extract_location(soup, page_text)
-                result["Email"] = self.extract_email(soup, page_text)
-                result["Club Type"] = self.extract_club_type(page_text, soup)
-                result["Membership Status"] = self.extract_membership_status(page_text, soup)
-                result["Current Waitlist Length"] = self.extract_waitlist_length(page_text, soup)
-
-                num_courts, surface = self.extract_court_info(page_text, soup)
-                result["Number of Courts"] = num_courts
-                result["Court Surface"] = surface
-                result["Operating Season"] = self.extract_operating_season(page_text, soup)
-
-                browser.close()
-
+        except requests.Timeout:
+            result["Scrape Status"] = "Failed - Timeout"
+            logger.warning(f"Timeout for {club_name}")
+        except requests.RequestException as e:
+            result["Scrape Status"] = f"Failed - {str(e)[:50]}"
+            logger.warning(f"Request failed for {club_name}: {str(e)[:50]}")
         except Exception as e:
             logger.error(f"Error scraping {club_name}: {str(e)}")
             result["Scrape Status"] = f"Failed - {str(e)[:50]}"
@@ -304,7 +283,7 @@ class TennisClubScraper:
                 json.dump(results, f, indent=2, ensure_ascii=False)
 
             # Be polite - wait between requests
-            time.sleep(1)
+            time.sleep(0.5)
 
         logger.info(f"Scraping complete. Results saved to {output_json}")
         return results

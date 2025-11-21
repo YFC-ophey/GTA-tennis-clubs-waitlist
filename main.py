@@ -8,7 +8,7 @@ import argparse
 import json
 import logging
 import sys
-from scraper import TennisClubScraper
+from scraper_simple import TennisClubScraper  # Using simple HTTP-based scraper
 from email_agent import EmailAgent
 from sheets_export import GoogleSheetsExporter, export_to_csv
 
