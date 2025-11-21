@@ -1,0 +1,15 @@
+.env
+credentials.json
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.log
+results/*.json
+results/*.csv
+.DS_Store
+playwright-report/
+test-results/
