@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Scraper - GTA Tennis Clubs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><span class="emoji">🔍</span>Web Scraper</h2>
+
+    <div id="alert-container"></div>
+
+    <div style="margin-bottom: 30px;">
+        <label for="max-clubs" style="display: block; margin-bottom: 10px; font-weight: 500;">
+            Number of clubs to scrape:
+        </label>
+        <input type="number" id="max-clubs" min="1" max="306" value="50"
+               style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; width: 200px; font-size: 16px;">
+        <p style="color: #666; margin-top: 10px; font-size: 0.9em;">
+            Leave blank or enter 306 to scrape all clubs. Start with 10-50 for testing.
+        </p>
+    </div>
+
+    <div style="margin-bottom: 30px;">
+        <button id="start-btn" class="btn" onclick="startScraping()">
+            Start Scraping
+        </button>
+        <button id="stop-btn" class="btn btn-danger" onclick="stopScraping()" style="display: none;">
+            Stop
+        </button>
+    </div>
+
+    <div id="progress-container" style="display: none;">
+        <h3 style="margin-bottom: 15px;">Progress</h3>
+
+        <div class="progress-bar">
+            <div id="progress-fill" class="progress-fill" style="width: 0%">
+                0%
+            </div>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-top: 20px;">
+            <div>
+                <strong>Current Club:</strong>
+                <div id="current-club" style="color: #667eea; margin-top: 5px;">-</div>
+            </div>
+            <div>
+                <strong>Progress:</strong>
+                <div id="progress-text" style="color: #667eea; margin-top: 5px;">0 / 0</div>
+            </div>
+            <div>
+                <strong>Successful:</strong>
+                <div id="successful-count" style="color: #48bb78; margin-top: 5px;">0</div>
+            </div>
+            <div>
+                <strong>Failed:</strong>
+                <div id="failed-count" style="color: #f56565; margin-top: 5px;">0</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><span class="emoji">ℹ️</span>Information</h2>
+
+    <div style="background: #f7fafc; padding: 20px; border-radius: 8px;">
+        <h3 style="margin-bottom: 15px;">What gets scraped?</h3>
+        <ul style="line-height: 2; color: #2d3748;">
+            <li>✅ Club Name</li>
+            <li>✅ Location (City)</li>
+            <li>✅ Email Address</li>
+            <li>✅ Club Type (Private/Public/Community)</li>
+            <li>✅ Membership Status (Open/Waitlist/Closed)</li>
+            <li>✅ Waitlist Length</li>
+            <li>✅ Number of Courts</li>
+            <li>✅ Court Surface</li>
+            <li>✅ Operating Season</li>
+        </ul>
+
+        <div style="margin-top: 20px; padding: 15px; background: #fff; border-left: 4px solid #4299e1; border-radius: 4px;">
+            <strong>⚠️ Note:</strong> The scraper respects rate limits (0.5 seconds between requests).
+            Scraping all 306 clubs takes approximately 15-20 minutes.
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let statusInterval = null;
+
+    function startScraping() {
+        const maxClubs = $('#max-clubs').val();
+        const data = maxClubs ? { max_clubs: parseInt(maxClubs) } : {};
+
+        $('#start-btn').prop('disabled', true).html('<span class="loading"></span> Starting...');
+        $('#alert-container').html('');
+
+        $.ajax({
+            url: '/api/start-scraping',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(data),
+            success: function(response) {
+                showAlert('Scraping started successfully!', 'success');
+                $('#progress-container').show();
+                $('#start-btn').hide();
+                $('#stop-btn').show();
+
+                // Start polling for status
+                statusInterval = setInterval(updateStatus, 1000);
+            },
+            error: function(xhr) {
+                showAlert('Error: ' + (xhr.responseJSON?.error || 'Failed to start scraping'), 'error');
+                $('#start-btn').prop('disabled', false).text('Start Scraping');
+            }
+        });
+    }
+
+    function stopScraping() {
+        if (confirm('Are you sure you want to stop scraping?')) {
+            clearInterval(statusInterval);
+            $('#start-btn').show().prop('disabled', false).text('Start Scraping');
+            $('#stop-btn').hide();
+            showAlert('Scraping stopped', 'info');
+        }
+    }
+
+    function updateStatus() {
+        $.get('/api/scraping-status', function(data) {
+            if (!data.is_running) {
+                clearInterval(statusInterval);
+                $('#start-btn').show().prop('disabled', false').text('Start Scraping');
+                $('#stop-btn').hide();
+                showAlert('Scraping completed!', 'success');
+                return;
+            }
+
+            const progress = data.progress || 0;
+            $('#progress-fill').css('width', progress + '%').text(progress + '%');
+            $('#current-club').text(data.current_name || '-');
+            $('#progress-text').text(data.current_club + ' / ' + data.total_clubs);
+            $('#successful-count').text(data.successful);
+            $('#failed-count').text(data.failed);
+        });
+    }
+
+    function showAlert(message, type) {
+        const alertClass = 'alert-' + type;
+        const html = '<div class="alert ' + alertClass + '">' + message + '</div>';
+        $('#alert-container').html(html);
+
+        // Auto-hide after 5 seconds
+        setTimeout(function() {
+            $('#alert-container').html('');
+        }, 5000);
+    }
+</script>
+{% endblock %}

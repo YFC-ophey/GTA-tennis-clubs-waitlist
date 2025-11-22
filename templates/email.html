@@ -1,0 +1,166 @@
+{% extends "base.html" %}
+
+{% block title %}Email Management - GTA Tennis Clubs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><span class="emoji">📧</span>Email Outreach</h2>
+
+    <div id="alert-container"></div>
+
+    <div class="alert alert-info">
+        <strong>ℹ️ Email Configuration:</strong> Make sure you've set up your email credentials in the <code>.env</code> file.
+        For Gmail, you need an App Password (not your regular password).
+    </div>
+
+    <div style="margin: 30px 0;">
+        <button class="btn" onclick="previewEmails()">
+            <span class="emoji">👀</span> Preview Emails
+        </button>
+        <button class="btn btn-secondary" onclick="sendEmails(true)" style="margin-left: 10px;">
+            <span class="emoji">🧪</span> Dry Run (No Sending)
+        </button>
+        <button class="btn btn-danger" onclick="confirmSendEmails()" style="margin-left: 10px;">
+            <span class="emoji">📨</span> Send Emails
+        </button>
+    </div>
+
+    <div id="preview-container"></div>
+</div>
+
+<div class="card">
+    <h2><span class="emoji">ℹ️</span>How Email Outreach Works</h2>
+
+    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; line-height: 1.8;">
+        <h3 style="margin-bottom: 15px;">Who gets emailed?</h3>
+        <p style="margin-bottom: 15px;">
+            The system automatically identifies clubs that meet ANY of these criteria:
+        </p>
+        <ul style="margin-bottom: 20px; line-height: 2;">
+            <li>✉️ Missing email address</li>
+            <li>📍 Missing 3 or more data fields</li>
+            <li>❌ Failed to scrape successfully</li>
+        </ul>
+
+        <h3 style="margin-bottom: 15px;">What's included in emails?</h3>
+        <ul style="margin-bottom: 20px; line-height: 2;">
+            <li>✅ Personalized to each club</li>
+            <li>✅ Lists specific missing information</li>
+            <li>✅ Professional and polite tone</li>
+            <li>✅ Easy to respond to</li>
+        </ul>
+
+        <h3 style="margin-bottom: 15px;">Safety Features:</h3>
+        <ul style="line-height: 2;">
+            <li>🧪 <strong>Dry Run:</strong> Generate emails without sending</li>
+            <li>👀 <strong>Preview:</strong> Review emails before sending</li>
+            <li>⏱️ <strong>Rate Limiting:</strong> 5 second delay between emails</li>
+            <li>📊 <strong>Logging:</strong> All activity tracked in email_log.json</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function previewEmails() {
+        $('#preview-container').html('<div style="text-align: center; padding: 40px;"><span class="loading"></span> Loading preview...</div>');
+
+        $.ajax({
+            url: '/api/email-preview',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({}),
+            success: function(response) {
+                displayPreview(response);
+            },
+            error: function(xhr) {
+                showAlert('Error loading preview: ' + (xhr.responseJSON?.error || 'Unknown error'), 'error');
+                $('#preview-container').html('');
+            }
+        });
+    }
+
+    function displayPreview(data) {
+        let html = '<div style="margin-top: 30px;">';
+        html += '<h3 style="margin-bottom: 15px;">Email Preview</h3>';
+
+        html += '<div class="stats-grid" style="margin-bottom: 30px;">';
+        html += '<div class="stat-card"><div class="stat-value">' + data.total_clubs + '</div><div class="stat-label">Clubs Needing Outreach</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + data.with_email + '</div><div class="stat-label">With Email Address</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + (data.total_clubs - data.with_email) + '</div><div class="stat-label">Missing Email</div></div>';
+        html += '</div>';
+
+        html += '<h4 style="margin-bottom: 15px;">Sample Emails (showing first ' + data.preview.length + '):</h4>';
+
+        data.preview.forEach(function(email, index) {
+            const hasEmail = email.email !== 'N/A';
+            const statusBadge = hasEmail
+                ? '<span class="badge badge-success">Will Send</span>'
+                : '<span class="badge badge-warning">No Email</span>';
+
+            html += '<div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
+            html += '<strong>' + (index + 1) + '. ' + email.club_name + '</strong>';
+            html += statusBadge;
+            html += '</div>';
+            html += '<div style="margin-bottom: 10px;"><strong>To:</strong> ' + (email.email || 'No email available') + '</div>';
+            html += '<div style="margin-bottom: 10px;"><strong>Missing Fields:</strong> ' + email.missing_fields.join(', ') + '</div>';
+            html += '<details style="margin-top: 15px;">';
+            html += '<summary style="cursor: pointer; color: #667eea; font-weight: 500;">View Email Body</summary>';
+            html += '<pre style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px; white-space: pre-wrap; font-size: 0.9em;">' + email.email_body + '</pre>';
+            html += '</details>';
+            html += '</div>';
+        });
+
+        html += '</div>';
+
+        $('#preview-container').html(html);
+    }
+
+    function sendEmails(dryRun) {
+        const action = dryRun ? 'dry run' : 'send emails';
+        const buttonText = dryRun ? 'Running Dry Run...' : 'Sending Emails...';
+
+        if (!dryRun) {
+            showAlert('Warning: This will send actual emails!', 'error');
+        }
+
+        $('button').prop('disabled', true);
+        $('#alert-container').append('<div class="alert alert-info"><span class="loading"></span> ' + buttonText + '</div>');
+
+        $.ajax({
+            url: '/api/send-emails',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ dry_run: dryRun }),
+            success: function(response) {
+                let message = 'Completed! ';
+                if (response.dry_run) {
+                    message += 'Dry run complete. Would send ' + response.total + ' emails (' + response.with_email + ' have email addresses).';
+                } else {
+                    message += 'Sent ' + response.sent + ' emails out of ' + response.total + ' clubs.';
+                }
+                showAlert(message, 'success');
+                $('button').prop('disabled', false);
+            },
+            error: function(xhr) {
+                showAlert('Error: ' + (xhr.responseJSON?.error || 'Unknown error'), 'error');
+                $('button').prop('disabled', false);
+            }
+        });
+    }
+
+    function confirmSendEmails() {
+        if (confirm('⚠️ WARNING: This will send actual emails to tennis clubs.\n\nMake sure you have:\n1. Configured your email credentials in .env\n2. Reviewed the email preview\n3. Tested with dry run\n\nAre you sure you want to continue?')) {
+            sendEmails(false);
+        }
+    }
+
+    function showAlert(message, type) {
+        const alertClass = 'alert-' + type;
+        const html = '<div class="alert ' + alertClass + '">' + message + '</div>';
+        $('#alert-container').html(html);
+    }
+</script>
+{% endblock %}

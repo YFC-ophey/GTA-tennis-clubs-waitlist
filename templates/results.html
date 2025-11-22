@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Results - GTA Tennis Clubs{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><span class="emoji">📊</span>Scraping Results</h2>
+
+    <div id="stats-container">
+        <p style="color: #666;">Loading results...</p>
+    </div>
+</div>
+
+<div class="card">
+    <h2><span class="emoji">📋</span>Data Table</h2>
+
+    <div style="margin-bottom: 20px;">
+        <input type="text" id="search" placeholder="Search clubs..."
+               style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; width: 100%; max-width: 400px; font-size: 16px;">
+    </div>
+
+    <div style="overflow-x: auto;">
+        <table id="results-table">
+            <thead>
+                <tr>
+                    <th>Club Name</th>
+                    <th>Location</th>
+                    <th>Email</th>
+                    <th>Courts</th>
+                    <th>Surface</th>
+                    <th>Membership</th>
+                    <th>Waitlist</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                <tr>
+                    <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                        No data available. Run the scraper first.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="margin-top: 20px; text-align: right;">
+        <button class="btn btn-secondary" onclick="window.location.href='/api/download/scraped_data.csv'">
+            Download CSV
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allResults = [];
+
+    function loadResults() {
+        $.get('/api/results', function(response) {
+            allResults = response.data;
+            displayStats(response.stats);
+            displayResults(allResults);
+        });
+    }
+
+    function displayStats(stats) {
+        if (!stats) {
+            $('#stats-container').html('<p style="color: #666;">No data available yet.</p>');
+            return;
+        }
+
+        const successRate = stats.total > 0 ? Math.round(stats.successful / stats.total * 100) : 0;
+
+        let html = '<div class="stats-grid">';
+        html += '<div class="stat-card"><div class="stat-value">' + stats.total + '</div><div class="stat-label">Total Clubs</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + stats.successful + '</div><div class="stat-label">Successful</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + stats.failed + '</div><div class="stat-label">Failed</div></div>';
+        html += '<div class="stat-card"><div class="stat-value">' + successRate + '%</div><div class="stat-label">Success Rate</div></div>';
+        html += '</div>';
+
+        // Field completeness
+        html += '<h3 style="margin: 30px 0 15px;">Data Completeness</h3>';
+        html += '<table><thead><tr><th>Field</th><th>Found</th><th>Missing</th><th>Coverage</th></tr></thead><tbody>';
+
+        for (const [field, data] of Object.entries(stats.field_stats)) {
+            html += '<tr>';
+            html += '<td>' + field + '</td>';
+            html += '<td>' + data.found + '</td>';
+            html += '<td>' + data.missing + '</td>';
+            html += '<td><strong>' + data.percentage + '%</strong></td>';
+            html += '</tr>';
+        }
+
+        html += '</tbody></table>';
+
+        $('#stats-container').html(html);
+    }
+
+    function displayResults(results) {
+        if (!results || results.length === 0) {
+            $('#results-body').html('<tr><td colspan="8" style="text-align: center; padding: 40px; color: #999;">No data available. Run the scraper first.</td></tr>');
+            return;
+        }
+
+        let html = '';
+        results.forEach(function(club) {
+            const status = club['Scrape Status'];
+            const statusBadge = status === 'Success'
+                ? '<span class="badge badge-success">Success</span>'
+                : '<span class="badge badge-error">Failed</span>';
+
+            html += '<tr>';
+            html += '<td><strong>' + club['Club Name'] + '</strong></td>';
+            html += '<td>' + club.Location + '</td>';
+            html += '<td>' + (club.Email !== 'N/A' ? club.Email : '<span style="color: #999;">N/A</span>') + '</td>';
+            html += '<td>' + club['Number of Courts'] + '</td>';
+            html += '<td>' + club['Court Surface'] + '</td>';
+            html += '<td>' + club['Membership Status'] + '</td>';
+            html += '<td>' + club['Current Waitlist Length'] + '</td>';
+            html += '<td>' + statusBadge + '</td>';
+            html += '</tr>';
+        });
+
+        $('#results-body').html(html);
+    }
+
+    function searchResults(query) {
+        if (!query) {
+            displayResults(allResults);
+            return;
+        }
+
+        const filtered = allResults.filter(function(club) {
+            return club['Club Name'].toLowerCase().includes(query.toLowerCase()) ||
+                   (club.Location && club.Location.toLowerCase().includes(query.toLowerCase())) ||
+                   (club.Email && club.Email.toLowerCase().includes(query.toLowerCase()));
+        });
+
+        displayResults(filtered);
+    }
+
+    $(document).ready(function() {
+        loadResults();
+
+        // Search functionality
+        $('#search').on('input', function() {
+            searchResults($(this).val());
+        });
+
+        // Auto-refresh every 5 seconds if scraping is active
+        setInterval(loadResults, 5000);
+    });
+</script>
+{% endblock %}

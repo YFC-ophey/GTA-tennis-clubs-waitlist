@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - GTA Tennis Clubs Scraper{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2><span class="emoji">📊</span>Dashboard</h2>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-value" id="total-clubs">306</div>
+            <div class="stat-label">Total Clubs</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="scraped-clubs">0</div>
+            <div class="stat-label">Clubs Scraped</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value"><span id="success-rate">0</span>%</div>
+            <div class="stat-label">Success Rate</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="emails-found">0</div>
+            <div class="stat-label">Emails Found</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" id="waitlist-clubs">0</div>
+            <div class="stat-label">Waitlist Clubs</div>
+        </div>
+    </div>
+
+    <div id="last-run-info" style="text-align: center; color: #666; margin-top: 20px;">
+        Last scrape: <span id="last-run">Never</span>
+    </div>
+</div>
+
+<div class="card">
+    <h2><span class="emoji">🚀</span>Quick Actions</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+        <div style="text-align: center; padding: 20px;">
+            <h3 style="margin-bottom: 15px;">Start Scraping</h3>
+            <p style="color: #666; margin-bottom: 15px;">Collect data from tennis club websites</p>
+            <a href="/scraper" class="btn">Go to Scraper</a>
+        </div>
+
+        <div style="text-align: center; padding: 20px;">
+            <h3 style="margin-bottom: 15px;">View Results</h3>
+            <p style="color: #666; margin-bottom: 15px;">Analyze scraped data and statistics</p>
+            <a href="/results" class="btn">View Results</a>
+        </div>
+
+        <div style="text-align: center; padding: 20px;">
+            <h3 style="margin-bottom: 15px;">Email Outreach</h3>
+            <p style="color: #666; margin-bottom: 15px;">Contact clubs with missing data</p>
+            <a href="/email" class="btn">Manage Emails</a>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h2><span class="emoji">📥</span>Export Data</h2>
+
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <button class="btn btn-secondary" onclick="downloadFile('scraped_data.json')">
+            Download JSON
+        </button>
+        <button class="btn btn-secondary" onclick="downloadFile('scraped_data.csv')">
+            Download CSV
+        </button>
+        <button class="btn btn-secondary" onclick="downloadFile('email_log.json')">
+            Download Email Log
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function loadStats() {
+        $.get('/api/stats', function(data) {
+            $('#scraped-clubs').text(data.scraped);
+            $('#success-rate').text(data.success_rate);
+            $('#emails-found').text(data.emails_found);
+            $('#waitlist-clubs').text(data.waitlist_clubs);
+
+            if (data.last_run) {
+                $('#last-run').text(data.last_run);
+            }
+        });
+    }
+
+    function downloadFile(filename) {
+        window.location.href = '/api/download/' + filename;
+    }
+
+    // Load stats on page load
+    $(document).ready(function() {
+        loadStats();
+        // Refresh stats every 5 seconds
+        setInterval(loadStats, 5000);
+    });
+</script>
+{% endblock %}
