@@ -4,9 +4,42 @@ A comprehensive system for scraping tennis club information from the Greater Tor
 
 > **⚠️ Important**: This scraper needs to run on your local machine (not in a restricted environment) to access tennis club websites. See [SETUP_GUIDE.md](SETUP_GUIDE.md) for detailed instructions.
 
+## 🎨 Two Ways to Use
+
+### 1. **Web App** (Recommended - Visual & Easy!) 🌟
+
+Beautiful web interface with real-time progress, data viewer, and email management.
+
+```bash
+python app.py
+# Open http://localhost:5000
+```
+
+**Features:**
+- 📊 Interactive dashboard with statistics
+- 🔍 Real-time scraping progress
+- 📋 Searchable data viewer
+- 📧 Email preview and management
+- 📥 One-click CSV export
+
+See [WEB_APP_GUIDE.md](WEB_APP_GUIDE.md) for full guide.
+
+### 2. **Command Line** (Advanced)
+
+Traditional CLI for automation and scripting.
+
+```bash
+python main.py --scrape --max-clubs 50
+```
+
+See usage sections below for CLI details.
+
+---
+
 ## Features
 
 - **Automated Web Scraping**: Extracts information from 306+ tennis club websites
+- **Web Interface**: Beautiful, user-friendly dashboard (NEW!)
 - **Email Outreach Agent**: Automatically contacts clubs with missing data
 - **Google Sheets Integration**: Export directly to Google Sheets or CSV
 - **Data Analysis**: Provides detailed statistics on data completeness
