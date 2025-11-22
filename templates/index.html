@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Dashboard - GTA Tennis Clubs Scraper{% endblock %}
+{% block title %}Dashboard - GTA Tennis Clubs Championship{% endblock %}
 
 {% block content %}
 <div class="card">
-    <h2><span class="emoji">📊</span>Dashboard</h2>
+    <h2>🏆 Championship Dashboard</h2>
 
     <div class="stats-grid">
         <div class="stat-card">
@@ -29,37 +29,40 @@
         </div>
     </div>
 
-    <div id="last-run-info" style="text-align: center; color: #666; margin-top: 20px;">
+    <div id="last-run-info" style="text-align: center; color: #666; margin-top: 20px; font-style: italic;">
         Last scrape: <span id="last-run">Never</span>
     </div>
 </div>
 
 <div class="card">
-    <h2><span class="emoji">🚀</span>Quick Actions</h2>
+    <h2>⚡ Quick Actions</h2>
 
-    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
-        <div style="text-align: center; padding: 20px;">
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 25px;">
+        <div style="text-align: center; padding: 30px; background: var(--wimbledon-cream); border-radius: 10px; border: 2px solid rgba(62, 31, 71, 0.1);">
+            <div style="font-size: 3em; margin-bottom: 15px;">🔍</div>
             <h3 style="margin-bottom: 15px;">Start Scraping</h3>
-            <p style="color: #666; margin-bottom: 15px;">Collect data from tennis club websites</p>
+            <p style="color: #666; margin-bottom: 20px;">Collect data from tennis club websites</p>
             <a href="/scraper" class="btn">Go to Scraper</a>
         </div>
 
-        <div style="text-align: center; padding: 20px;">
+        <div style="text-align: center; padding: 30px; background: var(--wimbledon-cream); border-radius: 10px; border: 2px solid rgba(62, 31, 71, 0.1);">
+            <div style="font-size: 3em; margin-bottom: 15px;">📊</div>
             <h3 style="margin-bottom: 15px;">View Results</h3>
-            <p style="color: #666; margin-bottom: 15px;">Analyze scraped data and statistics</p>
+            <p style="color: #666; margin-bottom: 20px;">Analyze scraped data and statistics</p>
             <a href="/results" class="btn">View Results</a>
         </div>
 
-        <div style="text-align: center; padding: 20px;">
+        <div style="text-align: center; padding: 30px; background: var(--wimbledon-cream); border-radius: 10px; border: 2px solid rgba(62, 31, 71, 0.1);">
+            <div style="font-size: 3em; margin-bottom: 15px;">📧</div>
             <h3 style="margin-bottom: 15px;">Email Outreach</h3>
-            <p style="color: #666; margin-bottom: 15px;">Contact clubs with missing data</p>
+            <p style="color: #666; margin-bottom: 20px;">Contact clubs with missing data</p>
             <a href="/email" class="btn">Manage Emails</a>
         </div>
     </div>
 </div>
 
 <div class="card">
-    <h2><span class="emoji">📥</span>Export Data</h2>
+    <h2>📥 Export Data</h2>
 
     <div style="display: flex; gap: 15px; flex-wrap: wrap;">
         <button class="btn btn-secondary" onclick="downloadFile('scraped_data.json')">

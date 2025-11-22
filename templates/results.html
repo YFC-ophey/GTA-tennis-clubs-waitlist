@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Results - GTA Tennis Clubs{% endblock %}
+{% block title %}Results - GTA Tennis Clubs Championship{% endblock %}
 
 {% block content %}
 <div class="card">
-    <h2><span class="emoji">📊</span>Scraping Results</h2>
+    <h2>📊 Championship Results</h2>
 
     <div id="stats-container">
         <p style="color: #666;">Loading results...</p>
@@ -12,11 +12,11 @@
 </div>
 
 <div class="card">
-    <h2><span class="emoji">📋</span>Data Table</h2>
+    <h2>📋 Club Data Table</h2>
 
-    <div style="margin-bottom: 20px;">
-        <input type="text" id="search" placeholder="Search clubs..."
-               style="padding: 10px; border: 2px solid #e2e8f0; border-radius: 8px; width: 100%; max-width: 400px; font-size: 16px;">
+    <div style="margin-bottom: 25px;">
+        <input type="text" id="search" placeholder="🔍 Search clubs by name, location, or email..."
+               style="padding: 12px 20px; border: 2px solid rgba(62, 31, 71, 0.2); border-radius: 8px; width: 100%; max-width: 500px; font-size: 16px;">
     </div>
 
     <div style="overflow-x: auto;">
@@ -35,7 +35,7 @@
             </thead>
             <tbody id="results-body">
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 40px; color: #999;">
+                    <td colspan="8" style="text-align: center; padding: 60px; color: #999;">
                         No data available. Run the scraper first.
                     </td>
                 </tr>
@@ -43,9 +43,9 @@
         </table>
     </div>
 
-    <div style="margin-top: 20px; text-align: right;">
+    <div style="margin-top: 30px; text-align: right;">
         <button class="btn btn-secondary" onclick="window.location.href='/api/download/scraped_data.csv'">
-            Download CSV
+            📥 Download CSV
         </button>
     </div>
 </div>
@@ -65,7 +65,7 @@
 
     function displayStats(stats) {
         if (!stats) {
-            $('#stats-container').html('<p style="color: #666;">No data available yet.</p>');
+            $('#stats-container').html('<p style="color: #666;">No data available yet. Run the scraper to collect data.</p>');
             return;
         }
 
@@ -79,15 +79,15 @@
         html += '</div>';
 
         // Field completeness
-        html += '<h3 style="margin: 30px 0 15px;">Data Completeness</h3>';
+        html += '<h3 style="margin: 35px 0 20px; color: var(--wimbledon-purple);">📈 Data Completeness</h3>';
         html += '<table><thead><tr><th>Field</th><th>Found</th><th>Missing</th><th>Coverage</th></tr></thead><tbody>';
 
         for (const [field, data] of Object.entries(stats.field_stats)) {
             html += '<tr>';
-            html += '<td>' + field + '</td>';
+            html += '<td><strong>' + field + '</strong></td>';
             html += '<td>' + data.found + '</td>';
             html += '<td>' + data.missing + '</td>';
-            html += '<td><strong>' + data.percentage + '%</strong></td>';
+            html += '<td><strong style="color: var(--wimbledon-green);">' + data.percentage + '%</strong></td>';
             html += '</tr>';
         }
 
@@ -98,7 +98,7 @@
 
     function displayResults(results) {
         if (!results || results.length === 0) {
-            $('#results-body').html('<tr><td colspan="8" style="text-align: center; padding: 40px; color: #999;">No data available. Run the scraper first.</td></tr>');
+            $('#results-body').html('<tr><td colspan="8" style="text-align: center; padding: 60px; color: #999;">No data available. Run the scraper first.</td></tr>');
             return;
         }
 
@@ -106,13 +106,13 @@
         results.forEach(function(club) {
             const status = club['Scrape Status'];
             const statusBadge = status === 'Success'
-                ? '<span class="badge badge-success">Success</span>'
-                : '<span class="badge badge-error">Failed</span>';
+                ? '<span class="badge badge-success">✓ Success</span>'
+                : '<span class="badge badge-error">✗ Failed</span>';
 
             html += '<tr>';
             html += '<td><strong>' + club['Club Name'] + '</strong></td>';
             html += '<td>' + club.Location + '</td>';
-            html += '<td>' + (club.Email !== 'N/A' ? club.Email : '<span style="color: #999;">N/A</span>') + '</td>';
+            html += '<td>' + (club.Email !== 'N/A' ? '<a href="mailto:' + club.Email + '" style="color: var(--wimbledon-green);">' + club.Email + '</a>' : '<span style="color: #999;">N/A</span>') + '</td>';
             html += '<td>' + club['Number of Courts'] + '</td>';
             html += '<td>' + club['Court Surface'] + '</td>';
             html += '<td>' + club['Membership Status'] + '</td>';

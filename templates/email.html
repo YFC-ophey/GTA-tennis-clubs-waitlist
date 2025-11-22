@@ -1,10 +1,10 @@
 {% extends "base.html" %}
 
-{% block title %}Email Management - GTA Tennis Clubs{% endblock %}
+{% block title %}Email Management - GTA Tennis Clubs Championship{% endblock %}
 
 {% block content %}
 <div class="card">
-    <h2><span class="emoji">📧</span>Email Outreach</h2>
+    <h2>📧 Championship Email Outreach</h2>
 
     <div id="alert-container"></div>
 
@@ -13,15 +13,15 @@
         For Gmail, you need an App Password (not your regular password).
     </div>
 
-    <div style="margin: 30px 0;">
+    <div style="margin: 35px 0;">
         <button class="btn" onclick="previewEmails()">
-            <span class="emoji">👀</span> Preview Emails
+            👀 Preview Emails
         </button>
-        <button class="btn btn-secondary" onclick="sendEmails(true)" style="margin-left: 10px;">
-            <span class="emoji">🧪</span> Dry Run (No Sending)
+        <button class="btn btn-secondary" onclick="sendEmails(true)" style="margin-left: 12px;">
+            🧪 Dry Run (No Sending)
         </button>
-        <button class="btn btn-danger" onclick="confirmSendEmails()" style="margin-left: 10px;">
-            <span class="emoji">📨</span> Send Emails
+        <button class="btn btn-danger" onclick="confirmSendEmails()" style="margin-left: 12px;">
+            📨 Send Emails
         </button>
     </div>
 
@@ -29,29 +29,29 @@
 </div>
 
 <div class="card">
-    <h2><span class="emoji">ℹ️</span>How Email Outreach Works</h2>
+    <h2>ℹ️ How Email Outreach Works</h2>
 
-    <div style="background: #f7fafc; padding: 20px; border-radius: 8px; line-height: 1.8;">
-        <h3 style="margin-bottom: 15px;">Who gets emailed?</h3>
-        <p style="margin-bottom: 15px;">
+    <div style="background: var(--wimbledon-cream); padding: 30px; border-radius: 10px; line-height: 1.8;">
+        <h3 style="margin-bottom: 20px; color: var(--wimbledon-purple);">Who gets emailed?</h3>
+        <p style="margin-bottom: 20px;">
             The system automatically identifies clubs that meet ANY of these criteria:
         </p>
-        <ul style="margin-bottom: 20px; line-height: 2;">
-            <li>✉️ Missing email address</li>
-            <li>📍 Missing 3 or more data fields</li>
-            <li>❌ Failed to scrape successfully</li>
+        <ul style="margin-bottom: 30px; line-height: 2.2; list-style-position: inside;">
+            <li>✉️ <strong>Missing email address</strong></li>
+            <li>📍 <strong>Missing 3 or more data fields</strong></li>
+            <li>❌ <strong>Failed to scrape successfully</strong></li>
         </ul>
 
-        <h3 style="margin-bottom: 15px;">What's included in emails?</h3>
-        <ul style="margin-bottom: 20px; line-height: 2;">
-            <li>✅ Personalized to each club</li>
-            <li>✅ Lists specific missing information</li>
-            <li>✅ Professional and polite tone</li>
-            <li>✅ Easy to respond to</li>
+        <h3 style="margin-bottom: 20px; color: var(--wimbledon-purple);">What's included in emails?</h3>
+        <ul style="margin-bottom: 30px; line-height: 2.2; list-style-position: inside;">
+            <li>✅ <strong>Personalized to each club</strong></li>
+            <li>✅ <strong>Lists specific missing information</strong></li>
+            <li>✅ <strong>Professional and polite tone</strong></li>
+            <li>✅ <strong>Easy to respond to</strong></li>
         </ul>
 
-        <h3 style="margin-bottom: 15px;">Safety Features:</h3>
-        <ul style="line-height: 2;">
+        <h3 style="margin-bottom: 20px; color: var(--wimbledon-purple);">Safety Features:</h3>
+        <ul style="line-height: 2.2; list-style-position: inside;">
             <li>🧪 <strong>Dry Run:</strong> Generate emails without sending</li>
             <li>👀 <strong>Preview:</strong> Review emails before sending</li>
             <li>⏱️ <strong>Rate Limiting:</strong> 5 second delay between emails</li>
@@ -64,7 +64,7 @@
 {% block extra_js %}
 <script>
     function previewEmails() {
-        $('#preview-container').html('<div style="text-align: center; padding: 40px;"><span class="loading"></span> Loading preview...</div>');
+        $('#preview-container').html('<div style="text-align: center; padding: 50px;"><span class="loading"></span> Loading preview...</div>');
 
         $.ajax({
             url: '/api/email-preview',
@@ -82,33 +82,33 @@
     }
 
     function displayPreview(data) {
-        let html = '<div style="margin-top: 30px;">';
-        html += '<h3 style="margin-bottom: 15px;">Email Preview</h3>';
+        let html = '<div style="margin-top: 35px;">';
+        html += '<h3 style="margin-bottom: 20px; color: var(--wimbledon-purple);">📧 Email Preview</h3>';
 
-        html += '<div class="stats-grid" style="margin-bottom: 30px;">';
+        html += '<div class="stats-grid" style="margin-bottom: 35px;">';
         html += '<div class="stat-card"><div class="stat-value">' + data.total_clubs + '</div><div class="stat-label">Clubs Needing Outreach</div></div>';
         html += '<div class="stat-card"><div class="stat-value">' + data.with_email + '</div><div class="stat-label">With Email Address</div></div>';
         html += '<div class="stat-card"><div class="stat-value">' + (data.total_clubs - data.with_email) + '</div><div class="stat-label">Missing Email</div></div>';
         html += '</div>';
 
-        html += '<h4 style="margin-bottom: 15px;">Sample Emails (showing first ' + data.preview.length + '):</h4>';
+        html += '<h4 style="margin-bottom: 20px; color: var(--wimbledon-purple);">Sample Emails (first ' + data.preview.length + '):</h4>';
 
         data.preview.forEach(function(email, index) {
             const hasEmail = email.email !== 'N/A';
             const statusBadge = hasEmail
-                ? '<span class="badge badge-success">Will Send</span>'
-                : '<span class="badge badge-warning">No Email</span>';
+                ? '<span class="badge badge-success">✓ Will Send</span>'
+                : '<span class="badge badge-warning">⚠ No Email</span>';
 
-            html += '<div style="background: #f7fafc; padding: 20px; border-radius: 8px; margin-bottom: 20px;">';
-            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">';
-            html += '<strong>' + (index + 1) + '. ' + email.club_name + '</strong>';
+            html += '<div style="background: white; padding: 25px; border-radius: 10px; margin-bottom: 20px; border: 2px solid var(--wimbledon-cream);">';
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px;">';
+            html += '<strong style="color: var(--wimbledon-purple);">' + (index + 1) + '. ' + email.club_name + '</strong>';
             html += statusBadge;
             html += '</div>';
-            html += '<div style="margin-bottom: 10px;"><strong>To:</strong> ' + (email.email || 'No email available') + '</div>';
-            html += '<div style="margin-bottom: 10px;"><strong>Missing Fields:</strong> ' + email.missing_fields.join(', ') + '</div>';
-            html += '<details style="margin-top: 15px;">';
-            html += '<summary style="cursor: pointer; color: #667eea; font-weight: 500;">View Email Body</summary>';
-            html += '<pre style="background: white; padding: 15px; border-radius: 4px; margin-top: 10px; white-space: pre-wrap; font-size: 0.9em;">' + email.email_body + '</pre>';
+            html += '<div style="margin-bottom: 12px;"><strong>To:</strong> ' + (email.email || 'No email available') + '</div>';
+            html += '<div style="margin-bottom: 12px;"><strong>Missing Fields:</strong> ' + email.missing_fields.join(', ') + '</div>';
+            html += '<details style="margin-top: 18px;">';
+            html += '<summary style="cursor: pointer; color: var(--wimbledon-green); font-weight: 600;">▼ View Email Body</summary>';
+            html += '<pre style="background: var(--wimbledon-cream); padding: 20px; border-radius: 6px; margin-top: 12px; white-space: pre-wrap; font-size: 0.9em; line-height: 1.6;">' + email.email_body + '</pre>';
             html += '</details>';
             html += '</div>';
         });
@@ -123,7 +123,7 @@
         const buttonText = dryRun ? 'Running Dry Run...' : 'Sending Emails...';
 
         if (!dryRun) {
-            showAlert('Warning: This will send actual emails!', 'error');
+            showAlert('⚠️ Warning: This will send actual emails!', 'error');
         }
 
         $('button').prop('disabled', true);
@@ -135,9 +135,9 @@
             contentType: 'application/json',
             data: JSON.stringify({ dry_run: dryRun }),
             success: function(response) {
-                let message = 'Completed! ';
+                let message = '✅ Completed! ';
                 if (response.dry_run) {
-                    message += 'Dry run complete. Would send ' + response.total + ' emails (' + response.with_email + ' have email addresses).';
+                    message += 'Dry run complete. Would send ' + response.total + ' emails (' + response.sent + ' have email addresses).';
                 } else {
                     message += 'Sent ' + response.sent + ' emails out of ' + response.total + ' clubs.';
                 }

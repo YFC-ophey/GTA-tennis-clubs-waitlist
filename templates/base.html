@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}GTA Tennis Clubs Scraper{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <title>{% block title %}GTA Tennis Clubs Championship Database{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,241 +14,367 @@
             box-sizing: border-box;
         }
 
+        :root {
+            --wimbledon-purple: #3E1F47;
+            --wimbledon-green: #006633;
+            --wimbledon-cream: #F5F3EF;
+            --wimbledon-light-green: #2d8659;
+            --wimbledon-dark-purple: #2a1532;
+        }
+
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--wimbledon-cream);
+            color: #333;
+            line-height: 1.6;
+        }
+
+        /* Tennis Court Pattern Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(90deg, rgba(62, 31, 71, 0.02) 1px, transparent 1px),
+                linear-gradient(rgba(62, 31, 71, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
         }
 
         .container {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
+            padding: 0 20px;
         }
 
+        /* Championship Header */
         .header {
-            background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-            text-align: center;
+            background: linear-gradient(135deg, var(--wimbledon-dark-purple) 0%, var(--wimbledon-purple) 100%);
+            color: white;
+            padding: 40px 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+            border-bottom: 4px solid var(--wimbledon-green);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 300px;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="2"/><circle cx="50" cy="50" r="35" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/></svg>');
+            background-size: 150px;
+            opacity: 0.3;
+            pointer-events: none;
+        }
+
+        .header-content {
+            max-width: 1400px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
         }
 
         .header h1 {
-            color: #333;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 3em;
+            font-weight: 700;
             margin-bottom: 10px;
-            font-size: 2.5em;
+            letter-spacing: -1px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
         }
 
         .header p {
-            color: #666;
-            font-size: 1.1em;
+            font-size: 1.2em;
+            opacity: 0.95;
+            font-weight: 300;
+            letter-spacing: 0.5px;
         }
 
+        /* Championship Navigation */
         .nav {
             display: flex;
-            gap: 15px;
+            gap: 0;
             justify-content: center;
-            margin-top: 20px;
+            margin-top: 30px;
             flex-wrap: wrap;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
         }
 
         .nav a {
-            padding: 12px 30px;
-            background: #667eea;
+            padding: 16px 40px;
+            background: rgba(255, 255, 255, 0.1);
             color: white;
             text-decoration: none;
-            border-radius: 8px;
             font-weight: 500;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.95em;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .nav a:last-child {
+            border-right: none;
         }
 
         .nav a:hover {
-            background: #764ba2;
+            background: var(--wimbledon-green);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
         }
 
         .nav a.active {
-            background: #764ba2;
+            background: var(--wimbledon-green);
+            font-weight: 600;
         }
 
+        /* Championship Cards */
         .card {
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(62, 31, 71, 0.08);
             margin-bottom: 30px;
+            border: 1px solid rgba(62, 31, 71, 0.08);
+            position: relative;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--wimbledon-purple) 0%, var(--wimbledon-green) 100%);
+            border-radius: 12px 12px 0 0;
         }
 
         .card h2 {
-            color: #333;
-            margin-bottom: 20px;
-            font-size: 1.8em;
+            font-family: 'Playfair Display', Georgia, serif;
+            color: var(--wimbledon-purple);
+            margin-bottom: 25px;
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: -0.5px;
         }
 
+        .card h3 {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: var(--wimbledon-purple);
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+
+        /* Championship Buttons */
         .btn {
-            padding: 12px 30px;
-            background: #667eea;
+            padding: 14px 35px;
+            background: var(--wimbledon-green);
             color: white;
             border: none;
-            border-radius: 8px;
+            border-radius: 6px;
             font-size: 16px;
-            font-weight: 500;
+            font-weight: 600;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.3s ease;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 0.9em;
+            box-shadow: 0 4px 12px rgba(0, 102, 51, 0.2);
         }
 
         .btn:hover {
-            background: #764ba2;
+            background: var(--wimbledon-light-green);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(0, 102, 51, 0.3);
         }
 
         .btn:disabled {
-            background: #ccc;
+            background: #999;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
         .btn-secondary {
-            background: #48bb78;
+            background: var(--wimbledon-purple);
+            box-shadow: 0 4px 12px rgba(62, 31, 71, 0.2);
         }
 
         .btn-secondary:hover {
-            background: #38a169;
+            background: var(--wimbledon-dark-purple);
+            box-shadow: 0 6px 20px rgba(62, 31, 71, 0.3);
         }
 
         .btn-danger {
-            background: #f56565;
+            background: #c41e3a;
+            box-shadow: 0 4px 12px rgba(196, 30, 58, 0.2);
         }
 
         .btn-danger:hover {
-            background: #e53e3e;
+            background: #a01729;
         }
 
+        /* Championship Stats Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
             color: white;
-            padding: 25px;
-            border-radius: 12px;
+            padding: 30px;
+            border-radius: 10px;
             text-align: center;
+            box-shadow: 0 8px 25px rgba(62, 31, 71, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
         }
 
         .stat-value {
-            font-size: 2.5em;
-            font-weight: bold;
-            margin-bottom: 5px;
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 3em;
+            font-weight: 700;
+            margin-bottom: 8px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
         }
 
         .stat-label {
-            font-size: 0.9em;
-            opacity: 0.9;
+            font-size: 0.95em;
+            opacity: 0.95;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 0.85em;
         }
 
+        /* Progress Bar */
         .progress-bar {
             width: 100%;
-            height: 30px;
-            background: #e2e8f0;
-            border-radius: 15px;
+            height: 35px;
+            background: var(--wimbledon-cream);
+            border-radius: 20px;
             overflow: hidden;
-            margin: 20px 0;
+            margin: 25px 0;
+            border: 2px solid var(--wimbledon-purple);
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
         }
 
         .progress-fill {
             height: 100%;
-            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-            transition: width 0.3s;
+            background: linear-gradient(90deg, var(--wimbledon-green) 0%, var(--wimbledon-light-green) 100%);
+            transition: width 0.5s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             color: white;
-            font-weight: bold;
+            font-weight: 700;
+            font-size: 0.9em;
+            letter-spacing: 0.5px;
         }
 
+        /* Alerts */
         .alert {
-            padding: 15px 20px;
+            padding: 18px 24px;
             border-radius: 8px;
-            margin-bottom: 20px;
-        }
-
-        .alert-success {
-            background: #c6f6d5;
-            color: #22543d;
-            border-left: 4px solid #48bb78;
-        }
-
-        .alert-error {
-            background: #fed7d7;
-            color: #742a2a;
-            border-left: 4px solid #f56565;
-        }
-
-        .alert-info {
-            background: #bee3f8;
-            color: #2c5282;
-            border-left: 4px solid #4299e1;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #e2e8f0;
-        }
-
-        th {
-            background: #f7fafc;
-            color: #2d3748;
-            font-weight: 600;
-        }
-
-        tr:hover {
-            background: #f7fafc;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
+            margin-bottom: 25px;
+            border-left: 5px solid;
             font-weight: 500;
         }
 
+        .alert-success {
+            background: #e6f4ea;
+            color: #1e7e34;
+            border-left-color: var(--wimbledon-green);
+        }
+
+        .alert-error {
+            background: #fdecea;
+            color: #c41e3a;
+            border-left-color: #c41e3a;
+        }
+
+        .alert-info {
+            background: #e8e3f0;
+            color: var(--wimbledon-purple);
+            border-left-color: var(--wimbledon-purple);
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+            background: white;
+        }
+
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid rgba(62, 31, 71, 0.1);
+        }
+
+        th {
+            background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
+            color: white;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+            font-size: 0.85em;
+        }
+
+        tr:hover {
+            background: rgba(62, 31, 71, 0.03);
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+
         .badge-success {
-            background: #c6f6d5;
-            color: #22543d;
+            background: #e6f4ea;
+            color: var(--wimbledon-green);
         }
 
         .badge-error {
-            background: #fed7d7;
-            color: #742a2a;
+            background: #fdecea;
+            color: #c41e3a;
         }
 
         .badge-warning {
-            background: #feebc8;
-            color: #744210;
+            background: #fff3cd;
+            color: #856404;
         }
 
+        /* Loading Spinner */
         .loading {
             display: inline-block;
             width: 20px;
             height: 20px;
-            border: 3px solid #f3f3f3;
-            border-top: 3px solid #667eea;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+            border-top: 3px solid white;
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
@@ -256,18 +384,41 @@
             100% { transform: rotate(360deg); }
         }
 
+        /* Input Fields */
+        input[type="text"],
+        input[type="number"],
+        input[type="email"] {
+            padding: 12px 16px;
+            border: 2px solid rgba(62, 31, 71, 0.2);
+            border-radius: 6px;
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.3s ease;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: var(--wimbledon-green);
+            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+        }
+
+        /* Championship touches */
         .emoji {
-            font-size: 1.5em;
-            margin-right: 10px;
+            font-size: 1.3em;
+            margin-right: 12px;
+        }
+
+        .content-area {
+            padding: 30px 0;
         }
     </style>
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🎾 GTA Tennis Clubs Scraper</h1>
-            <p>Automated data collection from 306 tennis clubs</p>
+    <div class="header">
+        <div class="header-content">
+            <h1>🎾 GTA Tennis Clubs Championship</h1>
+            <p>Comprehensive Database & Outreach Platform</p>
             <nav class="nav">
                 <a href="/" {% if request.path == '/' %}class="active"{% endif %}>Dashboard</a>
                 <a href="/scraper" {% if request.path == '/scraper' %}class="active"{% endif %}>Scraper</a>
@@ -275,7 +426,9 @@
                 <a href="/email" {% if request.path == '/email' %}class="active"{% endif %}>Email</a>
             </nav>
         </div>
+    </div>
 
+    <div class="container content-area">
         {% block content %}{% endblock %}
     </div>
 
