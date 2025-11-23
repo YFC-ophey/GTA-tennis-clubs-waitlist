@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}GTA Tennis Clubs{% endblock %} - Championship Data Portal</title>
+
+    <!-- Google Fonts - Wimbledon Style -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <!-- jQuery -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <style>
+        :root {
+            --wimbledon-purple: #3E1F47;
+            --wimbledon-green: #006633;
+            --wimbledon-cream: #F5F3EF;
+            --wimbledon-light-green: #2d8659;
+            --wimbledon-dark-purple: #2a1532;
+            --wimbledon-gold: #D4AF37;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: var(--wimbledon-cream);
+            color: #333;
+            line-height: 1.6;
+            position: relative;
+        }
+
+        /* Tennis Court Pattern Background */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image:
+                linear-gradient(90deg, rgba(62, 31, 71, 0.02) 1px, transparent 1px),
+                linear-gradient(rgba(62, 31, 71, 0.02) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Championship Header */
+        .header {
+            background: linear-gradient(135deg, var(--wimbledon-dark-purple) 0%, var(--wimbledon-purple) 100%);
+            color: white;
+            padding: 30px 0;
+            box-shadow: 0 4px 20px rgba(62, 31, 71, 0.3);
+            border-bottom: 4px solid var(--wimbledon-green);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Tennis Ball Pattern in Header */
+        .header::after {
+            content: '';
+            position: absolute;
+            top: -20px;
+            right: -20px;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .header h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 2.5em;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .header .subtitle {
+            text-align: center;
+            font-size: 1.1em;
+            opacity: 0.95;
+            font-weight: 300;
+            letter-spacing: 0.5px;
+        }
+
+        /* Navigation */
+        .nav {
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 2px solid var(--wimbledon-green);
+        }
+
+        .nav ul {
+            list-style: none;
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            padding: 0;
+            margin: 0;
+        }
+
+        .nav li {
+            margin: 0;
+        }
+
+        .nav a {
+            display: block;
+            padding: 18px 30px;
+            text-decoration: none;
+            color: var(--wimbledon-purple);
+            font-weight: 500;
+            font-size: 1em;
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .nav a:hover, .nav a.active {
+            background: linear-gradient(to bottom, var(--wimbledon-cream) 0%, white 100%);
+            border-bottom-color: var(--wimbledon-green);
+            color: var(--wimbledon-green);
+        }
+
+        /* Main Content Area */
+        main {
+            min-height: calc(100vh - 300px);
+            padding: 40px 0;
+        }
+
+        /* Cards */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+            border: 1px solid rgba(62, 31, 71, 0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 25px rgba(62, 31, 71, 0.15);
+        }
+
+        .card h2 {
+            font-family: 'Playfair Display', Georgia, serif;
+            color: var(--wimbledon-purple);
+            margin-bottom: 20px;
+            font-size: 2em;
+            font-weight: 600;
+            border-bottom: 3px solid var(--wimbledon-green);
+            padding-bottom: 12px;
+        }
+
+        /* Buttons - Championship Style */
+        .btn {
+            display: inline-block;
+            padding: 14px 32px;
+            background: linear-gradient(135deg, var(--wimbledon-green) 0%, var(--wimbledon-light-green) 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+            font-size: 1em;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 102, 51, 0.3);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 102, 51, 0.4);
+            background: linear-gradient(135deg, var(--wimbledon-light-green) 0%, var(--wimbledon-green) 100%);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
+            box-shadow: 0 4px 12px rgba(62, 31, 71, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: linear-gradient(135deg, var(--wimbledon-dark-purple) 0%, var(--wimbledon-purple) 100%);
+            box-shadow: 0 6px 20px rgba(62, 31, 71, 0.4);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
+            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
+            box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
+        }
+
+        /* Form Elements */
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        textarea {
+            width: 100%;
+            padding: 12px 16px;
+            border: 2px solid rgba(62, 31, 71, 0.2);
+            border-radius: 6px;
+            font-size: 1em;
+            font-family: 'Inter', sans-serif;
+            transition: border-color 0.3s ease;
+            background: white;
+        }
+
+        input:focus,
+        textarea:focus {
+            outline: none;
+            border-color: var(--wimbledon-green);
+            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--wimbledon-purple);
+            font-weight: 500;
+            font-size: 0.95em;
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid;
+            background: white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .alert-success {
+            border-left-color: var(--wimbledon-green);
+            background: linear-gradient(to right, rgba(0, 102, 51, 0.1) 0%, white 100%);
+            color: #004d26;
+        }
+
+        .alert-danger {
+            border-left-color: #dc3545;
+            background: linear-gradient(to right, rgba(220, 53, 69, 0.1) 0%, white 100%);
+            color: #721c24;
+        }
+
+        .alert-warning {
+            border-left-color: #ffc107;
+            background: linear-gradient(to right, rgba(255, 193, 7, 0.1) 0%, white 100%);
+            color: #856404;
+        }
+
+        .alert-info {
+            border-left-color: var(--wimbledon-purple);
+            background: linear-gradient(to right, rgba(62, 31, 71, 0.1) 0%, white 100%);
+            color: var(--wimbledon-dark-purple);
+        }
+
+        /* Loading Spinner */
+        .loading {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            border: 3px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Footer */
+        .footer {
+            background: var(--wimbledon-purple);
+            color: white;
+            text-align: center;
+            padding: 25px 0;
+            margin-top: 60px;
+            border-top: 3px solid var(--wimbledon-green);
+        }
+
+        .footer p {
+            margin: 5px 0;
+            opacity: 0.9;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.8em;
+            }
+
+            .nav a {
+                padding: 14px 18px;
+                font-size: 0.9em;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .btn {
+                padding: 12px 24px;
+                font-size: 0.95em;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Championship Header -->
+    <div class="header">
+        <div class="container">
+            <h1>🎾 GTA Tennis Clubs</h1>
+            <div class="subtitle">Championship Data Portal</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav">
+        <ul>
+            <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>🏆 Dashboard</a></li>
+            <li><a href="/scraper" {% if request.path == '/scraper' %}class="active"{% endif %}>🔍 Scraper</a></li>
+            <li><a href="/results" {% if request.path == '/results' %}class="active"{% endif %}>📊 Results</a></li>
+            <li><a href="/email" {% if request.path == '/email' %}class="active"{% endif %}>📧 Email</a></li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <main>
+        <div class="container">
+            {% block content %}{% endblock %}
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container">
+            <p><strong>GTA Tennis Clubs Data Portal</strong></p>
+            <p>Powered by Championship Excellence</p>
+        </div>
+    </div>
+
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+    .dashboard-header {
+        text-align: center;
+        margin-bottom: 40px;
+    }
+
+    .dashboard-header h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 3em;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .dashboard-header p {
+        color: #666;
+        font-size: 1.2em;
+        font-weight: 300;
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 25px;
+        margin-bottom: 45px;
+    }
+
+    .stat-card {
+        background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
+        color: white;
+        padding: 35px 25px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 6px 20px rgba(62, 31, 71, 0.25);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border: 2px solid var(--wimbledon-green);
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 30px rgba(62, 31, 71, 0.35);
+    }
+
+    .stat-value {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 3.5em;
+        font-weight: 700;
+        margin-bottom: 10px;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .stat-label {
+        font-size: 1.1em;
+        opacity: 0.95;
+        font-weight: 400;
+        letter-spacing: 0.5px;
+    }
+
+    /* Quick Actions */
+    .quick-actions {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 25px;
+        margin-top: 30px;
+    }
+
+    .action-card {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+        border-left: 5px solid var(--wimbledon-green);
+        transition: all 0.3s ease;
+    }
+
+    .action-card:hover {
+        transform: translateX(5px);
+        box-shadow: 0 6px 25px rgba(62, 31, 71, 0.15);
+    }
+
+    .action-card h3 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 1.6em;
+        margin-bottom: 15px;
+    }
+
+    .action-card p {
+        color: #666;
+        margin-bottom: 20px;
+        line-height: 1.6;
+    }
+
+    .action-card .btn {
+        width: 100%;
+        text-align: center;
+    }
+
+    /* Welcome Section */
+    .welcome-section {
+        background: linear-gradient(to right, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
+        padding: 40px;
+        border-radius: 12px;
+        margin-bottom: 40px;
+        border: 2px solid rgba(62, 31, 71, 0.1);
+    }
+
+    .welcome-section h2 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 2.2em;
+        margin-bottom: 15px;
+    }
+
+    .welcome-section p {
+        color: #555;
+        font-size: 1.1em;
+        line-height: 1.8;
+    }
+
+    .welcome-section ul {
+        margin-top: 20px;
+        margin-left: 25px;
+        color: #555;
+    }
+
+    .welcome-section li {
+        margin-bottom: 10px;
+        font-size: 1.05em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-header">
+    <h1>🏆 Championship Dashboard</h1>
+    <p>Welcome to the GTA Tennis Clubs Data Portal</p>
+</div>
+
+<!-- Statistics -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-value" id="total-clubs">{{ total_clubs }}</div>
+        <div class="stat-label">Total Clubs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="scraped-clubs">0</div>
+        <div class="stat-label">Clubs Scraped</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="emails-found">0</div>
+        <div class="stat-label">Emails Found</div>
+    </div>
+</div>
+
+<!-- Welcome Section -->
+<div class="welcome-section">
+    <h2>Welcome to the Tennis Data Portal</h2>
+    <p>
+        This championship-grade application helps you collect and manage data from GTA tennis clubs.
+        Our elegant system combines web scraping, data export, and email automation in one powerful platform.
+    </p>
+    <ul>
+        <li><strong>Scrape:</strong> Automatically extract data from {{ total_clubs }} tennis club websites</li>
+        <li><strong>Analyze:</strong> View comprehensive results in an organized table format</li>
+        <li><strong>Export:</strong> Download data in CSV and JSON formats</li>
+        <li><strong>Connect:</strong> Send professional emails to clubs with missing information</li>
+    </ul>
+</div>
+
+<!-- Quick Actions -->
+<div class="quick-actions">
+    <div class="action-card">
+        <h3>🔍 Start Scraping</h3>
+        <p>Begin collecting data from tennis club websites with our intelligent scraper.</p>
+        <a href="/scraper" class="btn">Launch Scraper</a>
+    </div>
+
+    <div class="action-card">
+        <h3>📊 View Results</h3>
+        <p>Explore scraped data in a beautiful, searchable table format.</p>
+        <a href="/results" class="btn">View Results</a>
+    </div>
+
+    <div class="action-card">
+        <h3>📧 Email Outreach</h3>
+        <p>Send professional emails to clubs requesting missing information.</p>
+        <a href="/email" class="btn">Manage Emails</a>
+    </div>
+</div>
+
+<script>
+// Update stats from API
+function updateStats() {
+    $.get('/api/results', function(data) {
+        if (data.results && data.results.length > 0) {
+            $('#scraped-clubs').text(data.results.length);
+
+            const emailsFound = data.results.filter(r => r.Email && r.Email !== 'N/A').length;
+            $('#emails-found').text(emailsFound);
+        }
+    });
+}
+
+// Load stats on page load
+$(document).ready(function() {
+    updateStats();
+    // Refresh stats every 5 seconds
+    setInterval(updateStats, 5000);
+});
+</script>
+{% endblock %}

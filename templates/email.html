@@ -1,0 +1,311 @@
+{% extends "base.html" %}
+
+{% block title %}Email Management{% endblock %}
+
+{% block extra_css %}
+<style>
+    .email-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .email-header h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 2.8em;
+        margin-bottom: 10px;
+    }
+
+    .email-template {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+        margin-bottom: 30px;
+        border-left: 5px solid var(--wimbledon-green);
+    }
+
+    .email-template h2 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        margin-bottom: 20px;
+        font-size: 1.8em;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: var(--wimbledon-purple);
+        font-weight: 600;
+    }
+
+    .form-group textarea {
+        width: 100%;
+        min-height: 200px;
+        font-family: 'Inter', sans-serif;
+    }
+
+    .template-hint {
+        background: linear-gradient(to right, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--wimbledon-purple);
+    }
+
+    .template-hint code {
+        background: rgba(62, 31, 71, 0.1);
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+        color: var(--wimbledon-purple);
+        font-weight: 600;
+    }
+
+    .button-group {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+    }
+
+    /* Preview Section */
+    .preview-section {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+        margin-bottom: 30px;
+        display: none;
+        border-top: 4px solid var(--wimbledon-purple);
+    }
+
+    .preview-section h2 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        margin-bottom: 25px;
+        font-size: 1.8em;
+    }
+
+    .email-preview {
+        background: var(--wimbledon-cream);
+        border: 2px solid rgba(62, 31, 71, 0.1);
+        border-radius: 8px;
+        padding: 25px;
+        margin-bottom: 20px;
+    }
+
+    .email-preview .email-to {
+        color: #666;
+        margin-bottom: 10px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid rgba(62, 31, 71, 0.1);
+    }
+
+    .email-preview .email-subject {
+        font-weight: 700;
+        color: var(--wimbledon-purple);
+        margin-bottom: 15px;
+        font-size: 1.1em;
+    }
+
+    .email-preview .email-body {
+        line-height: 1.8;
+        white-space: pre-wrap;
+        color: #333;
+    }
+
+    .preview-stats {
+        background: linear-gradient(to right, rgba(0, 102, 51, 0.1) 0%, transparent 100%);
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+        border-left: 4px solid var(--wimbledon-green);
+    }
+
+    .preview-stats strong {
+        color: var(--wimbledon-purple);
+        font-size: 1.2em;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="email-header">
+    <h1>📧 Email Management</h1>
+    <p>Send professional outreach to tennis clubs</p>
+</div>
+
+<!-- Configuration Alert -->
+<div class="alert alert-info">
+    <strong>ℹ️ Email Configuration:</strong> Make sure you've set up your email credentials in the <code>.env</code> file.
+    For Gmail, you need an App Password (not your regular password).
+</div>
+
+<!-- Email Template -->
+<div class="email-template">
+    <h2>✉️ Email Template</h2>
+
+    <div class="template-hint">
+        <strong>Template Variables:</strong><br>
+        Use <code>{club_name}</code> to insert the club's name.<br>
+        The system will automatically send to clubs with missing waitlist or membership data.
+    </div>
+
+    <div class="form-group">
+        <label for="email-template">Email Message</label>
+        <textarea id="email-template" placeholder="Dear {club_name} Team,...">Dear {club_name} Team,
+
+I hope this message finds you well. I am currently researching tennis clubs in the Greater Toronto Area and came across your organization.
+
+I would greatly appreciate if you could provide some information about your club:
+
+• Current membership status (open/waitlist)
+• Waitlist length (if applicable)
+• Any other relevant details about joining
+
+Thank you for your time and assistance!
+
+Best regards</textarea>
+    </div>
+
+    <div style="margin: 35px 0;">
+        <button class="btn" onclick="previewEmails()">
+            👀 Preview Emails
+        </button>
+        <button class="btn btn-secondary" onclick="sendEmails(true)" style="margin-left: 12px;">
+            🧪 Dry Run (Test)
+        </button>
+    </div>
+</div>
+
+<!-- Preview Section -->
+<div id="preview-section" class="preview-section">
+    <h2>📬 Email Preview</h2>
+
+    <div id="preview-stats" class="preview-stats"></div>
+
+    <div id="preview-container"></div>
+
+    <div class="button-group">
+        <button class="btn btn-danger" onclick="confirmSendEmails()">
+            📨 Send All Emails
+        </button>
+        <button class="btn" onclick="previewEmails()">
+            🔄 Refresh Preview
+        </button>
+    </div>
+</div>
+
+<script>
+function previewEmails() {
+    const template = $('#email-template').val();
+
+    if (!template.trim()) {
+        alert('Please enter an email template first.');
+        return;
+    }
+
+    $('#preview-container').html('<div style="text-align: center; padding: 40px;"><span class="loading" style="width: 40px; height: 40px; border-width: 4px;"></span><br><br>Loading preview...</div>');
+    $('#preview-section').show();
+
+    $.ajax({
+        url: '/api/email-preview',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ template: template }),
+        success: function(response) {
+            displayPreview(response);
+        },
+        error: function(xhr) {
+            alert('Error generating preview: ' + (xhr.responseJSON?.error || 'Unknown error'));
+            $('#preview-section').hide();
+        }
+    });
+}
+
+function displayPreview(data) {
+    $('#preview-stats').html(`
+        <strong>📊 Preview Statistics:</strong><br>
+        Total emails to send: <strong style="color: var(--wimbledon-green); font-size: 1.3em;">${data.total_emails}</strong><br>
+        Showing preview of first 5 emails below:
+    `);
+
+    let html = '';
+    data.previews.forEach(function(preview) {
+        html += `
+            <div class="email-preview">
+                <div class="email-to"><strong>To:</strong> ${preview.club_name} &lt;${preview.email}&gt;</div>
+                <div class="email-subject"><strong>Subject:</strong> ${preview.subject}</div>
+                <div class="email-body">${preview.body}</div>
+            </div>
+        `;
+    });
+
+    $('#preview-container').html(html);
+}
+
+function sendEmails(dryRun = true) {
+    const template = $('#email-template').val();
+
+    if (!template.trim()) {
+        alert('Please enter an email template first.');
+        return;
+    }
+
+    const confirmMsg = dryRun ?
+        'Run a test without actually sending emails?' :
+        'Are you sure you want to send emails to all clubs? This action cannot be undone.';
+
+    if (!confirm(confirmMsg)) {
+        return;
+    }
+
+    const button = event.target;
+    const originalText = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<span class="loading"></span> ' + (dryRun ? 'Testing...' : 'Sending...');
+
+    $.ajax({
+        url: '/api/send-emails',
+        method: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({ template: template, dry_run: dryRun }),
+        success: function(response) {
+            if (response.dry_run) {
+                alert(`✅ Dry run completed!\n\nWould send ${response.total_emails} emails.\nNo actual emails were sent.`);
+            } else {
+                alert(`✅ Email sending completed!\n\nSent: ${response.sent}\nFailed: ${response.failed}\nTotal: ${response.total}`);
+            }
+            button.disabled = false;
+            button.innerHTML = originalText;
+        },
+        error: function(xhr) {
+            alert('Error: ' + (xhr.responseJSON?.error || 'Unknown error'));
+            button.disabled = false;
+            button.innerHTML = originalText;
+        }
+    });
+}
+
+function confirmSendEmails() {
+    const confirmed = confirm(
+        '⚠️ FINAL CONFIRMATION ⚠️\n\n' +
+        'You are about to send REAL emails to tennis clubs.\n\n' +
+        'This action CANNOT be undone.\n\n' +
+        'Have you:\n' +
+        '✓ Configured your .env file with email credentials?\n' +
+        '✓ Reviewed the email template?\n' +
+        '✓ Checked the preview?\n\n' +
+        'Click OK to proceed with sending emails.'
+    );
+
+    if (confirmed) {
+        sendEmails(false);
+    }
+}
+</script>
+{% endblock %}

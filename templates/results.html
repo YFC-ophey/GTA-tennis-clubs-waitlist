@@ -1,0 +1,369 @@
+{% extends "base.html" %}
+
+{% block title %}Results{% endblock %}
+
+{% block extra_css %}
+<style>
+    .results-header {
+        text-align: center;
+        margin-bottom: 35px;
+    }
+
+    .results-header h1 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 2.8em;
+        margin-bottom: 10px;
+    }
+
+    /* Controls */
+    .controls {
+        background: white;
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+        margin-bottom: 30px;
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+        align-items: center;
+        border-top: 4px solid var(--wimbledon-green);
+    }
+
+    .controls input[type="text"] {
+        flex: 1;
+        min-width: 250px;
+    }
+
+    .controls .btn {
+        white-space: nowrap;
+    }
+
+    /* Results Table */
+    .results-table-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+        overflow: hidden;
+    }
+
+    .results-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .results-table thead {
+        background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
+        color: white;
+    }
+
+    .results-table th {
+        padding: 18px 15px;
+        text-align: left;
+        font-weight: 600;
+        font-size: 0.95em;
+        letter-spacing: 0.5px;
+        border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .results-table th:last-child {
+        border-right: none;
+    }
+
+    .results-table tbody tr {
+        border-bottom: 1px solid rgba(62, 31, 71, 0.08);
+        transition: background-color 0.2s ease;
+    }
+
+    .results-table tbody tr:hover {
+        background-color: rgba(0, 102, 51, 0.03);
+    }
+
+    .results-table tbody tr:last-child {
+        border-bottom: none;
+    }
+
+    .results-table td {
+        padding: 15px;
+        font-size: 0.95em;
+        color: #333;
+    }
+
+    .results-table td a {
+        color: var(--wimbledon-green);
+        text-decoration: none;
+        font-weight: 500;
+        transition: color 0.2s ease;
+    }
+
+    .results-table td a:hover {
+        color: var(--wimbledon-light-green);
+        text-decoration: underline;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 60px 20px;
+        color: #999;
+    }
+
+    .no-results .icon {
+        font-size: 4em;
+        margin-bottom: 20px;
+    }
+
+    .no-results h3 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 1.8em;
+        margin-bottom: 10px;
+    }
+
+    /* Export buttons */
+    .export-buttons {
+        display: flex;
+        gap: 10px;
+    }
+
+    /* Stats summary */
+    .results-summary {
+        background: linear-gradient(to right, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
+        padding: 20px 25px;
+        border-radius: 8px;
+        margin-bottom: 25px;
+        display: flex;
+        justify-content: space-around;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .summary-item {
+        text-align: center;
+    }
+
+    .summary-item .label {
+        color: #666;
+        font-size: 0.9em;
+        margin-bottom: 5px;
+    }
+
+    .summary-item .value {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: var(--wimbledon-purple);
+        font-size: 2em;
+        font-weight: 700;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="results-header">
+    <h1>📊 Scraping Results</h1>
+    <p>View and export collected tennis club data</p>
+</div>
+
+<!-- Results Summary -->
+<div id="results-summary" class="results-summary" style="display: none;">
+    <div class="summary-item">
+        <div class="label">Total Clubs</div>
+        <div class="value" id="summary-total">0</div>
+    </div>
+    <div class="summary-item">
+        <div class="label">Emails Found</div>
+        <div class="value" id="summary-emails">0</div>
+    </div>
+    <div class="summary-item">
+        <div class="label">Complete Records</div>
+        <div class="value" id="summary-complete">0</div>
+    </div>
+</div>
+
+<!-- Controls -->
+<div class="controls">
+    <input type="text" id="search-input" placeholder="🔍 Search clubs by name, location, or email...">
+    <div class="export-buttons">
+        <button class="btn" onclick="exportCSV()">📥 Export CSV</button>
+        <button class="btn btn-secondary" onclick="exportJSON()">📥 Export JSON</button>
+    </div>
+    <button class="btn" onclick="loadResults()">🔄 Refresh</button>
+</div>
+
+<!-- Results Table -->
+<div class="results-table-container">
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th>Club Name</th>
+                <th>Location</th>
+                <th>Email</th>
+                <th>Club Type</th>
+                <th>Membership</th>
+                <th>Waitlist</th>
+                <th>Courts</th>
+                <th>Surface</th>
+                <th>Season</th>
+            </tr>
+        </thead>
+        <tbody id="results-body">
+            <tr>
+                <td colspan="9" class="no-results">
+                    <div class="icon">🎾</div>
+                    <h3>No Results Yet</h3>
+                    <p>Start scraping to see results here</p>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+
+<script>
+let allResults = [];
+
+function loadResults() {
+    $.get('/api/results', function(data) {
+        if (data.results && data.results.length > 0) {
+            allResults = data.results;
+            displayResults(allResults);
+            updateSummary(allResults);
+        } else {
+            $('#results-body').html(`
+                <tr>
+                    <td colspan="9" class="no-results">
+                        <div class="icon">🎾</div>
+                        <h3>No Results Yet</h3>
+                        <p>Start scraping from the Scraper page to see results here</p>
+                    </td>
+                </tr>
+            `);
+            $('#results-summary').hide();
+        }
+    });
+}
+
+function displayResults(results) {
+    if (!results || results.length === 0) {
+        $('#results-body').html(`
+            <tr>
+                <td colspan="9" class="no-results">
+                    <div class="icon">🔍</div>
+                    <h3>No Matching Results</h3>
+                    <p>Try a different search term</p>
+                </td>
+            </tr>
+        `);
+        return;
+    }
+
+    let html = '';
+    results.forEach(function(club) {
+        html += '<tr>';
+        html += '<td><strong>' + (club['Club Name'] || 'N/A') + '</strong></td>';
+        html += '<td>' + (club.Location || 'N/A') + '</td>';
+        html += '<td>' + (club.Email !== 'N/A' && club.Email ?
+            '<a href="mailto:' + club.Email + '">' + club.Email + '</a>' :
+            '<span style="color: #999;">N/A</span>') + '</td>';
+        html += '<td>' + (club['Club Type'] || 'N/A') + '</td>';
+        html += '<td>' + (club['Membership Status'] || 'N/A') + '</td>';
+        html += '<td>' + (club['Waitlist Length'] || 'N/A') + '</td>';
+        html += '<td>' + (club['Number of Courts'] || 'N/A') + '</td>';
+        html += '<td>' + (club['Court Surface'] || 'N/A') + '</td>';
+        html += '<td>' + (club['Operating Season'] || 'N/A') + '</td>';
+        html += '</tr>';
+    });
+
+    $('#results-body').html(html);
+}
+
+function updateSummary(results) {
+    const total = results.length;
+    const emailsFound = results.filter(r => r.Email && r.Email !== 'N/A').length;
+    const completeRecords = results.filter(r =>
+        r.Email && r.Email !== 'N/A' &&
+        r['Waitlist Length'] && r['Waitlist Length'] !== 'N/A' &&
+        r['Membership Status'] && r['Membership Status'] !== 'N/A'
+    ).length;
+
+    $('#summary-total').text(total);
+    $('#summary-emails').text(emailsFound);
+    $('#summary-complete').text(completeRecords);
+    $('#results-summary').show();
+}
+
+function searchResults() {
+    const searchTerm = $('#search-input').val().toLowerCase();
+
+    if (!searchTerm) {
+        displayResults(allResults);
+        return;
+    }
+
+    const filtered = allResults.filter(function(club) {
+        return (
+            (club['Club Name'] || '').toLowerCase().includes(searchTerm) ||
+            (club.Location || '').toLowerCase().includes(searchTerm) ||
+            (club.Email || '').toLowerCase().includes(searchTerm)
+        );
+    });
+
+    displayResults(filtered);
+}
+
+function exportCSV() {
+    if (allResults.length === 0) {
+        alert('No data to export. Please run the scraper first.');
+        return;
+    }
+
+    // Create CSV content
+    const headers = ['Club Name', 'Location', 'Email', 'Club Type', 'Membership Status',
+                     'Waitlist Length', 'Number of Courts', 'Court Surface', 'Operating Season'];
+    let csv = headers.join(',') + '\n';
+
+    allResults.forEach(function(club) {
+        const row = headers.map(function(header) {
+            let value = club[header] || 'N/A';
+            // Escape commas and quotes
+            if (value.includes(',') || value.includes('"')) {
+                value = '"' + value.replace(/"/g, '""') + '"';
+            }
+            return value;
+        });
+        csv += row.join(',') + '\n';
+    });
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tennis_clubs_' + new Date().toISOString().split('T')[0] + '.csv';
+    a.click();
+}
+
+function exportJSON() {
+    if (allResults.length === 0) {
+        alert('No data to export. Please run the scraper first.');
+        return;
+    }
+
+    const json = JSON.stringify(allResults, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tennis_clubs_' + new Date().toISOString().split('T')[0] + '.json';
+    a.click();
+}
+
+// Load results on page load
+$(document).ready(function() {
+    loadResults();
+
+    // Search on input
+    $('#search-input').on('input', searchResults);
+
+    // Auto-refresh every 5 seconds
+    setInterval(loadResults, 5000);
+});
+</script>
+{% endblock %}
