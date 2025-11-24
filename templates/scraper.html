@@ -158,6 +158,16 @@
         </small>
     </div>
 
+    <div class="form-group">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+            <input type="checkbox" id="use-js-fallback" style="width: auto; cursor: pointer;">
+            <span>🚀 Enable JavaScript Fallback (Slower but handles React/Vue/Angular sites)</span>
+        </label>
+        <small style="color: #666; display: block; margin-top: 5px; margin-left: 30px;">
+            Uses headless browser for JavaScript-heavy websites. Requires Playwright installation.
+        </small>
+    </div>
+
     <div class="button-group">
         <button id="start-btn" class="btn" onclick="startScraping()">
             🎾 Start Scraping
@@ -202,7 +212,14 @@ let statusInterval = null;
 // Start scraping - THIS IS THE CRITICAL FUNCTION THAT WAS MISSING
 function startScraping() {
     const maxClubs = $('#max-clubs').val();
-    const data = maxClubs ? { max_clubs: parseInt(maxClubs) } : {};
+    const useJsFallback = $('#use-js-fallback').is(':checked');
+
+    const data = {
+        use_js_fallback: useJsFallback
+    };
+    if (maxClubs) {
+        data.max_clubs = parseInt(maxClubs);
+    }
 
     // Disable start button
     $('#start-btn').prop('disabled', true).html('<span class="loading"></span> Starting...');

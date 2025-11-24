@@ -1,3 +1,4 @@
+# Core requirements
 Flask==3.0.0
 pandas==2.1.4
 openpyxl==3.1.2
@@ -5,3 +6,7 @@ requests==2.31.0
 beautifulsoup4==4.12.2
 python-dotenv==1.0.0
 urllib3==2.1.0
+
+# Optional: JavaScript scraper (for React/Vue/Angular sites)
+# Install with: pip install playwright && playwright install chromium
+# playwright>=1.40.0
