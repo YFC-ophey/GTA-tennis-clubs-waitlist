@@ -127,12 +127,12 @@ def background_scraping_task(max_clubs=None):
 @app.route('/')
 def index():
     """Dashboard page"""
-    # Count clubs from Excel
+    # Count clubs from Excel (main scraping target)
     try:
         df = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx')
         total_clubs = len(df)
     except:
-        total_clubs = 306
+        total_clubs = 329  # Updated fallback to match user's total
 
     return render_template('index.html', total_clubs=total_clubs)
 

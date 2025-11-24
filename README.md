@@ -4,10 +4,11 @@ A beautiful, championship-themed web application for scraping and managing data 
 
 ## ✨ Features
 
-- **🔍 Web Scraper**: Automatically extract data from 306+ tennis club websites
-- **📊 Results Viewer**: Browse, search, and export scraped data
+- **🔍 Web Scraper**: Automatically extract data from 329 GTA tennis clubs
+- **📊 Pre-loaded Data**: 325+ clubs with existing data from OTA & City of Toronto (260 OTA + 65 Toronto)
 - **📧 Email Automation**: Send professional outreach to clubs with missing information
 - **🏆 Championship Design**: Elegant Wimbledon-themed interface
+- **⚡ Smart Scraping**: Skips clubs with complete data, only scrapes when needed
 
 ## 🚀 Quick Start
 

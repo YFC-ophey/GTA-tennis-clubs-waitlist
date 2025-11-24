@@ -23,23 +23,32 @@ class DataMerger:
         # Load Toronto CSV
         try:
             self.toronto_data = pd.read_csv('Tennis clubs data - CityofToronto.csv')
-            print(f"✓ Loaded {len(self.toronto_data)} clubs from City of Toronto data")
+            print(f"✓ City of Toronto: {len(self.toronto_data)} clubs")
         except Exception as e:
             print(f"⚠ Could not load Toronto data: {e}")
 
         # Load OTA CSV
         try:
             self.ota_data = pd.read_csv('Tennis clubs data - OTA.csv')
-            print(f"✓ Loaded {len(self.ota_data)} clubs from OTA data")
+            print(f"✓ Ontario Tennis Association: {len(self.ota_data)} clubs")
         except Exception as e:
             print(f"⚠ Could not load OTA data: {e}")
 
         # Load main Excel file
         try:
             self.excel_data = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx')
-            print(f"✓ Loaded {len(self.excel_data)} clubs from main Excel file")
+            print(f"✓ Main Excel file: {len(self.excel_data)} clubs")
         except Exception as e:
             print(f"⚠ Could not load Excel data: {e}")
+
+        # Calculate total
+        total_raw = 0
+        if self.toronto_data is not None:
+            total_raw += len(self.toronto_data)
+        if self.ota_data is not None:
+            total_raw += len(self.ota_data)
+
+        print(f"\n📊 CSV Data: {total_raw} total clubs (before deduplication)")
 
     def normalize_name(self, name: str) -> str:
         """Normalize club name for matching"""
@@ -185,19 +194,28 @@ class DataMerger:
         if not self.merged_data:
             return
 
-        total = len(set([v['Club Name'] for v in self.merged_data.values() if 'Club Name' in v]))
-        with_email = sum(1 for v in self.merged_data.values() if v.get('Email', 'N/A') != 'N/A')
-        with_courts = sum(1 for v in self.merged_data.values() if v.get('Number of Courts', 'N/A') != 'N/A')
-        with_membership = sum(1 for v in self.merged_data.values() if v.get('Membership Status', 'N/A') != 'N/A')
+        # Count unique clubs by club name
+        unique_clubs = set([v['Club Name'] for v in self.merged_data.values() if 'Club Name' in v])
+        total_unique = len(unique_clubs)
 
-        print("\n" + "="*60)
-        print("DATA MERGER SUMMARY")
-        print("="*60)
-        print(f"Unique clubs in database: {total}")
-        print(f"  - With email addresses: {with_email}")
-        print(f"  - With court counts: {with_courts}")
-        print(f"  - With membership status: {with_membership}")
-        print("="*60)
+        # Count clubs with specific data
+        with_email = len(set([v['Club Name'] for v in self.merged_data.values()
+                             if v.get('Email', 'N/A') != 'N/A' and 'Club Name' in v]))
+        with_courts = len(set([v['Club Name'] for v in self.merged_data.values()
+                              if v.get('Number of Courts', 'N/A') != 'N/A' and 'Club Name' in v]))
+        with_membership = len(set([v['Club Name'] for v in self.merged_data.values()
+                                  if v.get('Membership Status', 'N/A') != 'N/A' and 'Club Name' in v]))
+
+        print("\n" + "="*70)
+        print("📊 PRE-LOADED DATA SUMMARY")
+        print("="*70)
+        print(f"Unique clubs with pre-loaded data: {total_unique}")
+        print(f"  ✉️  With email addresses: {with_email}")
+        print(f"  🎾 With court counts: {with_courts}")
+        print(f"  📋 With membership status: {with_membership}")
+        print("="*70)
+        print("These clubs will skip scraping and use existing data!")
+        print("="*70)
 
 
 # Global instance
