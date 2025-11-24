@@ -169,6 +169,10 @@
         <div class="value" id="summary-total">0</div>
     </div>
     <div class="summary-item">
+        <div class="label">Successful Scrapes</div>
+        <div class="value" id="summary-success" style="color: var(--wimbledon-green);">0</div>
+    </div>
+    <div class="summary-item">
         <div class="label">Emails Found</div>
         <div class="value" id="summary-emails">0</div>
     </div>
@@ -194,6 +198,7 @@
         <thead>
             <tr>
                 <th>Club Name</th>
+                <th>Status</th>
                 <th>Location</th>
                 <th>Email</th>
                 <th>Club Type</th>
@@ -206,7 +211,7 @@
         </thead>
         <tbody id="results-body">
             <tr>
-                <td colspan="9" class="no-results">
+                <td colspan="10" class="no-results">
                     <div class="icon">🎾</div>
                     <h3>No Results Yet</h3>
                     <p>Start scraping to see results here</p>
@@ -228,7 +233,7 @@ function loadResults() {
         } else {
             $('#results-body').html(`
                 <tr>
-                    <td colspan="9" class="no-results">
+                    <td colspan="10" class="no-results">
                         <div class="icon">🎾</div>
                         <h3>No Results Yet</h3>
                         <p>Start scraping from the Scraper page to see results here</p>
@@ -244,7 +249,7 @@ function displayResults(results) {
     if (!results || results.length === 0) {
         $('#results-body').html(`
             <tr>
-                <td colspan="9" class="no-results">
+                <td colspan="10" class="no-results">
                     <div class="icon">🔍</div>
                     <h3>No Matching Results</h3>
                     <p>Try a different search term</p>
@@ -256,8 +261,14 @@ function displayResults(results) {
 
     let html = '';
     results.forEach(function(club) {
+        const status = club['Scrape Status'] || 'Unknown';
+        const statusColor = status === 'Success' ? 'var(--wimbledon-green)' :
+                           (status.startsWith('HTTP') || status === 'Connection failed' ? '#dc3545' : '#ffc107');
+        const statusIcon = status === 'Success' ? '✓' : '⚠';
+
         html += '<tr>';
         html += '<td><strong>' + (club['Club Name'] || 'N/A') + '</strong></td>';
+        html += '<td style="color: ' + statusColor + '; font-weight: 600;">' + statusIcon + ' ' + status + '</td>';
         html += '<td>' + (club.Location || 'N/A') + '</td>';
         html += '<td>' + (club.Email !== 'N/A' && club.Email ?
             '<a href="mailto:' + club.Email + '">' + club.Email + '</a>' :
@@ -276,14 +287,16 @@ function displayResults(results) {
 
 function updateSummary(results) {
     const total = results.length;
-    const emailsFound = results.filter(r => r.Email && r.Email !== 'N/A').length;
+    const successfulScrapes = results.filter(r => r['Scrape Status'] === 'Success').length;
+    const emailsFound = results.filter(r => r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available').length;
     const completeRecords = results.filter(r =>
-        r.Email && r.Email !== 'N/A' &&
+        r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available' &&
         r['Waitlist Length'] && r['Waitlist Length'] !== 'N/A' &&
         r['Membership Status'] && r['Membership Status'] !== 'N/A'
     ).length;
 
     $('#summary-total').text(total);
+    $('#summary-success').text(successfulScrapes + ' (' + Math.round((successfulScrapes/total)*100) + '%)');
     $('#summary-emails').text(emailsFound);
     $('#summary-complete').text(completeRecords);
     $('#results-summary').show();
