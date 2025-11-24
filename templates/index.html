@@ -4,194 +4,177 @@
 
 {% block extra_css %}
 <style>
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-
-    .dashboard-header h1 {
-        font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 3em;
-        font-weight: 700;
-        margin-bottom: 10px;
-    }
-
-    .dashboard-header p {
-        color: #666;
-        font-size: 1.2em;
-        font-weight: 300;
-    }
-
     /* Stats Grid */
     .stats-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 25px;
-        margin-bottom: 45px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 40px;
     }
 
     .stat-card {
-        background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
-        color: white;
-        padding: 35px 25px;
+        background: white;
+        padding: 24px;
         border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 6px 20px rgba(62, 31, 71, 0.25);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 2px solid var(--wimbledon-green);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-top: 4px solid #3D2273;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(62, 31, 71, 0.35);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .stat-card h3 {
+        color: #6B7280;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
     }
 
     .stat-value {
         font-family: 'Playfair Display', Georgia, serif;
-        font-size: 3.5em;
+        font-size: 2.5em;
         font-weight: 700;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
-    }
-
-    .stat-label {
-        font-size: 1.1em;
-        opacity: 0.95;
-        font-weight: 400;
-        letter-spacing: 0.5px;
+        margin: 0;
+        color: #1F1F1F;
     }
 
     /* Quick Actions */
     .quick-actions {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 30px;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
     }
 
     .action-card {
         background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
-        border-left: 5px solid var(--wimbledon-green);
-        transition: all 0.3s ease;
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
+        transition: all 0.2s ease;
     }
 
     .action-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 6px 25px rgba(62, 31, 71, 0.15);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
     }
 
     .action-card h3 {
         font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 1.6em;
-        margin-bottom: 15px;
+        color: #3D2273;
+        font-size: 1.4em;
+        margin-bottom: 12px;
+        font-weight: 600;
     }
 
     .action-card p {
-        color: #666;
+        color: #6B7280;
         margin-bottom: 20px;
         line-height: 1.6;
+        font-size: 0.95em;
     }
 
     .action-card .btn {
         width: 100%;
-        text-align: center;
+        justify-content: center;
     }
 
-    /* Welcome Section */
-    .welcome-section {
-        background: linear-gradient(to right, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
+    /* Welcome Banner */
+    .welcome-banner {
+        background: linear-gradient(135deg, #3D2273 0%, #2a1532 100%);
+        color: white;
         padding: 40px;
-        border-radius: 12px;
+        border-radius: 16px;
         margin-bottom: 40px;
-        border: 2px solid rgba(62, 31, 71, 0.1);
+        box-shadow: 0 4px 20px rgba(61, 34, 115, 0.25);
     }
 
-    .welcome-section h2 {
+    .welcome-banner h2 {
         font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 2.2em;
-        margin-bottom: 15px;
+        font-size: 2em;
+        margin: 0 0 12px 0;
+        font-weight: 700;
     }
 
-    .welcome-section p {
-        color: #555;
-        font-size: 1.1em;
-        line-height: 1.8;
-    }
-
-    .welcome-section ul {
-        margin-top: 20px;
-        margin-left: 25px;
-        color: #555;
-    }
-
-    .welcome-section li {
-        margin-bottom: 10px;
+    .welcome-banner p {
         font-size: 1.05em;
+        opacity: 0.95;
+        margin: 0;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 968px) {
+        .stats-grid,
+        .quick-actions {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1>🏆 Championship Dashboard</h1>
-    <p>Welcome to the GTA Tennis Clubs Data Portal</p>
-</div>
+<!-- Page Header -->
+<header class="page-header">
+    <div>
+        <h2>Dashboard</h2>
+        <p>Welcome to the GTA Tennis Clubs Data Portal</p>
+    </div>
+</header>
 
 <!-- Statistics -->
 <div class="stats-grid">
     <div class="stat-card">
+        <h3>Total Clubs</h3>
         <div class="stat-value" id="total-clubs">{{ total_clubs }}</div>
-        <div class="stat-label">Total Clubs</div>
     </div>
     <div class="stat-card">
+        <h3>Clubs Scraped</h3>
         <div class="stat-value" id="scraped-clubs">0</div>
-        <div class="stat-label">Clubs Scraped</div>
     </div>
     <div class="stat-card">
+        <h3>Emails Found</h3>
         <div class="stat-value" id="emails-found">0</div>
-        <div class="stat-label">Emails Found</div>
     </div>
 </div>
 
-<!-- Welcome Section -->
-<div class="welcome-section">
-    <h2>Welcome to the Tennis Data Portal</h2>
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <h2>🎾 Welcome to CourtSide Data Assistant</h2>
     <p>
-        This championship-grade application helps you collect and manage data from GTA tennis clubs.
-        Our elegant system combines web scraping, data export, and email automation in one powerful platform.
+        Your championship-grade application for collecting and managing data from {{ total_clubs }} GTA tennis clubs.
+        Extract contact information, analyze data, and streamline your outreach efforts.
     </p>
-    <ul>
-        <li><strong>Scrape:</strong> Automatically extract data from {{ total_clubs }} tennis club websites</li>
-        <li><strong>Analyze:</strong> View comprehensive results in an organized table format</li>
-        <li><strong>Export:</strong> Download data in CSV and JSON formats</li>
-        <li><strong>Connect:</strong> Send professional emails to clubs with missing information</li>
-    </ul>
 </div>
 
 <!-- Quick Actions -->
 <div class="quick-actions">
     <div class="action-card">
-        <h3>🔍 Start Scraping</h3>
+        <h3>Start Scraping</h3>
         <p>Begin collecting data from tennis club websites with our intelligent scraper.</p>
-        <a href="/scraper" class="btn">Launch Scraper</a>
+        <a href="/scraper" class="btn">
+            <span>🔍</span> Launch Scraper
+        </a>
     </div>
 
     <div class="action-card">
-        <h3>📊 View Results</h3>
+        <h3>View Results</h3>
         <p>Explore scraped data in a beautiful, searchable table format.</p>
-        <a href="/results" class="btn">View Results</a>
+        <a href="/results" class="btn btn-secondary">
+            <span>📊</span> View Results
+        </a>
     </div>
 
     <div class="action-card">
-        <h3>📧 Email Outreach</h3>
+        <h3>Email Outreach</h3>
         <p>Send professional emails to clubs requesting missing information.</p>
-        <a href="/email" class="btn">Manage Emails</a>
+        <a href="/email" class="btn">
+            <span>📧</span> Manage Emails
+        </a>
     </div>
 </div>
 

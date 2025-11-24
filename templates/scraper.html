@@ -4,25 +4,21 @@
 
 {% block extra_css %}
 <style>
-    .scraper-header {
-        text-align: center;
-        margin-bottom: 35px;
-    }
-
-    .scraper-header h1 {
-        font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 2.8em;
-        margin-bottom: 10px;
-    }
-
     .control-panel {
         background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
-        margin-bottom: 30px;
-        border-left: 5px solid var(--wimbledon-green);
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 32px;
+        border: 1px solid #E5E7EB;
+    }
+
+    .control-panel h3 {
+        font-family: 'Playfair Display', Georgia, serif;
+        color: #3D2273;
+        font-size: 1.4em;
+        margin: 0 0 24px 0;
+        font-weight: 600;
     }
 
     .form-group {
@@ -50,33 +46,33 @@
     /* Progress Section */
     .progress-container {
         background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
-        margin-bottom: 30px;
+        padding: 32px;
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 32px;
         display: none;
-        border-top: 4px solid var(--wimbledon-purple);
+        border: 1px solid #E5E7EB;
     }
 
     .progress-container h2 {
         font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        margin-bottom: 25px;
-        font-size: 1.8em;
+        color: #3D2273;
+        margin-bottom: 24px;
+        font-size: 1.6em;
+        font-weight: 600;
     }
 
     .progress-bar-container {
-        background: rgba(62, 31, 71, 0.1);
-        border-radius: 25px;
-        height: 35px;
-        margin-bottom: 20px;
+        background: #F3F4F6;
+        border-radius: 12px;
+        height: 32px;
+        margin-bottom: 24px;
         overflow: hidden;
-        border: 2px solid rgba(62, 31, 71, 0.2);
     }
 
     .progress-bar {
         height: 100%;
-        background: linear-gradient(90deg, var(--wimbledon-green) 0%, var(--wimbledon-light-green) 100%);
+        background: linear-gradient(90deg, #3D2273 0%, #2a1532 100%);
         width: 0%;
         transition: width 0.5s ease;
         display: flex;
@@ -84,8 +80,7 @@
         justify-content: center;
         color: white;
         font-weight: 600;
-        font-size: 0.9em;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+        font-size: 0.85em;
     }
 
     .progress-stats {
@@ -96,36 +91,38 @@
     }
 
     .stat-box {
-        background: linear-gradient(135deg, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
+        background: #F9FAFB;
         padding: 20px;
-        border-radius: 8px;
-        border-left: 4px solid var(--wimbledon-green);
+        border-radius: 12px;
+        border: 1px solid #E5E7EB;
     }
 
     .stat-box .label {
-        color: #666;
-        font-size: 0.9em;
+        color: #6B7280;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
         margin-bottom: 8px;
-        font-weight: 500;
     }
 
     .stat-box .value {
         font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
+        color: #1F1F1F;
         font-size: 2em;
         font-weight: 700;
     }
 
     .current-club {
-        background: linear-gradient(to right, rgba(0, 102, 51, 0.1) 0%, transparent 100%);
-        padding: 15px 20px;
-        border-radius: 8px;
-        margin-top: 20px;
-        border-left: 4px solid var(--wimbledon-green);
+        background: #F0FFF4;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-top: 24px;
+        border: 1px solid #D1FAE5;
     }
 
     .current-club strong {
-        color: var(--wimbledon-purple);
+        color: #3D2273;
     }
 
     /* Alerts Container */
@@ -136,17 +133,20 @@
 {% endblock %}
 
 {% block content %}
-<div class="scraper-header">
-    <h1>🔍 Web Scraper</h1>
-    <p>Collect data from GTA tennis club websites</p>
-</div>
+<!-- Page Header -->
+<header class="page-header">
+    <div>
+        <h2>Web Scraper</h2>
+        <p>Collect data from GTA tennis club websites</p>
+    </div>
+</header>
 
 <!-- Alerts Container -->
 <div id="alerts-container"></div>
 
 <!-- Control Panel -->
 <div class="control-panel">
-    <h2 style="font-family: 'Playfair Display', serif; color: var(--wimbledon-purple); margin-bottom: 25px;">Scraper Controls</h2>
+    <h3>Scraper Controls</h3>
 
     <div class="form-group">
         <label for="max-clubs">

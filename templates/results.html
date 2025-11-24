@@ -4,47 +4,100 @@
 
 {% block extra_css %}
 <style>
-    .results-header {
-        text-align: center;
-        margin-bottom: 35px;
+    /* Stats Row */
+    .stats-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 24px;
+        margin-bottom: 32px;
     }
 
-    .results-header h1 {
+    .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border-top: 4px solid #3D2273;
+    }
+
+    .stat-card h3 {
+        color: #6B7280;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin: 0 0 8px 0;
+    }
+
+    .stat-card p {
         font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 2.8em;
-        margin-bottom: 10px;
+        font-size: 2.5em;
+        color: #1F1F1F;
+        margin: 0;
+        font-weight: 700;
     }
 
-    /* Controls */
-    .controls {
+    /* Search and Filter Bar */
+    .filter-bar {
         background: white;
-        padding: 25px;
+        padding: 20px;
         border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
-        margin-bottom: 30px;
+        margin-bottom: 32px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        border: 1px solid #E5E7EB;
         display: flex;
-        gap: 15px;
-        flex-wrap: wrap;
+        justify-content: space-between;
         align-items: center;
-        border-top: 4px solid var(--wimbledon-green);
+        gap: 12px;
     }
 
-    .controls input[type="text"] {
+    .search-box {
+        position: relative;
         flex: 1;
-        min-width: 250px;
+        max-width: 400px;
     }
 
-    .controls .btn {
-        white-space: nowrap;
+    .search-box input {
+        width: 100%;
+        padding: 10px 16px 10px 40px;
+        border: 1px solid #D1D5DB;
+        border-radius: 24px;
+        font-size: 0.95em;
     }
 
-    /* Results Table */
-    .results-table-container {
+    .search-box::before {
+        content: '🔍';
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-size: 1.1em;
+    }
+
+    /* Data Table Card */
+    .data-table-card {
         background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
+        border-radius: 16px;
+        box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         overflow: hidden;
+        border: 1px solid #E5E7EB;
+    }
+
+    .table-header {
+        padding: 20px 24px;
+        border-bottom: 1px solid #E5E7EB;
+        background: #F9FAFB;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-header h3 {
+        font-family: 'Playfair Display', Georgia, serif;
+        font-size: 1.4em;
+        color: #3D2273;
+        font-weight: 600;
+        margin: 0;
     }
 
     .results-table {
@@ -53,52 +106,80 @@
     }
 
     .results-table thead {
-        background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
+        background: #3D2273;
         color: white;
     }
 
     .results-table th {
-        padding: 18px 15px;
+        padding: 16px;
         text-align: left;
         font-weight: 600;
-        font-size: 0.95em;
-        letter-spacing: 0.5px;
-        border-right: 1px solid rgba(255,255,255,0.1);
-    }
-
-    .results-table th:last-child {
-        border-right: none;
+        font-size: 0.85em;
+        text-transform: uppercase;
+        letter-spacing: 0.8px;
     }
 
     .results-table tbody tr {
-        border-bottom: 1px solid rgba(62, 31, 71, 0.08);
+        border-bottom: 1px solid #E5E7EB;
         transition: background-color 0.2s ease;
     }
 
-    .results-table tbody tr:hover {
-        background-color: rgba(0, 102, 51, 0.03);
+    .results-table tbody tr:nth-child(even) {
+        background: #F0FFF4;
     }
 
-    .results-table tbody tr:last-child {
-        border-bottom: none;
+    .results-table tbody tr:hover {
+        background: rgba(147, 51, 234, 0.05);
     }
 
     .results-table td {
-        padding: 15px;
-        font-size: 0.95em;
-        color: #333;
+        padding: 16px;
+        font-size: 0.9em;
+        color: #1F1F1F;
+    }
+
+    .results-table td:first-child {
+        font-weight: 600;
     }
 
     .results-table td a {
-        color: var(--wimbledon-green);
+        color: #00703C;
         text-decoration: none;
         font-weight: 500;
-        transition: color 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
     }
 
     .results-table td a:hover {
-        color: var(--wimbledon-light-green);
+        color: #005830;
         text-decoration: underline;
+    }
+
+    /* Status badges */
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75em;
+        font-weight: 600;
+    }
+
+    .status-verified {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+
+    .status-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+
+    .status-failed {
+        background: #FEE2E2;
+        color: #991B1B;
     }
 
     .no-results {
@@ -114,104 +195,98 @@
 
     .no-results h3 {
         font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
+        color: #3D2273;
         font-size: 1.8em;
         margin-bottom: 10px;
     }
 
-    /* Export buttons */
-    .export-buttons {
-        display: flex;
-        gap: 10px;
-    }
+    @media (max-width: 768px) {
+        .stats-row {
+            grid-template-columns: 1fr;
+        }
 
-    /* Stats summary */
-    .results-summary {
-        background: linear-gradient(to right, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
-        padding: 20px 25px;
-        border-radius: 8px;
-        margin-bottom: 25px;
-        display: flex;
-        justify-content: space-around;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
+        .filter-bar {
+            flex-direction: column;
+            align-items: stretch;
+        }
 
-    .summary-item {
-        text-align: center;
-    }
+        .search-box {
+            max-width: none;
+        }
 
-    .summary-item .label {
-        color: #666;
-        font-size: 0.9em;
-        margin-bottom: 5px;
-    }
+        .results-table {
+            font-size: 0.85em;
+        }
 
-    .summary-item .value {
-        font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 2em;
-        font-weight: 700;
+        .results-table th,
+        .results-table td {
+            padding: 10px;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="results-header">
-    <h1>📊 Scraping Results</h1>
-    <p>View and export collected tennis club data</p>
+<!-- Page Header -->
+<header class="page-header">
+    <div>
+        <h2>Club Scraper</h2>
+        <p>Manage data sources and extract club contact details</p>
+    </div>
+    <div class="page-header-actions">
+        <button class="btn btn-outline" onclick="exportCSV()">
+            <span>📥</span> Export CSV
+        </button>
+        <button class="btn" onclick="loadResults()">
+            <span>🔄</span> Refresh
+        </button>
+    </div>
+</header>
+
+<!-- Stats Row -->
+<div class="stats-row">
+    <div class="stat-card">
+        <h3>Clubs Found</h3>
+        <p id="summary-total">0</p>
+    </div>
+    <div class="stat-card">
+        <h3>Emails Verified</h3>
+        <p id="summary-emails">0%</p>
+    </div>
+    <div class="stat-card">
+        <h3>Successful Scrapes</h3>
+        <p id="summary-success">0</p>
+    </div>
 </div>
 
-<!-- Results Summary -->
-<div id="results-summary" class="results-summary" style="display: none;">
-    <div class="summary-item">
-        <div class="label">Total Clubs</div>
-        <div class="value" id="summary-total">0</div>
+<!-- Filter Bar -->
+<div class="filter-bar">
+    <div class="search-box">
+        <input type="text" id="search-input" placeholder="Filter by region...">
     </div>
-    <div class="summary-item">
-        <div class="label">Successful Scrapes</div>
-        <div class="value" id="summary-success" style="color: var(--wimbledon-green);">0</div>
-    </div>
-    <div class="summary-item">
-        <div class="label">Emails Found</div>
-        <div class="value" id="summary-emails">0</div>
-    </div>
-    <div class="summary-item">
-        <div class="label">Complete Records</div>
-        <div class="value" id="summary-complete">0</div>
-    </div>
+    <button class="btn btn-secondary" onclick="exportJSON()">
+        <span>📥</span> Export JSON
+    </button>
 </div>
 
-<!-- Controls -->
-<div class="controls">
-    <input type="text" id="search-input" placeholder="🔍 Search clubs by name, location, or email...">
-    <div class="export-buttons">
-        <button class="btn" onclick="exportCSV()">📥 Export CSV</button>
-        <button class="btn btn-secondary" onclick="exportJSON()">📥 Export JSON</button>
+<!-- Data Table Card -->
+<div class="data-table-card">
+    <div class="table-header">
+        <h3>Recent Results</h3>
     </div>
-    <button class="btn" onclick="loadResults()">🔄 Refresh</button>
-</div>
-
-<!-- Results Table -->
-<div class="results-table-container">
     <table class="results-table">
         <thead>
             <tr>
                 <th>Club Name</th>
-                <th>Status</th>
-                <th>Location</th>
-                <th>Email</th>
-                <th>Club Type</th>
-                <th>Membership</th>
-                <th>Waitlist</th>
-                <th>Courts</th>
+                <th>Region</th>
                 <th>Surface</th>
-                <th>Season</th>
+                <th>Email Status</th>
+                <th>Actions</th>
             </tr>
         </thead>
         <tbody id="results-body">
             <tr>
-                <td colspan="10" class="no-results">
+                <td colspan="5" class="no-results">
                     <div class="icon">🎾</div>
                     <h3>No Results Yet</h3>
                     <p>Start scraping to see results here</p>
@@ -233,14 +308,17 @@ function loadResults() {
         } else {
             $('#results-body').html(`
                 <tr>
-                    <td colspan="10" class="no-results">
+                    <td colspan="5" class="no-results">
                         <div class="icon">🎾</div>
                         <h3>No Results Yet</h3>
                         <p>Start scraping from the Scraper page to see results here</p>
                     </td>
                 </tr>
             `);
-            $('#results-summary').hide();
+            // Reset stats to 0
+            $('#summary-total').text('0');
+            $('#summary-emails').text('0%');
+            $('#summary-success').text('0');
         }
     });
 }
@@ -249,7 +327,7 @@ function displayResults(results) {
     if (!results || results.length === 0) {
         $('#results-body').html(`
             <tr>
-                <td colspan="10" class="no-results">
+                <td colspan="5" class="no-results">
                     <div class="icon">🔍</div>
                     <h3>No Matching Results</h3>
                     <p>Try a different search term</p>
@@ -262,23 +340,29 @@ function displayResults(results) {
     let html = '';
     results.forEach(function(club) {
         const status = club['Scrape Status'] || 'Unknown';
-        const statusColor = status === 'Success' ? 'var(--wimbledon-green)' :
-                           (status.startsWith('HTTP') || status === 'Connection failed' ? '#dc3545' : '#ffc107');
-        const statusIcon = status === 'Success' ? '✓' : '⚠';
+        const hasEmail = club.Email && club.Email !== 'N/A' && club.Email !== 'Contact form available';
+
+        // Surface type badge color
+        const surface = club['Court Surface'] || 'N/A';
+        let surfaceClass = 'status-badge ';
+        if (surface.toLowerCase().includes('grass')) surfaceClass += 'status-verified';
+        else if (surface.toLowerCase().includes('clay')) surfaceClass += 'status-pending';
+        else surfaceClass += 'status-failed';
+
+        // Email status
+        let emailStatus = '';
+        if (hasEmail) {
+            emailStatus = `<div class="status-badge status-verified"><div style="width:8px;height:8px;background:#065F46;border-radius:50%;"></div>${club.Email}</div>`;
+        } else {
+            emailStatus = `<div class="status-badge status-failed"><div style="width:8px;height:8px;background:#991B1B;border-radius:50%;"></div>N/A</div>`;
+        }
 
         html += '<tr>';
         html += '<td><strong>' + (club['Club Name'] || 'N/A') + '</strong></td>';
-        html += '<td style="color: ' + statusColor + '; font-weight: 600;">' + statusIcon + ' ' + status + '</td>';
         html += '<td>' + (club.Location || 'N/A') + '</td>';
-        html += '<td>' + (club.Email !== 'N/A' && club.Email ?
-            '<a href="mailto:' + club.Email + '">' + club.Email + '</a>' :
-            '<span style="color: #999;">N/A</span>') + '</td>';
-        html += '<td>' + (club['Club Type'] || 'N/A') + '</td>';
-        html += '<td>' + (club['Membership Status'] || 'N/A') + '</td>';
-        html += '<td>' + (club['Waitlist Length'] || 'N/A') + '</td>';
-        html += '<td>' + (club['Number of Courts'] || 'N/A') + '</td>';
-        html += '<td>' + (club['Court Surface'] || 'N/A') + '</td>';
-        html += '<td>' + (club['Operating Season'] || 'N/A') + '</td>';
+        html += '<td><span class="' + surfaceClass + '">' + surface + '</span></td>';
+        html += '<td>' + emailStatus + '</td>';
+        html += '<td><a href="mailto:' + (club.Email || '') + '" style="color:#3D2273;">Draft Email →</a></td>';
         html += '</tr>';
     });
 
@@ -287,19 +371,15 @@ function displayResults(results) {
 
 function updateSummary(results) {
     const total = results.length;
-    const successfulScrapes = results.filter(r => r['Scrape Status'] === 'Success').length;
+    const successfulScrapes = results.filter(r => r['Scrape Status'] &&
+        (r['Scrape Status'] === 'Success' || r['Scrape Status'].includes('Pre-loaded'))).length;
     const emailsFound = results.filter(r => r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available').length;
-    const completeRecords = results.filter(r =>
-        r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available' &&
-        r['Waitlist Length'] && r['Waitlist Length'] !== 'N/A' &&
-        r['Membership Status'] && r['Membership Status'] !== 'N/A'
-    ).length;
 
-    $('#summary-total').text(total);
-    $('#summary-success').text(successfulScrapes + ' (' + Math.round((successfulScrapes/total)*100) + '%)');
-    $('#summary-emails').text(emailsFound);
-    $('#summary-complete').text(completeRecords);
-    $('#results-summary').show();
+    const emailPercentage = total > 0 ? Math.round((emailsFound / total) * 100) : 0;
+
+    $('#summary-total').text(total.toLocaleString());
+    $('#summary-emails').text(emailPercentage + '%');
+    $('#summary-success').text(successfulScrapes);
 }
 
 function searchResults() {
