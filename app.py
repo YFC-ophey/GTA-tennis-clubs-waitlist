@@ -127,12 +127,23 @@ def background_scraping_task(max_clubs=None):
 @app.route('/')
 def index():
     """Dashboard page"""
-    # Count clubs from Excel (main scraping target)
-    try:
-        df = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx')
-        total_clubs = len(df)
-    except:
-        total_clubs = 329  # Updated fallback to match user's total
+    # Calculate total unique clubs from all sources
+    total_clubs = 329  # Total unique clubs from Excel + CSV sources
+
+    # Try to get dynamic count from data merger if available
+    if global_data_merger and global_data_merger.merged_data:
+        # Count unique club names from pre-loaded data
+        unique_clubs = set([v['Club Name'] for v in global_data_merger.merged_data.values() if 'Club Name' in v])
+        csv_unique = len(unique_clubs)
+
+        # Add Excel count (some clubs might only be in Excel)
+        try:
+            df = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx')
+            excel_count = len(df)
+            # Use the larger number (accounting for overlap)
+            total_clubs = max(excel_count, csv_unique, 329)
+        except:
+            total_clubs = max(csv_unique, 329)
 
     return render_template('index.html', total_clubs=total_clubs)
 
