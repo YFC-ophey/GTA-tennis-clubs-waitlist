@@ -51,36 +51,84 @@ class TennisClubScraper:
         return 'N/A'
 
     def extract_email(self, soup: BeautifulSoup, page_text: str) -> str:
-        """Extract email address from page"""
-        # Look for mailto links first
+        """Extract email address from page - Enhanced with multiple strategies"""
+
+        # Strategy 1: Look for mailto links (highest priority)
         mailto_links = soup.find_all('a', href=re.compile(r'^mailto:', re.I))
         if mailto_links:
             email = mailto_links[0]['href'].replace('mailto:', '').split('?')[0].strip()
             if '@' in email:
                 return email
 
-        # Search page text for email pattern
+        # Strategy 2: Look in meta tags
+        meta_email = soup.find('meta', attrs={'name': re.compile(r'email', re.I)})
+        if meta_email and meta_email.get('content'):
+            email = meta_email['content'].strip()
+            if '@' in email:
+                return email
+
+        # Strategy 3: Look in contact section specifically
+        contact_section = soup.find(['div', 'section'], class_=re.compile(r'contact', re.I))
+        if contact_section:
+            contact_text = contact_section.get_text()
+            emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', contact_text)
+            if emails:
+                for e in emails:
+                    if not any(x in e.lower() for x in ['example', 'test', 'noreply']):
+                        return e
+
+        # Strategy 4: Look in footer
+        footer = soup.find('footer')
+        if footer:
+            footer_text = footer.get_text()
+            emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', footer_text)
+            if emails:
+                for e in emails:
+                    if not any(x in e.lower() for x in ['example', 'test', 'noreply']):
+                        return e
+
+        # Strategy 5: Search entire page text with smart filtering
         email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         emails = re.findall(email_pattern, page_text)
 
         if emails:
-            # Filter out common false positives (but allow gmail/yahoo as clubs use them)
+            # Filter and prioritize
             blacklist = ['example.com', 'test.com', 'placeholder', 'yourdomain', 'email.com',
-                        'sample.com', 'domain.com', 'sampleemail', 'noreply', 'no-reply']
-            valid_emails = []
+                        'sample.com', 'domain.com', 'sampleemail', 'noreply', 'no-reply',
+                        'privacy@', 'legal@', 'abuse@']
+
+            # Prioritize club-related emails
+            priority_keywords = ['info@', 'contact@', 'tennis@', 'club@', 'admin@', 'president@']
+
+            priority_emails = []
+            other_emails = []
+
             for e in emails:
                 e_lower = e.lower()
-                # Skip if blacklisted domain or looks like a template
-                if not any(x in e_lower for x in blacklist) and '@' in e:
-                    valid_emails.append(e)
+                # Skip blacklisted
+                if any(x in e_lower for x in blacklist):
+                    continue
+                # Check priority
+                if any(keyword in e_lower for keyword in priority_keywords):
+                    priority_emails.append(e)
+                else:
+                    other_emails.append(e)
 
-            if valid_emails:
-                return valid_emails[0]
+            # Return priority emails first
+            if priority_emails:
+                return priority_emails[0]
+            if other_emails:
+                return other_emails[0]
 
-        # Also look for contact forms or contact pages
+        # Strategy 6: Look for obfuscated emails (e.g., "info AT domain DOT com")
+        obfuscated = re.search(r'(\w+)\s*(?:@|AT|at)\s*(\w+)\s*(?:\.|DOT|dot)\s*(\w+)', page_text, re.I)
+        if obfuscated:
+            email = f"{obfuscated.group(1)}@{obfuscated.group(2)}.{obfuscated.group(3)}"
+            return email
+
+        # Strategy 7: Check if there's a contact page link
         contact_links = soup.find_all('a', href=re.compile(r'contact|email', re.I))
         if contact_links:
-            # Return a note that there's a contact page
             return 'Contact form available'
 
         return 'N/A'
@@ -129,42 +177,82 @@ class TennisClubScraper:
         return 'N/A'
 
     def extract_courts_count(self, page_text: str, soup: BeautifulSoup) -> str:
-        """Extract number of courts"""
+        """Extract number of courts - Enhanced with multiple strategies"""
+
+        # Strategy 1: Look in facilities/amenities section
+        facilities = soup.find(['div', 'section'], class_=re.compile(r'facilit|amenity|about', re.I))
+        if facilities:
+            fac_text = facilities.get_text()
+            match = re.search(r'(\d+)\s+(?:tennis\s+)?courts?', fac_text, re.I)
+            if match:
+                count = int(match.group(1))
+                if 1 <= count <= 50:
+                    return str(count)
+
+        # Strategy 2: Comprehensive pattern matching
         patterns = [
-            r'(\d+)\s+(?:tennis\s+)?courts?(?:\s|,|\.)',
+            r'(\d+)\s+(?:tennis\s+)?courts?(?:\s|,|\.|\)|$)',
             r'courts?[:\s]+(\d+)',
             r'total\s+(?:of\s+)?(\d+)\s+courts?',
             r'we\s+have\s+(\d+)\s+courts?',
             r'featuring\s+(\d+)\s+courts?',
             r'(\d+)\s+(?:indoor|outdoor)\s+courts?',
+            r'club\s+has\s+(\d+)\s+courts?',
+            r'facilities\s+include\s+(\d+)\s+courts?',
+            r'(\d+)[-\s]court',  # e.g., "4-court facility"
+            r'with\s+(\d+)\s+courts?',
         ]
 
         for pattern in patterns:
-            match = re.search(pattern, page_text, re.I)
-            if match:
+            matches = re.finditer(pattern, page_text, re.I)
+            for match in matches:
                 count = int(match.group(1))
                 # Sanity check - tennis clubs typically have 1-50 courts
                 if 1 <= count <= 50:
                     return str(count)
 
+        # Strategy 3: Look for spelled-out numbers
+        word_to_num = {
+            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+        }
+        for word, num in word_to_num.items():
+            if re.search(rf'\b{word}\s+(?:tennis\s+)?courts?', page_text, re.I):
+                return str(num)
+
         return 'N/A'
 
     def extract_court_surface(self, page_text: str) -> str:
-        """Extract court surface type"""
+        """Extract court surface type - Enhanced"""
         text_lower = page_text.lower()
 
         surfaces_found = []
-        if 'hard court' in text_lower or 'hardcourt' in text_lower:
+
+        # Hard courts (most common)
+        if re.search(r'\bhard\s*courts?|\bhardcourts?|\bhard[-\s]surface|\basphalt|\bconcrete\s*courts?', text_lower):
             surfaces_found.append('Hard')
-        if 'clay court' in text_lower or 'clay' in text_lower and 'court' in text_lower:
+
+        # Clay courts
+        if re.search(r'\bclay\s*courts?|\bred\s*clay|\bhar-tru|\bgreen\s*clay', text_lower):
             surfaces_found.append('Clay')
-        if 'grass court' in text_lower or 'grass' in text_lower and 'court' in text_lower:
+
+        # Grass courts
+        if re.search(r'\bgrass\s*courts?|\blawn\s*courts?', text_lower):
             surfaces_found.append('Grass')
-        if 'indoor' in text_lower:
+
+        # Indoor/Outdoor
+        if re.search(r'\bindoor\s*courts?|\benclosed|\bbubble|\bdome', text_lower):
             surfaces_found.append('Indoor')
+        if re.search(r'\boutdoor\s*courts?|\bopen-air', text_lower):
+            if 'Indoor' not in surfaces_found:  # Don't add if already has indoor
+                surfaces_found.append('Outdoor')
+
+        # Synthetic/Other
+        if re.search(r'\bsynthetic|\bartificial\s*grass|\bturf\s*courts?', text_lower):
+            surfaces_found.append('Synthetic')
 
         if surfaces_found:
-            return ', '.join(surfaces_found)
+            return ', '.join(set(surfaces_found))  # Remove duplicates
 
         return 'N/A'
 
@@ -254,6 +342,16 @@ class TennisClubScraper:
             # Parse HTML
             soup = BeautifulSoup(response.text, 'html.parser')
 
+            # Check if it's a JavaScript-heavy site
+            is_js_heavy = False
+            scripts = soup.find_all('script')
+            if len(scripts) > 10:  # Lots of scripts
+                script_text = ' '.join([s.string or '' for s in scripts[:5]])
+                if any(framework in script_text.lower() for framework in ['react', 'vue', 'angular', 'next']):
+                    is_js_heavy = True
+                    if self.debug:
+                        print(f"[DEBUG] ⚠️  JavaScript-heavy site detected - data may be limited")
+
             # Remove script and style elements
             for script in soup(["script", "style", "noscript"]):
                 script.decompose()
@@ -262,22 +360,49 @@ class TennisClubScraper:
 
             if self.debug:
                 print(f"[DEBUG] Page text length: {len(page_text)} characters")
+                if len(page_text) < 500:
+                    print(f"[DEBUG] ⚠️  Very little visible text - likely JS-rendered")
                 print(f"[DEBUG] First 200 chars: {page_text[:200]}")
 
-            # Extract all data fields
-            result['Email'] = self.extract_email(soup, page_text)
-            result['Location'] = self.extract_city_from_address(page_text)
-            result['Club Type'] = self.extract_club_type(page_text, soup)
-            result['Membership Status'] = self.extract_membership_status(page_text)
-            result['Waitlist Length'] = self.extract_waitlist_length(page_text, soup)
-            result['Number of Courts'] = self.extract_courts_count(page_text, soup)
-            result['Court Surface'] = self.extract_court_surface(page_text)
-            result['Operating Season'] = self.extract_operating_season(page_text)
-            result['Scrape Status'] = 'Success'
+            # Only extract if we have reasonable content
+            if len(page_text) < 200:
+                result['Scrape Status'] = 'JS-heavy (limited data)'
+                if self.debug:
+                    print(f"[DEBUG] ⚠️  Insufficient content - skipping detailed extraction")
+            else:
+                # Extract all data fields (only if pre-loaded data not complete)
+                if result['Email'] == 'N/A':
+                    result['Email'] = self.extract_email(soup, page_text)
+                if result['Location'] == 'N/A':
+                    result['Location'] = self.extract_city_from_address(page_text)
+                if result['Club Type'] == 'N/A':
+                    result['Club Type'] = self.extract_club_type(page_text, soup)
+                if result['Membership Status'] == 'N/A':
+                    result['Membership Status'] = self.extract_membership_status(page_text)
+                if result['Waitlist Length'] == 'N/A':
+                    result['Waitlist Length'] = self.extract_waitlist_length(page_text, soup)
+                if result['Number of Courts'] == 'N/A':
+                    result['Number of Courts'] = self.extract_courts_count(page_text, soup)
+                if result['Court Surface'] == 'N/A':
+                    result['Court Surface'] = self.extract_court_surface(page_text)
+                if result['Operating Season'] == 'N/A':
+                    result['Operating Season'] = self.extract_operating_season(page_text)
+
+                # Update status based on what was found
+                if result['Scrape Status'].startswith('Pre-loaded'):
+                    # Keep pre-loaded status
+                    pass
+                elif is_js_heavy and len([v for v in result.values() if v == 'N/A']) > 5:
+                    result['Scrape Status'] = 'Success (JS-limited)'
+                else:
+                    result['Scrape Status'] = 'Success'
 
             if self.debug:
                 found_fields = [k for k, v in result.items() if v != 'N/A' and k not in ['Club Name', 'Website', 'Scrape Status']]
                 print(f"[DEBUG] Found data for: {found_fields}")
+                missing_fields = [k for k, v in result.items() if v == 'N/A' and k not in ['Club Name', 'Website', 'Scrape Status']]
+                if missing_fields:
+                    print(f"[DEBUG] Missing data for: {missing_fields}")
 
             # Small delay to be respectful
             time.sleep(0.5)
