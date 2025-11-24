@@ -12,7 +12,7 @@ from urllib.parse import urljoin, urlparse
 import time
 
 class TennisClubScraper:
-    def __init__(self):
+    def __init__(self, data_merger=None):
         self.session = requests.Session()
         # Better headers to avoid being blocked
         self.session.headers.update({
@@ -25,6 +25,7 @@ class TennisClubScraper:
         })
         self.timeout = 15
         self.debug = True  # Enable debug logging
+        self.data_merger = data_merger  # Optional data merger for pre-populated data
 
     def extract_city_from_address(self, text: str) -> str:
         """Extract city name from address text"""
@@ -209,6 +210,29 @@ class TennisClubScraper:
             'Operating Season': 'N/A',
             'Scrape Status': 'Failed'  # Track success/failure
         }
+
+        # Check data merger first for existing data
+        if self.data_merger:
+            existing_data = self.data_merger.get_existing_data(club_name, url)
+            if existing_data:
+                if self.debug:
+                    print(f"[DEBUG] Found existing data for {club_name} from {existing_data.get('source', 'database')}")
+
+                # Use existing data where available
+                for key in ['Email', 'Location', 'Club Type', 'Membership Status',
+                           'Number of Courts', 'Court Surface', 'Operating Season']:
+                    if key in existing_data and existing_data[key] != 'N/A':
+                        result[key] = existing_data[key]
+
+                # If we have email and some other data, consider it a success without scraping
+                if result['Email'] != 'N/A' or result['Number of Courts'] != 'N/A':
+                    result['Scrape Status'] = f"Pre-loaded ({existing_data.get('source', 'DB')})"
+                    if self.debug:
+                        found_fields = [k for k, v in result.items() if v != 'N/A' and k not in ['Club Name', 'Website', 'Scrape Status']]
+                        print(f"[DEBUG] Pre-loaded data fields: {found_fields}")
+                    # Still try to scrape for missing data, but don't fail if it doesn't work
+                    # Fall through to scraping below
+                    pass
 
         try:
             # Make sure URL has protocol

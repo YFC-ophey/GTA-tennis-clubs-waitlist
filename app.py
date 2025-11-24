@@ -11,9 +11,18 @@ import os
 from datetime import datetime
 from scraper_simple import TennisClubScraper
 from email_agent import EmailAgent
+from data_merger import initialize_data_merger
 import threading
 
 app = Flask(__name__)
+
+# Initialize data merger with CSV data on startup
+print("\n" + "="*80)
+print("🎾 Initializing Tennis Club Data Portal")
+print("="*80)
+global_data_merger = initialize_data_merger()
+print("✓ Data merger initialized successfully")
+print("="*80 + "\n")
 
 # Global variables for tracking scraping progress
 scraping_status = {
@@ -42,8 +51,8 @@ def background_scraping_task(max_clubs=None):
         scraping_status['results'] = []
         scraping_status['errors'] = []
 
-        # Initialize scraper
-        scraper = TennisClubScraper()
+        # Initialize scraper with data merger for pre-loaded data
+        scraper = TennisClubScraper(data_merger=global_data_merger)
 
         # Scrape each club
         for idx, row in df.iterrows():
@@ -65,18 +74,37 @@ def background_scraping_task(max_clubs=None):
                     scraping_status['errors'].append(error_msg)
                     print(error_msg)
             else:
-                scraping_status['results'].append({
-                    'Club Name': club_name,
-                    'Website': 'N/A',
-                    'Email': 'N/A',
-                    'Location': 'N/A',
-                    'Club Type': 'N/A',
-                    'Membership Status': 'N/A',
-                    'Waitlist Length': 'N/A',
-                    'Number of Courts': 'N/A',
-                    'Court Surface': 'N/A',
-                    'Operating Season': 'N/A'
-                })
+                # No website, but check if we have data in our database
+                existing_data = global_data_merger.get_existing_data(club_name, '') if global_data_merger else None
+                if existing_data:
+                    result = {
+                        'Club Name': club_name,
+                        'Website': 'N/A',
+                        'Email': existing_data.get('Email', 'N/A'),
+                        'Location': existing_data.get('Location', 'N/A'),
+                        'Club Type': existing_data.get('Club Type', 'N/A'),
+                        'Membership Status': existing_data.get('Membership Status', 'N/A'),
+                        'Waitlist Length': 'N/A',
+                        'Number of Courts': existing_data.get('Number of Courts', 'N/A'),
+                        'Court Surface': 'N/A',
+                        'Operating Season': 'N/A',
+                        'Scrape Status': f"Pre-loaded ({existing_data.get('source', 'DB')})"
+                    }
+                else:
+                    result = {
+                        'Club Name': club_name,
+                        'Website': 'N/A',
+                        'Email': 'N/A',
+                        'Location': 'N/A',
+                        'Club Type': 'N/A',
+                        'Membership Status': 'N/A',
+                        'Waitlist Length': 'N/A',
+                        'Number of Courts': 'N/A',
+                        'Court Surface': 'N/A',
+                        'Operating Season': 'N/A',
+                        'Scrape Status': 'No website'
+                    }
+                scraping_status['results'].append(result)
 
         # Save results
         if scraping_status['results']:
