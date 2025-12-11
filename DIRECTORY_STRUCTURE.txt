@@ -1,0 +1,15 @@
+.
+./.gitignore
+./DIRECTORY_STRUCTURE.txt
+./README.md
+./UPLOAD_INSTRUCTIONS.md
+./app.py
+./data
+./data/GTA_Tennis_clubs_data_.xlsx
+./docs
+./docs/API.md
+./docs/SCRAPING_GUIDE.md
+./docs/SETUP.md
+./requirements.txt
+./templates
+./templates/dashboard.html

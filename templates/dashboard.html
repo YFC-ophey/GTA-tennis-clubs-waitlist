@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GTA Tennis Clubs Database - Championship Edition</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', sans-serif;
+            background: #F5F3EF;
+            color: #1A1A2E;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, #3E1F47 0%, #4A2C54 100%);
+            color: white;
+            padding: 40px 0;
+            margin-bottom: 35px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        h1 {
+            font-family: Georgia, serif;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .subtitle {
+            font-size: 1.15em;
+            opacity: 0.95;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 25px;
+            margin-bottom: 35px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 30px;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(62, 31, 71, 0.08);
+            border-top: 4px solid #006633;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(62, 31, 71, 0.12);
+        }
+        
+        .stat-number {
+            font-family: Georgia, serif;
+            font-size: 3em;
+            font-weight: bold;
+            color: #3E1F47;
+            margin-bottom: 8px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 12px;
+            background: #E8E6E1;
+            border-radius: 6px;
+            margin-top: 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #006633 0%, #00914D 100%);
+            transition: width 0.5s ease;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 0;
+            background: white;
+            border-radius: 4px 4px 0 0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .tab {
+            padding: 18px 28px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1em;
+            color: #666;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab:hover {
+            color: #3E1F47;
+            background: rgba(62, 31, 71, 0.03);
+        }
+        
+        .tab.active {
+            color: #3E1F47;
+            border-bottom: 3px solid #006633;
+            font-weight: 600;
+        }
+        
+        .tab-content {
+            display: none;
+            background: white;
+            padding: 35px;
+            border-radius: 0 0 4px 4px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .card {
+            background: white;
+            border-radius: 4px;
+            padding: 30px;
+            margin-bottom: 25px;
+            border-left: 5px solid #006633;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .card h2 {
+            font-family: Georgia, serif;
+            color: #3E1F47;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        
+        .button {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #3E1F47 0%, #4A2C54 100%);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s;
+        }
+        
+        .button:hover {
+            background: linear-gradient(135deg, #4A2C54 0%, #5A3C64 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(62, 31, 71, 0.3);
+        }
+        
+        .button-green {
+            background: linear-gradient(135deg, #006633 0%, #00914D 100%);
+        }
+        
+        .button-green:hover {
+            background: linear-gradient(135deg, #00914D 0%, #00A856 100%);
+            box-shadow: 0 4px 12px rgba(0, 102, 51, 0.3);
+        }
+        
+        .action-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-top: 25px;
+        }
+        
+        .action-card {
+            background: linear-gradient(135deg, #FCFCFB 0%, white 100%);
+            padding: 25px;
+            border-radius: 4px;
+            border: 2px solid #E8E6E1;
+            transition: all 0.3s;
+        }
+        
+        .action-card:hover {
+            border-color: #006633;
+            transform: translateY(-3px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+        
+        .action-card h3 {
+            color: #3E1F47;
+            font-family: Georgia, serif;
+            margin-bottom: 12px;
+        }
+        
+        .action-card p {
+            color: #666;
+            margin-bottom: 18px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 16px;
+            text-align: left;
+            border-bottom: 1px solid #E8E6E1;
+        }
+        
+        th {
+            background: linear-gradient(180deg, #3E1F47 0%, #4A2C54 100%);
+            color: white;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.85em;
+            letter-spacing: 0.8px;
+        }
+        
+        tr:nth-child(even) {
+            background: #FCFCFB;
+        }
+        
+        tr:hover {
+            background: #F9F8F6;
+        }
+        
+        .search-box {
+            width: 100%;
+            padding: 14px 20px;
+            border: 2px solid #E8E6E1;
+            border-radius: 4px;
+            font-size: 1em;
+            margin-bottom: 20px;
+        }
+        
+        .search-box:focus {
+            outline: none;
+            border-color: #006633;
+            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .badge-success {
+            background: #D4EDDA;
+            color: #006633;
+            border: 1px solid #006633;
+        }
+        
+        .badge-warning {
+            background: #FFF3CD;
+            color: #856404;
+        }
+        
+        .completeness-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .completeness-item {
+            background: #F9F8F6;
+            padding: 25px;
+            border-radius: 4px;
+            border: 2px solid #E8E6E1;
+        }
+        
+        .completeness-label {
+            font-size: 0.85em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-bottom: 10px;
+        }
+        
+        .completeness-value {
+            font-family: Georgia, serif;
+            font-size: 2.2em;
+            font-weight: bold;
+            color: #3E1F47;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+        
+        .club-item {
+            background: white;
+            padding: 18px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            border-left: 5px solid #006633;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        
+        .club-item strong {
+            color: #3E1F47;
+            font-size: 1.05em;
+        }
+        
+        .instructions {
+            margin-top: 25px;
+            padding: 20px;
+            background: linear-gradient(135deg, #E8F5E9 0%, #F1F8F4 100%);
+            border-radius: 4px;
+            border: 2px solid #006633;
+        }
+        
+        .instructions strong {
+            color: #3E1F47;
+            font-size: 1.1em;
+        }
+        
+        .instructions ol {
+            margin: 15px 0;
+            padding-left: 25px;
+            color: #555;
+            line-height: 1.8;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>🎾 GTA Tennis Clubs Database</h1>
+            <p class="subtitle">Championship Edition - Comprehensive database of 306 Greater Toronto Area tennis clubs</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="totalClubs">-</div>
+                <div class="stat-label">Total Clubs</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="processedClubs">-</div>
+                <div class="stat-label">Processed</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressBar"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="remainingClubs">-</div>
+                <div class="stat-label">Remaining</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="completionRate">-</div>
+                <div class="stat-label">Completion Rate</div>
+            </div>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('overview')">Overview</button>
+            <button class="tab" onclick="switchTab('processed')">Processed Clubs</button>
+            <button class="tab" onclick="switchTab('remaining')">Remaining Clubs</button>
+            <button class="tab" onclick="switchTab('quality')">Data Quality</button>
+        </div>
+        
+        <!-- Tab Contents -->
+        <div id="overview" class="tab-content active">
+            <div class="card">
+                <h2>Start Scraping</h2>
+                <p style="color: #555; margin-bottom: 20px;">Click below to get the next 10 clubs ready for data extraction.</p>
+                <button class="button" onclick="startScraping()">Get Next 10 Clubs</button>
+                <button class="button button-green" onclick="exportData()" style="margin-left: 10px;">Export CSV</button>
+            </div>
+            
+            <div id="scrapingSection" style="display: none;">
+                <div class="card">
+                    <h2>Clubs Ready to Scrape</h2>
+                    <div id="clubsList"></div>
+                </div>
+            </div>
+            
+            <div class="action-grid">
+                <div class="action-card">
+                    <h3>View Processed</h3>
+                    <p>See all 80 clubs that have been successfully scraped</p>
+                    <button class="button" onclick="switchTab('processed')">View</button>
+                </div>
+                <div class="action-card">
+                    <h3>Data Quality</h3>
+                    <p>Check completeness metrics for all fields</p>
+                    <button class="button" onclick="switchTab('quality')">View Report</button>
+                </div>
+                <div class="action-card">
+                    <h3>Remaining Clubs</h3>
+                    <p>Browse the 215 clubs waiting to be processed</p>
+                    <button class="button" onclick="switchTab('remaining')">View List</button>
+                </div>
+            </div>
+        </div>
+        
+        <div id="processed" class="tab-content">
+            <h2 style="font-family: Georgia, serif; color: #3E1F47; margin-bottom: 20px;">Processed Clubs (80)</h2>
+            <input type="text" class="search-box" placeholder="Search by name, location, or email..." onkeyup="filterTable('processedTable', this.value)">
+            <div style="overflow-x: auto;">
+                <table id="processedTable">
+                    <thead>
+                        <tr>
+                            <th>Club Name</th>
+                            <th>Location</th>
+                            <th>Email</th>
+                            <th>Club Type</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="processedBody">
+                        <tr><td colspan="5" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="remaining" class="tab-content">
+            <h2 style="font-family: Georgia, serif; color: #3E1F47; margin-bottom: 20px;">Remaining Clubs (215)</h2>
+            <input type="text" class="search-box" placeholder="Search by name or URL..." onkeyup="filterTable('remainingTable', this.value)">
+            <div style="overflow-x: auto;">
+                <table id="remainingTable">
+                    <thead>
+                        <tr>
+                            <th>Club Name</th>
+                            <th>Website URL</th>
+                        </tr>
+                    </thead>
+                    <tbody id="remainingBody">
+                        <tr><td colspan="2" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div id="quality" class="tab-content">
+            <h2 style="font-family: Georgia, serif; color: #3E1F47; margin-bottom: 20px;">Data Quality Report</h2>
+            <p style="color: #666; margin-bottom: 25px;">Analysis of data completeness across all processed clubs</p>
+            <div class="completeness-grid" id="qualityGrid">
+                <div class="loading">Loading...</div>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        let currentStats = null;
+        
+        // Load initial data
+        loadStats();
+        
+        async function loadStats() {
+            try {
+                const response = await fetch('/api/stats');
+                currentStats = await response.json();
+                
+                document.getElementById('totalClubs').textContent = currentStats.total;
+                document.getElementById('processedClubs').textContent = currentStats.processed;
+                document.getElementById('remainingClubs').textContent = currentStats.remaining;
+                document.getElementById('completionRate').textContent = currentStats.completion_rate + '%';
+                document.getElementById('progressBar').style.width = currentStats.completion_rate + '%';
+                
+                // Update quality grid
+                const grid = document.getElementById('qualityGrid');
+                grid.innerHTML = '';
+                for (const [field, data] of Object.entries(currentStats.completeness)) {
+                    grid.innerHTML += `
+                        <div class="completeness-item">
+                            <div class="completeness-label">${field}</div>
+                            <div class="completeness-value">${data.percentage}%</div>
+                            <div style="font-size: 0.85em; color: #666; margin-top: 8px;">
+                                ${data.complete} / ${data.total} complete
+                            </div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        async function loadProcessed() {
+            try {
+                const response = await fetch('/api/processed');
+                const clubs = await response.json();
+                
+                const tbody = document.getElementById('processedBody');
+                tbody.innerHTML = '';
+                
+                clubs.forEach(club => {
+                    const hasData = club.Email !== 'Not Found' && club.Location !== 'Not Found';
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${club['Club Name']}</strong></td>
+                            <td>${club.Location}</td>
+                            <td>${club.Email}</td>
+                            <td>${club['Club Type']}</td>
+                            <td><span class="badge ${hasData ? 'badge-success' : 'badge-warning'}">${hasData ? 'Complete' : 'Partial'}</span></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading processed clubs:', error);
+            }
+        }
+        
+        async function loadRemaining() {
+            try {
+                const response = await fetch('/api/remaining');
+                const clubs = await response.json();
+                
+                const tbody = document.getElementById('remainingBody');
+                tbody.innerHTML = '';
+                
+                clubs.slice(0, 50).forEach(club => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td><strong>${club['Club Name']}</strong></td>
+                            <td><a href="${club['Website URL']}" target="_blank" style="color: #006633;">${club['Website URL']}</a></td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading remaining clubs:', error);
+            }
+        }
+        
+        async function startScraping() {
+            try {
+                const response = await fetch('/api/scrape/start', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({batch_size: 10})
+                });
+                
+                const data = await response.json();
+                const section = document.getElementById('scrapingSection');
+                const list = document.getElementById('clubsList');
+                
+                section.style.display = 'block';
+                list.innerHTML = '';
+                
+                data.clubs.forEach((club, i) => {
+                    list.innerHTML += `
+                        <div class="club-item">
+                            <strong>${i + 1}. ${club['Club Name']}</strong><br>
+                            <a href="${club['Website URL']}" target="_blank" style="color: #006633;">${club['Website URL']}</a>
+                            <button class="button" style="margin-left: 10px; padding: 8px 16px; font-size: 0.85em;" onclick="copyURL('${club['Website URL']}')">Copy URL</button>
+                        </div>
+                    `;
+                });
+                
+                list.innerHTML += `
+                    <div class="instructions">
+                        <strong>📋 How to Scrape:</strong>
+                        <ol>
+                            <li>Click "Copy URL" for any club above</li>
+                            <li>Paste it in chat and ask: "Please scrape this club: [URL]"</li>
+                            <li>I'll extract all 9 fields automatically</li>
+                            <li>Data gets added to your spreadsheet</li>
+                        </ol>
+                    </div>
+                `;
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+        
+        function copyURL(url) {
+            navigator.clipboard.writeText(url).then(() => {
+                alert('✅ URL copied! Paste it in chat to scrape.');
+            });
+        }
+        
+        function switchTab(tabName) {
+            // Update tabs
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+            
+            // Load data if needed
+            if (tabName === 'processed' && document.getElementById('processedBody').innerHTML.includes('Loading')) {
+                loadProcessed();
+            } else if (tabName === 'remaining' && document.getElementById('remainingBody').innerHTML.includes('Loading')) {
+                loadRemaining();
+            }
+        }
+        
+        function filterTable(tableId, search) {
+            const filter = search.toLowerCase();
+            const table = document.getElementById(tableId);
+            const rows = table.getElementsByTagName('tr');
+            
+            for (let i = 1; i < rows.length; i++) {
+                const text = rows[i].textContent.toLowerCase();
+                rows[i].style.display = text.includes(filter) ? '' : 'none';
+            }
+        }
+        
+        function exportData() {
+            window.location.href = '/api/export';
+        }
+    </script>
+</body>
+</html>
