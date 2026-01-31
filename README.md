@@ -94,7 +94,7 @@ python app.py
 ```
 
 5. **Access dashboard**
-Open your browser to: **http://localhost:5001**
+Open your browser to: **COMING SOON**
 
 ## 📊 Data Structure
 
