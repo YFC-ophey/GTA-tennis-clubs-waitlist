@@ -47,3 +47,4 @@ instance/
 
 # Logs
 *.log
+.worktrees/
