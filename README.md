@@ -57,6 +57,10 @@ Open:
 
 The app runs on port `5001` to avoid common local conflicts.
 
+## 🧭 Default Development Workflow
+
+See [`WORKFLOW.md`](/Users/opheliachen/projects/GTA%20Tennis%20Clubs/GTA-tennis-clubs-waitlist/.worktrees/codex-wimbledon-dashboard/WORKFLOW.md) for the required sequence.
+
 ## 🔌 API Endpoints
 
 - `GET /api/results` — merged club list and metadata.
