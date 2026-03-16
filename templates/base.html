@@ -3,343 +3,471 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}GTA Tennis Clubs{% endblock %} - Championship Data Portal</title>
+    <title>{% block title %}GTA Tennis Clubs{% endblock %} - Tennis Player Directory</title>
 
-    <!-- Google Fonts - Wimbledon Style -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js" defer></script>
 
     <style>
         :root {
-            --wimbledon-purple: #3E1F47;
-            --wimbledon-green: #006633;
-            --wimbledon-cream: #F5F3EF;
-            --wimbledon-light-green: #2d8659;
-            --wimbledon-dark-purple: #2a1532;
-            --wimbledon-gold: #D4AF37;
+            --bg: #f5f1e8;
+            --bg-surface: #fcfaf4;
+            --bg-elev: #ffffff;
+            --text: #1a1a1a;
+            --text-muted: #56434c;
+            --line: #d8cbb5;
+            --line-soft: #ebe1d1;
+            --green: #0f5b3b;
+            --green-soft: #197b55;
+            --green-muted: #dff5ec;
+            --purple: #2f2a52;
+            --purple-soft: #3e335e;
+            --gold: #d6ac48;
+            --danger: #b54f4a;
+            --success: #0f766e;
+            --warning: #c57f17;
+            --radius-xl: 18px;
+            --radius-lg: 14px;
+            --radius-md: 10px;
+            --shadow-soft: 0 14px 36px rgba(26, 20, 31, 0.1);
+            --shadow-card: 0 10px 28px rgba(26, 20, 31, 0.08);
+            --court-green: linear-gradient(145deg, #006645 0%, #004a37 80%);
+            --court-green-soft: #eef9f2;
+            --wimbledon-dark: #0a3f3a;
+            --wimbledon-green: #0f5b3b;
+            --wimbledon-gold: #e2bf68;
+            --wimbledon-purple: var(--purple);
+            --wimbledon-light-green: var(--green-muted);
+            --wimbledon-cream: var(--bg);
         }
 
         * {
-            margin: 0;
-            padding: 0;
             box-sizing: border-box;
         }
 
+        html,
         body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: var(--wimbledon-cream);
-            color: #333;
-            line-height: 1.6;
+            margin: 0;
+            min-height: 100%;
+            min-height: 100dvh;
+        }
+
+        body {
+            font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+            background: radial-gradient(circle at 0% 0%, #fbf7ee 0%, var(--bg) 40%, #f1e9d5 100%);
+            color: var(--text);
+            line-height: 1.45;
             position: relative;
         }
 
-        /* Tennis Court Pattern Background */
         body::before {
-            content: '';
+            content: "";
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
+            inset: 0;
             background-image:
-                linear-gradient(90deg, rgba(62, 31, 71, 0.02) 1px, transparent 1px),
-                linear-gradient(rgba(62, 31, 71, 0.02) 1px, transparent 1px);
-            background-size: 50px 50px;
+                radial-gradient(circle at 2px 2px, rgba(47, 42, 82, 0.08) 0.8px, transparent 0),
+                linear-gradient(rgba(46, 42, 82, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(46, 42, 82, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
             pointer-events: none;
             z-index: 0;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
+        .site-shell {
             position: relative;
+            min-height: 100vh;
             z-index: 1;
+            display: flex;
+            flex-direction: column;
         }
 
-        /* Championship Header */
-        .header {
-            background: linear-gradient(135deg, var(--wimbledon-dark-purple) 0%, var(--wimbledon-purple) 100%);
-            color: white;
-            padding: 30px 0;
-            box-shadow: 0 4px 20px rgba(62, 31, 71, 0.3);
-            border-bottom: 4px solid var(--wimbledon-green);
-            position: relative;
-            overflow: hidden;
+        .site-header {
+            background: linear-gradient(130deg, #2f2a52 0%, #2d4d3f 58%, #0f5b3b 100%);
+            color: #fff;
+            border-bottom: 4px solid var(--wimbledon-gold);
+            box-shadow: 0 18px 36px rgba(23, 18, 30, 0.28);
         }
 
-        /* Tennis Ball Pattern in Header */
-        .header::after {
-            content: '';
-            position: absolute;
-            top: -20px;
-            right: -20px;
-            width: 100px;
-            height: 100px;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            border-radius: 50%;
+        .site-header__inner {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 22px clamp(16px, 3vw, 32px);
         }
 
-        .header h1 {
-            font-family: 'Playfair Display', Georgia, serif;
-            font-size: 2.5em;
+        .site-title {
+            margin: 0;
+            font-family: "Playfair Display", Georgia, serif;
             font-weight: 700;
-            text-align: center;
-            margin-bottom: 10px;
-            letter-spacing: 1px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            font-size: clamp(1.8rem, 2vw, 2.5rem);
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
         }
 
-        .header .subtitle {
-            text-align: center;
-            font-size: 1.1em;
-            opacity: 0.95;
-            font-weight: 300;
-            letter-spacing: 0.5px;
+        .site-subtitle {
+            margin-top: 6px;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 0.98rem;
+            max-width: 52ch;
+            line-height: 1.45;
         }
 
-        /* Navigation */
-        .nav {
-            background: white;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            border-bottom: 2px solid var(--wimbledon-green);
+        .site-nav {
+            margin-top: 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            padding-top: 12px;
+            display: flex;
+            align-items: center;
         }
 
-        .nav ul {
+        .site-nav ul {
             list-style: none;
             display: flex;
-            justify-content: center;
-            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0;
             padding: 0;
-            margin: 0;
+            flex-wrap: wrap;
         }
 
-        .nav li {
-            margin: 0;
-        }
-
-        .nav a {
-            display: block;
-            padding: 18px 30px;
+        .site-nav a {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 40px;
+            padding: 8px 14px;
+            border-radius: 999px;
             text-decoration: none;
-            color: var(--wimbledon-purple);
-            font-weight: 500;
-            font-size: 1em;
-            transition: all 0.3s ease;
-            border-bottom: 3px solid transparent;
-            font-family: 'Inter', sans-serif;
-        }
-
-        .nav a:hover, .nav a.active {
-            background: linear-gradient(to bottom, var(--wimbledon-cream) 0%, white 100%);
-            border-bottom-color: var(--wimbledon-green);
-            color: var(--wimbledon-green);
-        }
-
-        /* Main Content Area */
-        main {
-            min-height: calc(100vh - 300px);
-            padding: 40px 0;
-        }
-
-        /* Cards */
-        .card {
-            background: white;
-            border-radius: 12px;
-            padding: 30px;
-            margin-bottom: 25px;
-            box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
-            border: 1px solid rgba(62, 31, 71, 0.08);
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 6px 25px rgba(62, 31, 71, 0.15);
-        }
-
-        .card h2 {
-            font-family: 'Playfair Display', Georgia, serif;
-            color: var(--wimbledon-purple);
-            margin-bottom: 20px;
-            font-size: 2em;
+            color: rgba(255, 255, 255, 0.95);
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
             font-weight: 600;
-            border-bottom: 3px solid var(--wimbledon-green);
-            padding-bottom: 12px;
+            font-size: 0.95rem;
         }
 
-        /* Buttons - Championship Style */
+        .site-nav a:hover,
+        .site-nav a:focus-visible,
+        .site-nav a.active {
+            background: rgba(255, 255, 255, 0.18);
+            border-color: rgba(255, 255, 255, 0.45);
+            outline: none;
+        }
+
+        .site-nav a:focus-visible {
+            box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.35);
+        }
+
+        .site-main {
+            flex: 1;
+            padding: 30px 0 52px;
+        }
+
+        .container {
+            width: min(1200px, calc(100% - 2rem));
+            margin: 0 auto;
+        }
+
+        .panel {
+            background: var(--bg-surface);
+            border: 1px solid var(--line);
+            border-radius: var(--radius-xl);
+            padding: clamp(16px, 2.3vw, 28px);
+            box-shadow: var(--shadow-card);
+            background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0));
+        }
+
+        .panel-soft {
+            background: var(--bg-elev);
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 16px;
+        }
+
+        .panel + .panel {
+            margin-top: 16px;
+        }
+
         .btn {
-            display: inline-block;
-            padding: 14px 32px;
-            background: linear-gradient(135deg, var(--wimbledon-green) 0%, var(--wimbledon-light-green) 100%);
-            color: white;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: 600;
-            font-size: 1em;
-            border: none;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 12px rgba(0, 102, 51, 0.3);
-            font-family: 'Inter', sans-serif;
+            min-height: 44px;
+            min-width: 44px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            padding: 10px 16px;
+            font-weight: 700;
+            font-family: inherit;
+            color: #fff;
+            background: var(--court-green);
+            transition: transform 0.18s ease, box-shadow 0.18s ease, filter 0.18s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 10px 24px rgba(12, 107, 70, 0.28);
         }
 
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(0, 102, 51, 0.4);
-            background: linear-gradient(135deg, var(--wimbledon-light-green) 0%, var(--wimbledon-green) 100%);
+        .btn:hover,
+        .btn:focus-visible {
+            transform: translateY(-1px);
+            filter: saturate(1.05);
+            outline: none;
+            box-shadow: 0 14px 28px rgba(12, 107, 70, 0.34);
         }
 
         .btn:active {
             transform: translateY(0);
         }
 
+        .btn--ghost {
+            color: var(--green);
+            background: var(--green-muted);
+            border-color: #cce8dd;
+            box-shadow: none;
+        }
+
+        .btn--ghost:hover,
+        .btn--ghost:focus-visible {
+            background: #ecfaf4;
+        }
+
+        .btn--secondary {
+            background: linear-gradient(160deg, var(--purple) 0%, var(--purple-soft) 100%);
+            box-shadow: 0 10px 24px rgba(46, 31, 66, 0.28);
+        }
+
+        .btn--danger {
+            background: linear-gradient(160deg, #8f2d2d 0%, var(--danger) 100%);
+            box-shadow: 0 10px 24px rgba(139, 45, 45, 0.28);
+        }
+
         .btn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+            box-shadow: none;
         }
 
-        .btn-secondary {
-            background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
-            box-shadow: 0 4px 12px rgba(62, 31, 71, 0.3);
-        }
-
-        .btn-secondary:hover {
-            background: linear-gradient(135deg, var(--wimbledon-dark-purple) 0%, var(--wimbledon-purple) 100%);
-            box-shadow: 0 6px 20px rgba(62, 31, 71, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #8B0000 0%, #DC143C 100%);
-            box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
-        }
-
-        .btn-danger:hover {
-            background: linear-gradient(135deg, #DC143C 0%, #8B0000 100%);
-            box-shadow: 0 6px 20px rgba(139, 0, 0, 0.4);
-        }
-
-        /* Form Elements */
-        input[type="text"],
-        input[type="number"],
-        input[type="email"],
-        textarea {
+        .input {
             width: 100%;
-            padding: 12px 16px;
-            border: 2px solid rgba(62, 31, 71, 0.2);
-            border-radius: 6px;
-            font-size: 1em;
-            font-family: 'Inter', sans-serif;
-            transition: border-color 0.3s ease;
-            background: white;
+            min-height: 42px;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            padding: 10px 14px;
+            color: var(--text);
+            background: #fff;
+            font: inherit;
         }
 
-        input:focus,
-        textarea:focus {
-            outline: none;
-            border-color: var(--wimbledon-green);
-            box-shadow: 0 0 0 3px rgba(0, 102, 51, 0.1);
+        .input:focus-visible,
+        select:focus-visible,
+        button:focus-visible {
+            outline: 3px solid rgba(46, 31, 66, 0.18);
+            outline-offset: 2px;
         }
 
-        label {
-            display: block;
-            margin-bottom: 8px;
-            color: var(--wimbledon-purple);
-            font-weight: 500;
-            font-size: 0.95em;
+        .chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 32px;
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            background: #fff;
+            color: var(--text);
+            font-size: 0.85rem;
+            margin: 4px;
         }
 
-        /* Alerts */
-        .alert {
-            padding: 16px 20px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border-left: 4px solid;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        .chip.active {
+            color: #fff;
+            border-color: transparent;
+            background: var(--court-green);
+            box-shadow: 0 8px 14px rgba(12, 107, 70, 0.22);
         }
 
-        .alert-success {
-            border-left-color: var(--wimbledon-green);
-            background: linear-gradient(to right, rgba(0, 102, 51, 0.1) 0%, white 100%);
-            color: #004d26;
+        .chip--clear {
+            border-style: dashed;
+            cursor: pointer;
         }
 
-        .alert-danger {
-            border-left-color: #dc3545;
-            background: linear-gradient(to right, rgba(220, 53, 69, 0.1) 0%, white 100%);
-            color: #721c24;
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 5px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--line);
+            font-size: 0.82rem;
+            font-weight: 700;
         }
 
-        .alert-warning {
-            border-left-color: #ffc107;
-            background: linear-gradient(to right, rgba(255, 193, 7, 0.1) 0%, white 100%);
-            color: #856404;
+        .status-pill--success {
+            color: #0e4d40;
+            background: #def8ef;
+            border-color: #98e3c8;
         }
 
-        .alert-info {
-            border-left-color: var(--wimbledon-purple);
-            background: linear-gradient(to right, rgba(62, 31, 71, 0.1) 0%, white 100%);
-            color: var(--wimbledon-dark-purple);
+        .status-pill--warning {
+            color: #7a4f00;
+            background: #fff1c2;
+            border-color: #e8cb6f;
         }
 
-        /* Loading Spinner */
-        .loading {
-            display: inline-block;
-            width: 18px;
-            height: 18px;
-            border: 3px solid rgba(255,255,255,0.3);
-            border-radius: 50%;
-            border-top-color: white;
-            animation: spin 0.8s linear infinite;
+        .status-pill--danger {
+            color: #6f1c1c;
+            background: #ffe2df;
+            border-color: #f6b3aa;
         }
 
-        @keyframes spin {
-            to { transform: rotate(360deg); }
+        .section-title {
+            margin: 0;
+            font-family: "Playfair Display", Georgia, serif;
+            color: var(--purple);
+            font-size: clamp(1.5rem, 2vw, 2rem);
+            letter-spacing: 0.01em;
         }
 
-        /* Footer */
-        .footer {
-            background: var(--wimbledon-purple);
-            color: white;
+        .section-subtitle {
+            margin: 6px 0 0;
+            color: var(--text-muted);
+        }
+
+        .muted {
+            color: var(--text-muted);
+        }
+
+        .metric-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .metric-card {
+            grid-column: span 3;
+            background: linear-gradient(140deg, #fff5e8 0%, #fff 90%);
+            border: 1px solid #eedfc5;
+            border-radius: var(--radius-lg);
+            padding: 18px;
+        }
+
+        .metric-label {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .metric-value {
+            margin-top: 8px;
+            font-size: clamp(1.55rem, 2.2vw, 2.05rem);
+            font-weight: 800;
+            color: var(--purple);
+            font-family: "Playfair Display", Georgia, serif;
+        }
+
+        .map-wrap {
+            margin-top: 12px;
+            height: 420px;
+            border-radius: 12px;
+            border: 1px solid var(--line);
+            overflow: hidden;
+            background: #f4efe6;
+        }
+
+        .chart-wrap {
+            margin-top: 12px;
+            min-height: 280px;
+        }
+
+        .site-footer {
+            background: #fbf7ef;
+            border-top: 1px solid var(--line);
+            padding: 16px 0 26px;
+            margin-top: auto;
+        }
+
+        .site-footer__inner {
+            width: min(1200px, calc(100% - 2rem));
+            margin: 0 auto;
+            color: #5c4a55;
             text-align: center;
-            padding: 25px 0;
-            margin-top: 60px;
-            border-top: 3px solid var(--wimbledon-green);
+            font-size: 0.9rem;
         }
 
-        .footer p {
-            margin: 5px 0;
-            opacity: 0.9;
+        .surface-table {
+            width: 100%;
+            border-collapse: collapse;
         }
 
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .header h1 {
-                font-size: 1.8em;
+        .surface-table th,
+        .surface-table td {
+            border-bottom: 1px solid var(--line-soft);
+            padding: 12px 14px;
+            text-align: left;
+            vertical-align: top;
+            font-size: 0.95rem;
+        }
+
+        .surface-table thead {
+            background: #f6efe5;
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+
+        .surface-table tbody tr:hover {
+            background: #f9f4eb;
+        }
+
+        .anchor-link {
+            color: var(--green);
+            font-weight: 600;
+            text-decoration: none;
+        }
+
+        .anchor-link:hover,
+        .anchor-link:focus-visible {
+            text-decoration: underline;
+            outline: none;
+        }
+
+        .legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 10px;
+            align-items: center;
+        }
+
+        @media (max-width: 1020px) {
+            .metric-card {
+                grid-column: span 6;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .metric-card {
+                grid-column: span 12;
             }
 
-            .nav a {
-                padding: 14px 18px;
-                font-size: 0.9em;
+            .site-nav ul {
+                gap: 6px;
             }
 
-            .card {
-                padding: 20px;
+            .site-nav a {
+                padding: 8px 12px;
             }
 
-            .btn {
-                padding: 12px 24px;
-                font-size: 0.95em;
+            .site-main {
+                padding-top: 20px;
+            }
+
+            .map-wrap {
+                height: 320px;
             }
         }
     </style>
@@ -347,37 +475,31 @@
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- Championship Header -->
-    <div class="header">
-        <div class="container">
-            <h1>🎾 GTA Tennis Clubs</h1>
-            <div class="subtitle">Championship Data Portal</div>
-        </div>
-    </div>
+    <div class="site-shell">
+        <header class="site-header">
+            <div class="site-header__inner">
+                <h1 class="site-title">GTA Tennis Clubs Player Directory</h1>
+                <p class="site-subtitle">Premium tournament-grade scouting workspace</p>
+                <nav class="site-nav" aria-label="Primary">
+                    <ul>
+                        <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Dashboard</a></li>
+                        <li><a href="/results" {% if request.path == '/results' or request.path == '/players' %}class="active"{% endif %}>Player Directory</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
 
-    <!-- Navigation -->
-    <nav class="nav">
-        <ul>
-            <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>🏆 Dashboard</a></li>
-            <li><a href="/scraper" {% if request.path == '/scraper' %}class="active"{% endif %}>🔍 Scraper</a></li>
-            <li><a href="/results" {% if request.path == '/results' %}class="active"{% endif %}>📊 Results</a></li>
-            <li><a href="/email" {% if request.path == '/email' %}class="active"{% endif %}>📧 Email</a></li>
-        </ul>
-    </nav>
+        <main class="site-main">
+            <div class="container">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
 
-    <!-- Main Content -->
-    <main>
-        <div class="container">
-            {% block content %}{% endblock %}
-        </div>
-    </main>
-
-    <!-- Footer -->
-    <div class="footer">
-        <div class="container">
-            <p><strong>GTA Tennis Clubs Data Portal</strong></p>
-            <p>Powered by Championship Excellence</p>
-        </div>
+        <footer class="site-footer">
+            <div class="site-footer__inner">
+                GTA Tennis Clubs · Player Directory · Data is from scraping + enrichment workflows.
+            </div>
+        </footer>
     </div>
 
     {% block extra_js %}{% endblock %}

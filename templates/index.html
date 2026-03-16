@@ -3,216 +3,442 @@
 {% block title %}Dashboard{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <style>
-    .dashboard-header {
-        text-align: center;
-        margin-bottom: 40px;
+    .filters-wrap {
+        margin-top: 14px;
     }
 
-    .dashboard-header h1 {
-        font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 3em;
-        font-weight: 700;
-        margin-bottom: 10px;
+    .panel__head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        flex-wrap: wrap;
     }
 
-    .dashboard-header p {
-        color: #666;
-        font-size: 1.2em;
-        font-weight: 300;
-    }
-
-    /* Stats Grid */
-    .stats-grid {
+    .layout-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-        gap: 25px;
-        margin-bottom: 45px;
+        grid-template-columns: 1.2fr 0.8fr;
+        gap: 16px;
+        margin-top: 14px;
     }
 
-    .stat-card {
-        background: linear-gradient(135deg, var(--wimbledon-purple) 0%, var(--wimbledon-dark-purple) 100%);
-        color: white;
-        padding: 35px 25px;
-        border-radius: 12px;
-        text-align: center;
-        box-shadow: 0 6px 20px rgba(62, 31, 71, 0.25);
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
-        border: 2px solid var(--wimbledon-green);
+    .layout-grid--wide {
+        grid-template-columns: 1fr;
     }
 
-    .stat-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 30px rgba(62, 31, 71, 0.35);
+    .chart-tall {
+        min-height: 230px;
+        margin-top: 8px;
     }
 
-    .stat-value {
-        font-family: 'Playfair Display', Georgia, serif;
-        font-size: 3.5em;
-        font-weight: 700;
-        margin-bottom: 10px;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    .stats-card {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
+        gap: 10px;
+        margin-top: 16px;
     }
 
-    .stat-label {
-        font-size: 1.1em;
-        opacity: 0.95;
-        font-weight: 400;
-        letter-spacing: 0.5px;
+    .status-note {
+        margin-top: 14px;
+        padding: 12px;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-md);
+        background: #fff;
     }
 
-    /* Quick Actions */
-    .quick-actions {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-        gap: 25px;
-        margin-top: 30px;
+    .status-note p {
+        margin: 0;
     }
 
-    .action-card {
-        background: white;
-        padding: 30px;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(62, 31, 71, 0.1);
-        border-left: 5px solid var(--wimbledon-green);
-        transition: all 0.3s ease;
+    .legend-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: currentColor;
     }
 
-    .action-card:hover {
-        transform: translateX(5px);
-        box-shadow: 0 6px 25px rgba(62, 31, 71, 0.15);
+    .map-empty {
+        color: var(--text-muted);
+        margin-top: 12px;
     }
 
-    .action-card h3 {
-        font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 1.6em;
-        margin-bottom: 15px;
+    .court-filter-label {
+        margin-bottom: 4px;
+        color: var(--text-muted);
+        font-size: 0.9rem;
     }
 
-    .action-card p {
-        color: #666;
-        margin-bottom: 20px;
-        line-height: 1.6;
-    }
-
-    .action-card .btn {
-        width: 100%;
-        text-align: center;
-    }
-
-    /* Welcome Section */
-    .welcome-section {
-        background: linear-gradient(to right, rgba(62, 31, 71, 0.05) 0%, rgba(0, 102, 51, 0.05) 100%);
-        padding: 40px;
-        border-radius: 12px;
-        margin-bottom: 40px;
-        border: 2px solid rgba(62, 31, 71, 0.1);
-    }
-
-    .welcome-section h2 {
-        font-family: 'Playfair Display', Georgia, serif;
-        color: var(--wimbledon-purple);
-        font-size: 2.2em;
-        margin-bottom: 15px;
-    }
-
-    .welcome-section p {
-        color: #555;
-        font-size: 1.1em;
-        line-height: 1.8;
-    }
-
-    .welcome-section ul {
-        margin-top: 20px;
-        margin-left: 25px;
-        color: #555;
-    }
-
-    .welcome-section li {
-        margin-bottom: 10px;
-        font-size: 1.05em;
+    @media (max-width: 980px) {
+        .layout-grid {
+            grid-template-columns: 1fr;
+        }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="dashboard-header">
-    <h1>🏆 Championship Dashboard</h1>
-    <p>Welcome to the GTA Tennis Clubs Data Portal</p>
-</div>
-
-<!-- Statistics -->
-<div class="stats-grid">
-    <div class="stat-card">
-        <div class="stat-value" id="total-clubs">{{ total_clubs }}</div>
-        <div class="stat-label">Total Clubs</div>
+<section class="panel">
+    <h1 class="section-title">Tennis Club Intelligence Hub</h1>
+    <p class="section-subtitle">Use Wimbledon-inspired analytics: click court-count or membership segments to filter the map, list, and summary views in real time.</p>
+    <div class="metric-grid">
+        <article class="metric-card">
+            <p class="metric-label">Total clubs</p>
+            <p class="metric-value" id="stat-total">{{ total_clubs }}</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Visible clubs</p>
+            <p class="metric-value" id="stat-visible">0</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Known emails</p>
+            <p class="metric-value" id="stat-emails">0</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Needs update</p>
+            <p class="metric-value" id="stat-update">0</p>
+        </article>
+        <article class="metric-card">
+            <p class="metric-label">Mapped clubs</p>
+            <p class="metric-value" id="stat-mapped">0</p>
+        </article>
     </div>
-    <div class="stat-card">
-        <div class="stat-value" id="scraped-clubs">0</div>
-        <div class="stat-label">Clubs Scraped</div>
-    </div>
-    <div class="stat-card">
-        <div class="stat-value" id="emails-found">0</div>
-        <div class="stat-label">Emails Found</div>
-    </div>
-</div>
+</section>
 
-<!-- Welcome Section -->
-<div class="welcome-section">
-    <h2>Welcome to the Tennis Data Portal</h2>
-    <p>
-        This championship-grade application helps you collect and manage data from GTA tennis clubs.
-        Our elegant system combines web scraping, data export, and email automation in one powerful platform.
-    </p>
-    <ul>
-        <li><strong>Scrape:</strong> Automatically extract data from {{ total_clubs }} tennis club websites</li>
-        <li><strong>Analyze:</strong> View comprehensive results in an organized table format</li>
-        <li><strong>Export:</strong> Download data in CSV and JSON formats</li>
-        <li><strong>Connect:</strong> Send professional emails to clubs with missing information</li>
-    </ul>
-</div>
-
-<!-- Quick Actions -->
-<div class="quick-actions">
-    <div class="action-card">
-        <h3>🔍 Start Scraping</h3>
-        <p>Begin collecting data from tennis club websites with our intelligent scraper.</p>
-        <a href="/scraper" class="btn">Launch Scraper</a>
+<section class="panel panel-soft">
+    <div class="panel__head">
+        <div>
+            <h2 class="section-title" style="font-size: 1.45rem;">Interactive Filters</h2>
+            <p class="section-subtitle">Select from chart segments or tap chip labels. Click again to remove each filter.</p>
+        </div>
+        <button id="clear-filters" class="btn btn--ghost" type="button">Clear filters</button>
     </div>
-
-    <div class="action-card">
-        <h3>📊 View Results</h3>
-        <p>Explore scraped data in a beautiful, searchable table format.</p>
-        <a href="/results" class="btn">View Results</a>
+    <div class="filters-wrap" id="filter-pills" aria-live="polite" aria-label="Active filters">No active filters.</div>
+    <div class="legend" aria-label="Scrape status legend">
+        <span class="chip"><span class="legend-dot" style="background: var(--success);"></span>Success: usable extraction</span>
+        <span class="chip"><span class="legend-dot" style="background: var(--warning);"></span>Needs Update: partial or missing fields</span>
+        <span class="chip"><span class="legend-dot" style="background: var(--danger);"></span>Failed: no usable extraction</span>
     </div>
+</section>
 
-    <div class="action-card">
-        <h3>📧 Email Outreach</h3>
-        <p>Send professional emails to clubs requesting missing information.</p>
-        <a href="/email" class="btn">Manage Emails</a>
+<section class="panel">
+    <div class="layout-grid">
+    <section aria-label="Club map">
+            <div class="panel__head">
+                <div>
+                    <h2 class="section-title" style="font-size: 1.45rem;">Club map</h2>
+                    <p class="section-subtitle">Map is filtered by your active selections.</p>
+                </div>
+            </div>
+            <div id="map" class="map-wrap" aria-label="Club map"></div>
+            <p id="map-empty" class="map-empty" style="display:none;">No mapped clubs found for this filter.</p>
+        </section>
+
+        <section aria-label="Distribution charts">
+            <div>
+                    <p class="court-filter-label">Court Count Distribution</p>
+                <div class="chart-wrap">
+                    <canvas id="courtChart" aria-label="Court Count Distribution"></canvas>
+                </div>
+            </div>
+                <div>
+                    <p class="court-filter-label">Membership Status Distribution</p>
+                <div class="chart-wrap">
+                    <canvas id="membershipChart" aria-label="Membership Distribution"></canvas>
+                </div>
+            </div>
+        </section>
     </div>
-</div>
+</section>
 
+<section class="panel">
+    <h2 class="section-title" style="font-size: 1.45rem;">Overview panel</h2>
+    <div class="stats-card">
+        <div class="status-note">
+            <p><strong id="dashboard-total-note">Loading…</strong> clubs loaded from the source list. Use the court and membership selectors to isolate groups for scouting, benchmarking, or outreach planning.</p>
+        </div>
+        <a class="btn" href="/results">Open Player Directory</a>
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
-// Update stats from API
-function updateStats() {
-    $.get('/api/results', function(data) {
-        if (data.results && data.results.length > 0) {
-            $('#scraped-clubs').text(data.results.length);
+    const courtBuckets = ["1", "2-4", "5-9", "10-14", "15+", "N/A"];
+    const membershipOrder = ["Open", "Waitlist", "Closed", "Unknown", "Other"];
+    let records = [];
+    let activeFilters = { courts: new Set(), memberships: new Set() };
+    let mapInstance = null;
+    let markersLayer = null;
+    let courtChart = null;
+    let membershipChart = null;
+    let dashboardMeta = {};
 
-            const emailsFound = data.results.filter(r => r.Email && r.Email !== 'N/A').length;
-            $('#emails-found').text(emailsFound);
+    function normalizeStatus(value) {
+        if (value === "Success") return "Success";
+        if (value === "Failed") return "Failed";
+        return "Needs Update";
+    }
+
+    function normalizeMembership(value) {
+        const text = String(value || "").toLowerCase();
+        if (!text || text === "n/a") return "Unknown";
+        if (text.includes("wait")) return "Waitlist";
+        if (text.includes("close") || text.includes("full")) return "Closed";
+        if (text.includes("open")) return "Open";
+        return "Other";
+    }
+
+    function bucketCourt(value) {
+        if (!value || value === "N/A") return "N/A";
+        const match = String(value).match(/\b(\d{1,3})\b/);
+        if (!match) return "N/A";
+        const num = Number(match[1]);
+        if (num === 1) return "1";
+        if (num >= 2 && num <= 4) return "2-4";
+        if (num >= 5 && num <= 9) return "5-9";
+        if (num >= 10 && num <= 14) return "10-14";
+        return "15+";
+    }
+
+    function visibleRecords() {
+        let rows = records.slice();
+        if (activeFilters.courts.size > 0) {
+            rows = rows.filter(function(row) {
+                return activeFilters.courts.has(bucketCourt(row["Number of Courts"]));
+            });
         }
-    });
-}
+        if (activeFilters.memberships.size > 0) {
+            rows = rows.filter(function(row) {
+                return activeFilters.memberships.has(normalizeMembership(row["Membership Status"]));
+            });
+        }
+        return rows;
+    }
 
-// Load stats on page load
-$(document).ready(function() {
-    updateStats();
-    // Refresh stats every 5 seconds
-    setInterval(updateStats, 5000);
-});
+    function updateFilterPills() {
+        const chips = [];
+        activeFilters.courts.forEach(function(bucket) {
+            chips.push('<button class="chip active" type="button" aria-label="Remove court filter ' + bucket + '" onclick="toggleFilter(\'courts\', \'' + bucket + '\')">' + bucket + ' courts</button>');
+        });
+        activeFilters.memberships.forEach(function(type) {
+            chips.push('<button class="chip active" type="button" aria-label="Remove membership filter ' + type + '" onclick="toggleFilter(\'memberships\', \'' + type + '\')">' + type + '</button>');
+        });
+
+        if (chips.length === 0) {
+            $('#filter-pills').html('No active filters.');
+            return;
+        }
+        chips.push('<button class="chip chip--clear" type="button" onclick="clearFilters()">Clear all</button>');
+        $('#filter-pills').html(chips.join(''));
+    }
+
+    function toggleFilter(type, value) {
+        if (activeFilters[type].has(value)) {
+            activeFilters[type].delete(value);
+        } else {
+            activeFilters[type].add(value);
+        }
+        renderDashboard();
+    }
+
+    function clearFilters() {
+        activeFilters = { courts: new Set(), memberships: new Set() };
+        renderDashboard();
+    }
+
+    function initMap() {
+        if (!mapInstance) {
+            mapInstance = L.map('map').setView([43.65, -79.38], 9);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; OpenStreetMap contributors',
+            }).addTo(mapInstance);
+            markersLayer = L.layerGroup().addTo(mapInstance);
+            return;
+        }
+        markersLayer.clearLayers();
+    }
+
+    function renderMap(rows) {
+        initMap();
+        $('#map-empty').hide();
+        const markerRows = rows.filter(function(row) {
+            return row.lat !== undefined && row.lng !== undefined;
+        });
+
+        markerRows.forEach(function(markerData) {
+            const popup = '<strong>' + (markerData.club_name || markerData["Club Name"] || 'N/A') + '</strong><br>'
+                + 'Location: ' + (markerData.location || markerData.Location || 'N/A') + '<br>'
+                + 'Courts: ' + (markerData.courts || markerData["Number of Courts"] || 'N/A') + '<br>'
+                + 'Membership: ' + (markerData["Membership Status"] || 'N/A') + '<br>'
+                + 'Email: ' + (markerData.email || markerData.Email || 'N/A');
+            L.marker([markerData.lat, markerData.lng]).addTo(markersLayer).bindPopup(popup);
+        });
+
+        if (markerRows.length === 0) {
+            $('#map-empty').show();
+            return;
+        }
+        const bounds = L.featureGroup(markersLayer.getLayers()).getBounds();
+        if (bounds.isValid()) {
+            mapInstance.fitBounds(bounds.pad(0.25));
+        }
+    }
+
+    function computeDistribution(rows, keyFn) {
+        const dict = {};
+        rows.forEach(function(row) {
+            const key = keyFn(row);
+            dict[key] = (dict[key] || 0) + 1;
+        });
+        return dict;
+    }
+
+    function drawCourts(rows) {
+        const context = document.getElementById('courtChart');
+        const dist = computeDistribution(rows, function(row) { return bucketCourt(row["Number of Courts"]); });
+        const values = courtBuckets.map(function(bucket) { return dist[bucket] || 0; });
+        const colors = ["#0f766e", "#0a8f6a", "#4f46e5", "#b7791f", "#dc6800", "#8a8794"];
+        const payload = {
+            labels: courtBuckets,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+            }],
+        };
+
+        if (courtChart) {
+            courtChart.data = payload;
+            courtChart.update();
+            return;
+        }
+
+        courtChart = new Chart(context, {
+            type: 'bar',
+            data: payload,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                },
+                onClick: function(evt, elements) {
+                    if (!elements || !elements.length) {
+                        return;
+                    }
+                    const index = elements[0].index;
+                    toggleFilter('courts', courtBuckets[index]);
+                },
+            },
+        });
+    }
+
+    function drawMembership(rows) {
+        const context = document.getElementById('membershipChart');
+        const dist = computeDistribution(rows, function(row) { return normalizeMembership(row["Membership Status"]); });
+        const values = membershipOrder.map(function(label) { return dist[label] || 0; });
+        const colors = ["#0f766e", "#7c2d12", "#1d4ed8", "#6b7280", "#c026d3"];
+        const payload = {
+            labels: membershipOrder,
+            datasets: [{
+                data: values,
+                backgroundColor: colors,
+            }],
+        };
+
+        if (membershipChart) {
+            membershipChart.data = payload;
+            membershipChart.update();
+            return;
+        }
+
+        membershipChart = new Chart(context, {
+            type: 'doughnut',
+            data: payload,
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '56%',
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: "#2f1f4a",
+                        },
+                    },
+                },
+                onClick: function(evt, elements) {
+                    if (!elements || !elements.length) {
+                        return;
+                    }
+                    const index = elements[0].index;
+                    const selected = membershipOrder[index];
+                    toggleFilter('memberships', selected);
+                },
+            },
+        });
+    }
+
+    function updateStats(rows) {
+        const knownEmails = dashboardMeta.known_emails || [];
+        const mappedRows = rows.filter(function(row) {
+            return row.lat && row.lng;
+        });
+        const needsUpdate = rows.filter(function(row) {
+            return normalizeStatus(row["Scrape Status"]) !== 'Success';
+        }).length;
+
+        $('#stat-visible').text(rows.length);
+        $('#stat-mapped').text(mappedRows.length);
+        $('#stat-emails').text(Array.isArray(knownEmails) ? knownEmails.length : 0);
+        $('#stat-update').text(needsUpdate);
+    }
+
+    function renderDashboard() {
+        const rows = visibleRecords();
+        const mapped = rows.map(function(row) {
+            return {
+                club_name: row["Club Name"] || 'N/A',
+                Location: row.Location || 'N/A',
+                location: row.Location || 'N/A',
+                email: row.Email || 'N/A',
+                courts: row["Number of Courts"] || 'N/A',
+                "Membership Status": row["Membership Status"] || 'N/A',
+                lat: row.lat,
+                lng: row.lng,
+            };
+        });
+
+        $('#stat-total').text(dashboardMeta.total_clubs || records.length || 0);
+        $('#dashboard-total-note').text(dashboardMeta.total_clubs || records.length || 0);
+        $('#stat-mapped').text(rows.filter(function(row) { return row.lat && row.lng; }).length);
+        updateStats(rows);
+        updateFilterPills();
+        renderMap(mapped);
+        drawCourts(rows);
+        drawMembership(rows);
+    }
+
+    function loadDashboardData() {
+        $.getJSON('/api/dashboard-data', function(payload) {
+            dashboardMeta = payload || {};
+            records = Array.isArray(dashboardMeta.records) ? dashboardMeta.records : [];
+            renderDashboard();
+        }).fail(function() {
+            records = [];
+            dashboardMeta = {};
+            renderDashboard();
+        });
+    }
+
+    $(document).ready(function() {
+        loadDashboardData();
+        $('#clear-filters').on('click', clearFilters);
+        setInterval(loadDashboardData, 15000);
+    });
 </script>
 {% endblock %}
