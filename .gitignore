@@ -1,5 +1,6 @@
-# Environment variables (contains sensitive credentials)
+# Environment variables
 .env
+.env.local
 
 # Python
 __pycache__/
@@ -7,6 +8,14 @@ __pycache__/
 *$py.class
 *.so
 .Python
+
+# Virtual environments
+env/
+venv/
+ENV/
+.venv
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -23,11 +32,9 @@ wheels/
 .installed.cfg
 *.egg
 
-# Virtual environments
-venv/
-ENV/
-env/
-.venv
+# Flask
+instance/
+.webassets-cache
 
 # IDE
 .vscode/
@@ -35,16 +42,22 @@ env/
 *.swp
 *.swo
 *~
+
+# OS / temp
 .DS_Store
-
-# Scraped data outputs
-scraped_data_*.json
-scraped_data_*.csv
-
-# Flask
-instance/
-.webassets-cache
+Thumbs.db
+*.tmp
+/tmp/
 
 # Logs
 *.log
+
+# Scraped outputs
+scraped_data_*.json
+scraped_data_*.csv
+
+# Data artifacts
+data/*.xlsx
+
+# Workspace
 .worktrees/
