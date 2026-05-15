@@ -1,0 +1,450 @@
+{% extends "base.html" %}
+
+{% block title %}Player Directory{% endblock %}
+
+{% block extra_css %}
+<style>
+    .top-grid {
+        display: grid;
+        grid-template-columns: repeat(12, minmax(0, 1fr));
+        gap: 16px;
+        margin-bottom: 16px;
+    }
+
+    .summary-card {
+        grid-column: span 3;
+        background: linear-gradient(140deg, #f5ecdf 0%, #fff 100%);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+    }
+
+    .summary-card__label {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+    }
+
+    .summary-card__value {
+        margin-top: 8px;
+        font-size: 1.8rem;
+        font-weight: 800;
+        color: var(--purple);
+        font-family: "Playfair Display", Georgia, serif;
+    }
+
+    .directory-note {
+        background: #fff;
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        padding: 14px;
+        margin-bottom: 16px;
+    }
+
+    .directory-note p {
+        margin: 0;
+    }
+
+    .table-toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin: 12px 0;
+    }
+
+    .table-toolbar .input {
+        flex: 1;
+        min-width: 280px;
+    }
+
+    .btn-group {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .emails-wrap {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        background: #fff;
+        padding: 14px;
+        margin-bottom: 14px;
+    }
+
+    .emails-wrap p {
+        margin: 8px 0 0;
+    }
+
+    .emails-grid {
+        margin: 0;
+        padding: 0;
+        list-style: none;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .emails-grid li {
+        border: 1px solid var(--line);
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: #f8f4ee;
+        font-size: 0.88rem;
+    }
+
+    .table-shell {
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        overflow: auto;
+        background: #fff;
+    }
+
+    .no-results {
+        text-align: center;
+        padding: 56px 16px;
+        color: #6b7280;
+    }
+
+    .inline {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    @media (max-width: 900px) {
+        .summary-card {
+            grid-column: span 6;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .summary-card {
+            grid-column: span 12;
+        }
+
+        .table-toolbar {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-group {
+            width: 100%;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<section class="panel">
+    <div class="panel__head">
+        <div>
+            <h1 class="section-title">Player Directory</h1>
+            <p class="section-subtitle">Searchable roster of all collected clubs with quality status labels and export options.</p>
+        </div>
+    </div>
+
+    <div class="top-grid">
+        <article class="summary-card">
+            <div class="summary-card__label">Total clubs</div>
+            <div class="summary-card__value" id="summary-total">0</div>
+        </article>
+        <article class="summary-card">
+            <div class="summary-card__label">Success</div>
+            <div class="summary-card__value" id="summary-success">0</div>
+        </article>
+        <article class="summary-card">
+            <div class="summary-card__label">Known emails</div>
+            <div class="summary-card__value" id="summary-emails">0</div>
+        </article>
+        <article class="summary-card">
+            <div class="summary-card__label">Needs update</div>
+            <div class="summary-card__value" id="summary-update">0</div>
+        </article>
+    </div>
+
+    <div class="directory-note">
+        <p><strong>What each status means:</strong> <span class="status-pill status-pill--success">Success</span> = key fields available. <span class="status-pill status-pill--warning">Needs Update</span> = some critical fields incomplete (membership/courts/location). <span class="status-pill status-pill--danger">Failed</span> = no usable extraction.</p>
+    </div>
+</section>
+
+<section class="panel">
+    <section class="emails-wrap">
+        <div class="inline">
+            <h2 class="section-title" style="font-size: 1.2rem; margin: 0;">Known Emails</h2>
+            <button class="btn btn--ghost" type="button" onclick="copyKnownEmails()">Copy all emails</button>
+        </div>
+        <p>Showing every collected address from the directory (no truncation).</p>
+        <ul id="known-emails-list" class="emails-grid"><li>None available yet</li></ul>
+    </section>
+
+    <div class="table-toolbar">
+        <input class="input" type="text" id="search-input" placeholder="Search by club name, location, or email" aria-label="Search clubs">
+        <div class="btn-group">
+            <button class="btn" type="button" onclick="exportCSV()">Export CSV</button>
+            <button class="btn btn--ghost" type="button" onclick="exportJSON()">Export JSON</button>
+            <button class="btn btn--secondary" type="button" onclick="loadResults()">Refresh</button>
+        </div>
+    </div>
+
+    <div class="table-shell">
+        <table class="surface-table">
+            <thead>
+                <tr>
+                    <th>Club Name</th>
+                    <th>Status</th>
+                    <th>Location</th>
+                    <th>Email</th>
+                    <th>Club Type</th>
+                    <th>Membership</th>
+                    <th>Waitlist</th>
+                    <th>Courts</th>
+                    <th>Surface</th>
+                    <th>Season</th>
+                </tr>
+            </thead>
+            <tbody id="results-body">
+                <tr>
+                    <td colspan="10" class="no-results">Loading directory...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="panel">
+    <div class="panel__head">
+        <h2 class="section-title" style="font-size: 1.3rem;">Court count suggestions</h2>
+        <button class="btn btn--ghost" type="button" onclick="researchMissingCourts()">Suggest missing counts from web</button>
+    </div>
+    <p class="section-subtitle">This uses review snippets and public sources when a court count is missing.</p>
+    <div id="court-research-body" style="margin-top: 10px; color: var(--text-muted);" aria-live="polite">
+        No suggestions yet.
+    </div>
+</section>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allResults = [];
+    let knownEmails = [];
+
+    function normalizeStatus(value) {
+        if (value === 'Success') return 'Success';
+        if (value === 'Failed') return 'Failed';
+        return 'Needs Update';
+    }
+
+    function statusClass(status) {
+        if (status === 'Success') return 'status-pill--success';
+        if (status === 'Failed') return 'status-pill--danger';
+        return 'status-pill--warning';
+    }
+
+    function loadResults() {
+        $.get('/api/results', function(payload) {
+            if (!payload || !payload.results || payload.results.length === 0) {
+                allResults = [];
+                knownEmails = [];
+                renderResults([]);
+                updateSummary([]);
+                renderKnownEmails([]);
+                return;
+            }
+            allResults = payload.results;
+            knownEmails = payload.known_emails || [];
+            renderResults(allResults);
+            renderKnownEmails(knownEmails);
+            updateSummary(allResults);
+        }).fail(function() {
+            $('#results-body').html('<tr><td colspan="10" class="no-results">Unable to load results now. Retry shortly.</td></tr>');
+        });
+    }
+
+    function renderResults(results) {
+        if (!results || results.length === 0) {
+            $('#results-body').html('<tr><td colspan="10" class="no-results">No matches for your search.</td></tr>');
+            return;
+        }
+
+        let rowsHtml = '';
+        results.forEach(function(club) {
+            const status = normalizeStatus(club['Scrape Status']);
+            const hasEmail = club.Email && club.Email !== 'N/A' && club.Email !== 'Contact form available';
+            rowsHtml += '<tr>';
+            rowsHtml += '<td><strong>' + (club['Club Name'] || 'N/A') + '</strong></td>';
+            rowsHtml += '<td><span class="status-pill ' + statusClass(status) + '">' + status + '</span></td>';
+            rowsHtml += '<td>' + (club.Location || 'N/A') + '</td>';
+            rowsHtml += '<td>' + (hasEmail ? '<a class="anchor-link" href="mailto:' + club.Email + '">' + club.Email + '</a>' : '<span class="muted">N/A</span>') + '</td>';
+            rowsHtml += '<td>' + (club['Club Type'] || 'N/A') + '</td>';
+            rowsHtml += '<td>' + (club['Membership Status'] || 'N/A') + '</td>';
+            rowsHtml += '<td>' + (club['Waitlist Length'] || 'N/A') + '</td>';
+            rowsHtml += '<td>' + (club['Number of Courts'] || 'N/A') + '</td>';
+            rowsHtml += '<td>' + (club['Court Surface'] || 'N/A') + '</td>';
+            rowsHtml += '<td>' + (club['Operating Season'] || 'N/A') + '</td>';
+            rowsHtml += '</tr>';
+        });
+        $('#results-body').html(rowsHtml);
+    }
+
+    function renderKnownEmails(emails) {
+        const unique = [...new Set((emails || []).filter(function(email) {
+            return email && email.includes('@');
+        }))];
+
+        if (!unique.length) {
+            $('#known-emails-list').html('<li>None available yet</li>');
+            $('#summary-emails').text(0);
+            return;
+        }
+
+        const html = unique.map(function(email) {
+            return '<li><a class="anchor-link" href="mailto:' + email + '">' + email + '</a></li>';
+        });
+        $('#known-emails-list').html(html.join(''));
+        $('#summary-emails').text(unique.length);
+    }
+
+    function updateSummary(results) {
+        const total = results.length;
+        const success = results.filter(function(row) {
+            return normalizeStatus(row['Scrape Status']) === 'Success';
+        }).length;
+        const updates = results.filter(function(row) {
+            return normalizeStatus(row['Scrape Status']) !== 'Success';
+        }).length;
+        $('#summary-total').text(total);
+        $('#summary-success').text(success + ' (' + (total ? Math.round((success / total) * 100) : 0) + '%)');
+        $('#summary-update').text(updates);
+        if ($('#known-emails-list li').length === 1 && $('#known-emails-list li').text() === 'None available yet') {
+            $('#summary-emails').text(0);
+        }
+    }
+
+    function searchResults() {
+        const needle = $('#search-input').val().toLowerCase();
+        if (!needle) {
+            renderResults(allResults);
+            return;
+        }
+
+        const filtered = allResults.filter(function(club) {
+            return (
+                (club['Club Name'] || '').toLowerCase().includes(needle) ||
+                (club.Location || '').toLowerCase().includes(needle) ||
+                (club.Email || '').toLowerCase().includes(needle)
+            );
+        });
+        renderResults(filtered);
+    }
+
+    function copyKnownEmails() {
+        const unique = [...new Set((knownEmails || []).filter(function(email) {
+            return email && email.includes('@');
+        }))];
+        if (!unique.length) {
+            alert('No emails available to copy.');
+            return;
+        }
+        const text = unique.join('; ');
+        navigator.clipboard.writeText(text).then(function() {
+            alert('Copied ' + unique.length + ' emails.');
+        }).catch(function() {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            alert('Copied ' + unique.length + ' emails.');
+        });
+    }
+
+    function exportCSV() {
+        if (!allResults.length) {
+            alert('No data to export yet.');
+            return;
+        }
+        const headers = ['Club Name', 'Location', 'Email', 'Club Type', 'Membership Status', 'Waitlist Length', 'Number of Courts', 'Court Surface', 'Operating Season'];
+        let csv = headers.join(',') + '\\n';
+        allResults.forEach(function(row) {
+            const rowValues = headers.map(function(header) {
+                const value = String(row[header] || 'N/A').replaceAll('"', '""');
+                return /[",]/.test(value) ? '"' + value + '"' : value;
+            });
+            csv += rowValues.join(',') + '\\n';
+        });
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'gta_tennis_directory_' + new Date().toISOString().split('T')[0] + '.csv';
+        a.click();
+    }
+
+    function exportJSON() {
+        if (!allResults.length) {
+            alert('No data to export yet.');
+            return;
+        }
+        const blob = new Blob([JSON.stringify(allResults, null, 2)], { type: 'application/json;charset=utf-8;' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'gta_tennis_directory_' + new Date().toISOString().split('T')[0] + '.json';
+        a.click();
+    }
+
+    function researchMissingCourts() {
+        const unresolved = allResults.filter(function(row) {
+            const courts = String(row['Number of Courts'] || '').trim();
+            return courts === '' || courts === 'N/A' || courts.toLowerCase() === 'unknown';
+        });
+        if (!unresolved.length) {
+            $('#court-research-body').text('No unresolved court counts currently.');
+            return;
+        }
+
+        $.ajax({
+            url: '/api/court-count-research',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({
+                max_records: 12,
+                clubs: unresolved.slice(0, 12),
+            }),
+            success: function(payload) {
+                const results = payload.results || [];
+                if (!results.length) {
+                    $('#court-research-body').text('No web matches returned yet.');
+                    return;
+                }
+                let html = '<table class="surface-table"><thead><tr><th>Club</th><th>Location</th><th>Estimated courts</th><th>Confidence</th><th>Evidence</th></tr></thead><tbody>';
+                results.forEach(function(item) {
+                    html += '<tr>';
+                    html += '<td>' + (item.club_name || 'N/A') + '</td>';
+                    html += '<td>' + (item.location || 'N/A') + '</td>';
+                    html += '<td>' + (item.estimated_courts || 'N/A') + '</td>';
+                    html += '<td>' + Math.round((item.confidence || 0) * 100) + '%</td>';
+                    html += '<td>' + (item.evidence || 'No snippet') + '</td>';
+                    html += '</tr>';
+                });
+                html += '</tbody></table>';
+                $('#court-research-body').html(html);
+            },
+            error: function() {
+                $('#court-research-body').text('Unable to fetch court suggestions now.');
+            },
+        });
+    }
+
+    function setupSearch() {
+        $('#search-input').on('input', searchResults);
+    }
+
+    $(document).ready(function() {
+        loadResults();
+        setupSearch();
+        setInterval(loadResults, 5000);
+    });
+</script>
+{% endblock %}

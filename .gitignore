@@ -1,12 +1,21 @@
+# Environment variables
+.env
+.env.local
+
 # Python
 __pycache__/
 *.py[cod]
 *$py.class
 *.so
 .Python
+
+# Virtual environments
 env/
 venv/
 ENV/
+.venv
+
+# Distribution / packaging
 build/
 develop-eggs/
 dist/
@@ -34,21 +43,21 @@ instance/
 *.swo
 *~
 
-# OS
+# OS / temp
 .DS_Store
 Thumbs.db
+*.tmp
+/tmp/
 
 # Logs
 *.log
 
-# Environment
-.env
-.env.local
+# Scraped outputs
+scraped_data_*.json
+scraped_data_*.csv
 
-# Temporary files
-*.tmp
-/tmp/
+# Data artifacts
+data/*.xlsx
 
-# Data (keep structure but not sensitive data)
-# data/*.xlsx
-# Uncomment above if you don't want to commit Excel files
+# Workspace
+.worktrees/
