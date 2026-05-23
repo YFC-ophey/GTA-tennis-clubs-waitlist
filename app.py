@@ -25,6 +25,12 @@ from data_merger import initialize_data_merger
 from email_agent import EmailAgent
 from scraper_simple import CRITICAL_FIELDS, FIELD_THRESHOLDS, REVIEW_FIELDS, TennisClubScraper
 
+try:
+    from scraper_hybrid import HybridScraper, PLAYWRIGHT_AVAILABLE
+except ImportError:
+    HybridScraper = None
+    PLAYWRIGHT_AVAILABLE = False
+
 
 BASE_DIR = Path(__file__).resolve().parent
 STATE_FILE = BASE_DIR / "data" / "current_club_state.json"
@@ -103,6 +109,10 @@ print("🎾 Initializing Tennis Club Data Portal")
 print("=" * 80)
 global_data_merger = initialize_data_merger()
 print("✓ Data merger initialized successfully")
+if PLAYWRIGHT_AVAILABLE:
+    print("✓ JavaScript scraper available (Playwright installed)")
+else:
+    print("ℹ️  JavaScript scraper not available (install: pip install playwright)")
 print("=" * 80 + "\n")
 
 
@@ -667,7 +677,7 @@ def _write_outputs(results: list[dict], review_queue: list[dict], changed: bool)
     return timestamp
 
 
-def background_scraping_task(max_clubs=None):
+def background_scraping_task(max_clubs=None, use_js_fallback=False):
     """Background task to run the scraper"""
     global scraping_status
 
@@ -697,7 +707,13 @@ def background_scraping_task(max_clubs=None):
         ]
         coverage_denominator = _count_eligible_for_coverage(df, target_fields)
 
-        scraper = TennisClubScraper(data_merger=global_data_merger, debug=False)
+        if use_js_fallback and HybridScraper is not None:
+            print("[INFO] Using hybrid scraper (JavaScript fallback enabled)")
+            scraper = HybridScraper(data_merger=global_data_merger, use_js_fallback=True)
+        else:
+            if use_js_fallback and HybridScraper is None:
+                print("[WARNING] JavaScript fallback requested but hybrid scraper is unavailable")
+            scraper = TennisClubScraper(data_merger=global_data_merger, debug=False)
 
         for idx, row in df.iterrows():
             if not scraping_status["running"]:
@@ -864,6 +880,7 @@ def start_scraping():
 
     data = request.get_json() or {}
     max_clubs = data.get("max_clubs")
+    use_js_fallback = data.get("use_js_fallback", False)
 
     scraping_status = {
         "running": True,
@@ -879,11 +896,11 @@ def start_scraping():
         "coverage_metrics": {},
     }
 
-    thread = threading.Thread(target=background_scraping_task, args=(max_clubs,))
+    thread = threading.Thread(target=background_scraping_task, args=(max_clubs, use_js_fallback))
     thread.daemon = True
     thread.start()
 
-    return jsonify({"message": "Scraping started"})
+    return jsonify({"message": "Scraping started", "js_fallback_enabled": bool(use_js_fallback and PLAYWRIGHT_AVAILABLE)})
 
 
 @app.route("/api/scraping-status")

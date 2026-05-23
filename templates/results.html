@@ -271,6 +271,45 @@
         margin-bottom: 2px;
     }
 
+    .email-panel {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+        overflow: hidden;
+    }
+
+    .email-panel > summary {
+        list-style: none;
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 16px;
+        padding: 16px 18px;
+        cursor: pointer;
+    }
+
+    .email-panel > summary::-webkit-details-marker {
+        display: none;
+    }
+
+    .email-panel[open] > summary {
+        border-bottom: 1px solid var(--line);
+        background: #f8fafc;
+    }
+
+    .email-panel__meta {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .email-panel__meta .result-count {
+        white-space: nowrap;
+    }
+
     .known-list {
         display: flex;
         flex-wrap: wrap;
@@ -469,11 +508,11 @@
 
     <section class="summary-card summary-card--note" id="email-summary" style="display: none; margin-bottom: 4px;">
         <div>
-            <div class="label">Known emails</div>
+            <div class="label">Published contact emails</div>
             <div class="value" id="summary-known-emails" style="font-size: 1.45rem;">0</div>
-            <p class="summary-card__hint" id="known-emails-help">No known emails yet.</p>
+            <p class="summary-card__hint" id="known-emails-help">No published email addresses yet.</p>
         </div>
-        <button class="btn btn--secondary" id="copy-known-emails-btn" onclick="copyKnownEmails()">Copy all known emails</button>
+        <button class="btn btn--secondary" id="copy-known-emails-btn" onclick="copyKnownEmails()">Copy all addresses</button>
     </section>
 
     <section class="summary-guide">
@@ -482,17 +521,20 @@
     </section>
 
     <section class="known-emails-wrap">
-        <div class="directory-table-card">
-            <div class="panel-header">
+        <details class="email-panel" id="known-emails-panel">
+            <summary>
                 <div>
-                    <h2 class="panel-title">Known Emails</h2>
-                    <p class="panel-subtitle">Deduplicated addresses from all loaded records.</p>
+                    <h2 class="panel-title">Published contact emails</h2>
+                    <p class="panel-subtitle">Optional outreach aid. Open the list if you want to contact clubs directly.</p>
                 </div>
-            </div>
+                <div class="email-panel__meta">
+                    <span class="result-count" id="known-emails-inline-panel">0 emails</span>
+                </div>
+            </summary>
             <div class="panel-body">
-                <div id="known-emails">No known emails yet.</div>
+                <div id="known-emails">No published email addresses yet.</div>
             </div>
-        </div>
+        </details>
     </section>
 
     <section class="court-research-wrap" id="court-research-block" style="display:none;">
@@ -521,7 +563,7 @@
 
     <section id="status-guide" class="summary-guide" aria-live="polite">
         <div class="inline-note">Showing <strong id="visible-results-inline">0</strong> clubs from <strong id="total-results-inline">0</strong> loaded records.</div>
-        <div id="known-emails-help-mobile" class="inline-note">Known emails: <strong id="known-emails-inline">0</strong></div>
+        <div id="known-emails-help-mobile" class="inline-note">Published emails: <strong id="known-emails-inline-mobile">0</strong></div>
     </section>
 
     <section class="directory-table-card">
@@ -611,11 +653,13 @@ function loadResults() {
             knownEmails = [];
             $('#results-summary').hide();
             $('#email-summary').hide();
-            $('#known-emails').html('<p class="empty-state">No known emails yet.</p>');
-            $('#known-emails-help').text('No known emails yet.');
-            $('#known-emails-inline').text('0');
+            $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
+            $('#known-emails-help').text('No published email addresses yet.');
+            $('#known-emails-inline-panel').text('0 emails');
+            $('#known-emails-inline-mobile').text('0');
             updateVisibleCounts(0);
             $('#court-research-block').hide();
+            $('#known-emails-panel').hide();
         }
     });
 }
@@ -694,8 +738,10 @@ function updateSummary(results) {
     $('#summary-emails').text(emailsFound);
     $('#summary-known-emails').text(knownEmails.length);
     $('#summary-complete').text(completeRecords);
-    $('#known-emails-inline').text(knownEmails.length);
+    $('#known-emails-inline-panel').text(knownEmails.length + ' emails');
+    $('#known-emails-inline-mobile').text(knownEmails.length);
     $('#email-summary').show();
+    $('#known-emails-panel').toggle(knownEmails.length > 0);
     $('#results-summary').show();
     updateVisibleCounts(results.length);
 }
@@ -703,25 +749,27 @@ function updateSummary(results) {
 function renderKnownEmails(emails) {
     const uniqueEmails = [...new Set(emails || [])].filter(email => email && email.includes('@'));
     if (!uniqueEmails.length) {
-        $('#known-emails-help').text('No known emails yet.');
-        $('#known-emails').html('<p class="empty-state">No known emails yet.</p>');
+        $('#known-emails-help').text('No published email addresses yet.');
+        $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
         $('#copy-known-emails-btn').prop('disabled', true);
         knownEmails = [];
+        $('#known-emails-panel').hide();
         return;
     }
 
-    $('#known-emails-help').text(uniqueEmails.length + ' addresses available.');
+    $('#known-emails-help').text(uniqueEmails.length + ' published addresses available.');
     const list = uniqueEmails.map(function(email) {
         return '<a class="email-chip" href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a>';
     });
     $('#known-emails').html('<div class="known-list">' + list.join('') + '</div>');
     $('#copy-known-emails-btn').prop('disabled', false);
     knownEmails = uniqueEmails;
+    $('#known-emails-panel').show();
 }
 
 function copyKnownEmails() {
     if (!knownEmails.length) {
-        alert('No emails available to copy.');
+        alert('No published email addresses available to copy.');
         return;
     }
     const text = knownEmails.join('; ');
