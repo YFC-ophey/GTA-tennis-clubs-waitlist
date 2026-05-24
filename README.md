@@ -1,152 +1,121 @@
 # 🎾 GTA Tennis Clubs Data Portal
 
-A beautiful, championship-themed web application for scraping and managing data from Greater Toronto Area tennis clubs. Features a Wimbledon-inspired design with purple, green, and cream colors.
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![Flask](https://img.shields.io/badge/flask-3.x-green.svg)](https://flask.palletsprojects.com/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+A Wimbledon-inspired data portal for collecting and visualizing GTA tennis club information.  
+Current branch includes scraping orchestration, interactive dashboard pages, and a data review pipeline suitable for handling large-scale extraction gaps.
 
 ## ✨ Features
 
-- **🔍 Web Scraper**: Automatically extract data from 329 GTA tennis clubs
-- **📊 Pre-loaded Data**: 325+ clubs with existing data from OTA & City of Toronto (260 OTA + 65 Toronto)
-- **📧 Email Automation**: Send professional outreach to clubs with missing information
-- **🏆 Championship Design**: Elegant Wimbledon-themed interface
-- **⚡ Smart Scraping**: Skips clubs with complete data, only scrapes when needed
+- **🏆 Wimbledon-themed UI** for the dashboard and directory pages.
+- **📊 Interactive dashboard** with coverage metrics and status overview.
+- **🧭 Club directory + map-ready records** served by `/api/dashboard-data`.
+- **🕸️ Smart scraping pipeline** that merges raw sources with previous collected data.
+- **📧 Outreach support** via `EmailAgent` for follow-up on incomplete records.
+- **🔎 Optional court-count enrichment** using DuckDuckGo snippets or Firecrawl when configured.
+- **🧱 Deterministic CSV/JSON output** for each scrape run.
+
+## 📂 Project Layout
+
+- `app.py` — Flask server and API endpoints.
+- `scraper_simple.py` — scraping logic.
+- `data_merger.py` — source data normalization and merge helpers.
+- `email_agent.py` — email preview/send utilities.
+- `templates/` — HTML templates (`index`, `results`, `scraper`, `email`).
+- `data/` — working Excel source.
+- `GTA_Tennis_clubs_raw_data .xlsx` — root-level raw data source used by current app.
 
 ## 🚀 Quick Start
 
 ### Prerequisites
 
-- Python 3.8 or higher
-- pip (Python package manager)
+- Python 3.8+
+- pip
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd GTA-tennis-clubs-waitlist
-   ```
+```bash
+git clone <repository-url>
+cd GTA-tennis-clubs-waitlist
+pip install -r requirements.txt
+```
 
-2. **Install dependencies**
-   ```bash
-   pip install -r requirements.txt
-   # or on macOS:
-   pip3 install -r requirements.txt
-   ```
+### Run
 
-3. **Configure email settings** (optional, required for email features)
-   ```bash
-   cp .env.example .env
-   ```
+```bash
+python app.py
+```
 
-   Then edit `.env` and add your Gmail credentials:
-   - `SENDER_EMAIL`: Your Gmail address
-   - `SENDER_PASSWORD`: Your Gmail App Password (not regular password)
+Open:
 
-   **How to get a Gmail App Password:**
-   1. Go to [Google Account Security](https://myaccount.google.com/security)
-   2. Enable 2-Step Verification
-   3. Go to [App Passwords](https://myaccount.google.com/apppasswords)
-   4. Generate a new App Password for "Mail"
-   5. Copy the 16-character password to `.env`
+- `http://localhost:5001/` (dashboard)
+- `http://localhost:5001/scraper`
+- `http://localhost:5001/results`
+- `http://localhost:5001/email`
 
-4. **Run the application**
-   ```bash
-   python3 app.py
-   ```
+The app runs on port `5001` to avoid common local conflicts.
 
-   The app will start on `http://localhost:5001`
+## 🧭 Default Development Workflow
 
-   > **Note**: Port 5001 is used to avoid conflicts with macOS AirPlay Receiver
+See [`WORKFLOW.md`](/Users/opheliachen/projects/GTA%20Tennis%20Clubs/GTA-tennis-clubs-waitlist/.worktrees/codex-wimbledon-dashboard/WORKFLOW.md) for the required sequence.
 
-5. **Open in browser**
+## 🔌 API Endpoints
 
-   Navigate to `http://localhost:5001`
+- `GET /api/results` — merged club list and metadata.
+- `GET /api/dashboard-data` — dashboard stats + records payload.
+- `GET /api/scraping-status` — run progress and error counters.
+- `POST /api/start-scraping` — start background scraping task.
+- `POST /api/court-count-research` — estimate unknown court counts from web snippets.
+- `POST /api/email-preview` — generate preview emails.
+- `POST /api/send-emails` — send or dry-run outreach emails.
+- `GET /` and `/scraper`, `/results`, `/email` for the HTML pages.
 
-## 📖 Usage
+## 🧩 Data Model
 
-### Dashboard
-- View statistics about total clubs, scraped data, and emails found
-- Quick access to all features
+Each club record contains:
 
-### Scraper
-1. Optionally set the number of clubs to scrape (leave empty for all)
-2. Click "Start Scraping"
-3. Monitor real-time progress
-4. Results are automatically saved
+- `Club Name`
+- `Website`
+- `Email`
+- `Location`
+- `Club Type`
+- `Membership Status`
+- `Waitlist Length`
+- `Number of Courts`
+- `Court Surface`
+- `Operating Season`
+- `Scrape Status`
 
-### Results
-- Browse all scraped data in a table
-- Search by club name, location, or email
-- Export data as CSV or JSON
+`Scrape Status` supports `Success`, `Partial`, and `Failed` semantics for downstream dashboard filtering.
 
-### Email
-1. Write or customize your email template
-2. Click "Preview Emails" to see what will be sent
-3. Use "Dry Run" to test without sending
-4. Click "Send All Emails" to send actual emails
+## 🛠 Configuration
 
-## 🎨 Design
+Optional environment variables:
 
-The application features a Wimbledon Championship theme:
-- **Colors**: Purple (#3E1F47), Green (#006633), Cream (#F5F3EF)
-- **Typography**: Playfair Display (serif headings) + Inter (body)
-- **Details**: Tennis court grid patterns, championship aesthetic
+- `SENDER_EMAIL` and `SENDER_PASSWORD` for outbound email workflow.
+- `FIRECRAWL_API_KEY` for higher-confidence court-count suggestions.
 
-## 📁 Data Fields
+## 🧪 Data Files
 
-The scraper extracts:
-- Club Name
-- Location/City
-- Email Address
-- Club Type (Private/Public)
-- Membership Status
-- Waitlist Length
-- Number of Courts
-- Court Surface
-- Operating Season
+Scrape runs persist:
 
-## 🔧 Technical Stack
+- `scraped_data_<timestamp>.json`
+- `scraped_data_<timestamp>.csv`
 
-- **Backend**: Flask (Python web framework)
-- **Scraping**: Requests + BeautifulSoup
-- **Frontend**: HTML, CSS, JavaScript (jQuery)
-- **Data**: Pandas for Excel/CSV handling
-- **Email**: SMTP with Gmail
+You can also inspect merged records at runtime via API payloads.
 
-## 📝 Files
+## 🐞 Troubleshooting
 
-- `app.py` - Flask web application
-- `scraper_simple.py` - Web scraping engine
-- `email_agent.py` - Email automation
-- `templates/` - HTML templates
-  - `base.html` - Base template with Wimbledon styling
-  - `index.html` - Dashboard
-  - `scraper.html` - Scraper interface
-  - `results.html` - Results viewer
-  - `email.html` - Email management
-- `GTA_Tennis_clubs_raw_data .xlsx` - Source data
-
-## 🐛 Troubleshooting
-
-**Port 5000 already in use**
-- The app uses port 5001 by default to avoid macOS AirPlay conflicts
-
-**"command not found: python"**
-- Use `python3` instead of `python` on macOS/Linux
-
-**Scraper button not working**
-- Check browser console for errors
-- Ensure JavaScript is enabled
-- Try refreshing the page
-
-**Email not sending**
-- Verify `.env` file is configured correctly
-- Ensure you're using a Gmail App Password, not regular password
-- Check that 2-Step Verification is enabled on your Google account
+- **Port already in use** — ensure port `5001` is free.
+- **Missing Flask dependency** — run `pip install -r requirements.txt`.
+- **No emails sent** — verify `.env` / Gmail app-password style credentials.
 
 ## 📄 License
 
-MIT License
+MIT. See repository `LICENSE`.
 
 ## 🙏 Credits
 
-Created with championship excellence for GTA tennis club data collection.
+- Inspired by Wimbledon design language and built for practical club data intelligence.
