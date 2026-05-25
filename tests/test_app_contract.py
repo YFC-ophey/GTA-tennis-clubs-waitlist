@@ -280,3 +280,45 @@ def test_build_review_queue_classifies_missing_critical_fields():
     ]
     assert 'Email' in entry['Missing Fields']
     assert 'Location' in entry['Missing Fields']
+
+
+def test_ensure_review_metadata_annotates_unresolved_result():
+    result = {
+        'Club Name': 'Missing Critical Club',
+        'Website': 'https://missing-critical.example',
+        'Email': 'N/A',
+        'Location': 'N/A',
+        'Club Type': 'Private',
+        'Membership Status': 'Open',
+        'Waitlist Length': 'N/A',
+        'Number of Courts': 'N/A',
+        'Court Surface': 'Hard',
+        'Operating Season': 'Year-round',
+        'Scrape Status': 'Partial',
+        '_meta': {
+            'retrieval_mode': 'structured',
+            'status_detail': 'missing_critical:Email,Location,NumberOfCourts',
+            'attempted_urls': ['https://missing-critical.example/contact', 'https://missing-critical.example'],
+            'errors': [],
+            'site_profile': 'standard',
+            'needs_outreach': True,
+            'field_sources': {
+                'Club Type': {'confidence': 0.95},
+                'Membership Status': {'confidence': 0.92},
+                'Court Surface': {'confidence': 0.96},
+                'Operating Season': {'confidence': 0.97},
+            },
+        },
+    }
+
+    meta = app_module._ensure_review_metadata(result)
+
+    assert meta['failure_reason'] == 'partial_unpublished'
+    assert meta['failed_stage'] == 'post_processing'
+    assert meta['recommended_next_action'] == 'manual_review_or_contact_club'
+    assert meta['missing_fields'] == ['Email', 'Location', 'Number of Courts', 'Waitlist Length']
+    assert meta['attempted_urls'] == [
+        'https://missing-critical.example/contact',
+        'https://missing-critical.example',
+    ]
+    assert result['_meta']['failure_reason'] == 'partial_unpublished'

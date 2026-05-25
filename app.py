@@ -193,12 +193,11 @@ def _compute_mode_counts(results: list[dict]) -> dict[str, int]:
 def _build_review_queue(results: list[dict]) -> list[dict]:
     queue: list[dict] = []
     for row in results:
-        meta = row.get("_meta", {})
-        field_sources = meta.get("field_sources", {})
-        actual_missing_fields, low_confidence_fields = _review_queue_field_gaps(row, field_sources)
-        missing_fields = list(dict.fromkeys([*actual_missing_fields, *low_confidence_fields]))
-        attempted_urls = _normalized_attempted_urls(meta.get("attempted_urls"), row.get("Website"))
-        failure = _classify_review_failure(row, meta, actual_missing_fields, low_confidence_fields)
+        review_state = _build_review_state(row)
+        meta = _ensure_review_metadata(row, review_state)
+        missing_fields = review_state["missing_fields"]
+        low_confidence_fields = review_state["low_confidence_fields"]
+        failure = review_state["failure"]
 
         if meta.get("needs_outreach") or missing_fields or low_confidence_fields:
             queue.append(
@@ -214,11 +213,62 @@ def _build_review_queue(results: list[dict]) -> list[dict]:
                     "failure_reason": failure["failure_reason"],
                     "failed_stage": failure["failed_stage"],
                     "missing_fields": missing_fields,
-                    "attempted_urls": attempted_urls,
+                    "attempted_urls": review_state["attempted_urls"],
                     "recommended_next_action": failure["recommended_next_action"],
                 }
             )
     return queue
+
+
+def _build_review_state(result: dict) -> dict[str, object]:
+    meta = dict(result.get("_meta", {}))
+    field_sources = meta.get("field_sources", {})
+    actual_missing_fields, low_confidence_fields = _review_queue_field_gaps(result, field_sources)
+    attempted_urls = _normalized_attempted_urls(meta.get("attempted_urls"), result.get("Website"))
+    failure = _classify_review_failure(meta, actual_missing_fields, low_confidence_fields)
+    missing_fields = list(dict.fromkeys([*actual_missing_fields, *low_confidence_fields]))
+
+    return {
+        "meta": meta,
+        "actual_missing_fields": actual_missing_fields,
+        "low_confidence_fields": low_confidence_fields,
+        "missing_fields": missing_fields,
+        "attempted_urls": attempted_urls,
+        "failure": failure,
+    }
+
+
+def _ensure_review_metadata(result: dict, review_state: dict[str, object] | None = None) -> dict:
+    if review_state is None:
+        review_state = _build_review_state(result)
+
+    meta = dict(review_state["meta"])
+    actual_missing_fields = review_state["actual_missing_fields"]
+    low_confidence_fields = review_state["low_confidence_fields"]
+    missing_fields = review_state["missing_fields"]
+    attempted_urls = review_state["attempted_urls"]
+    failure = review_state["failure"]
+
+    if actual_missing_fields or low_confidence_fields or meta.get("needs_outreach"):
+        meta.update(
+            {
+                "failure_reason": failure["failure_reason"],
+                "failed_stage": failure["failed_stage"],
+                "missing_fields": missing_fields,
+                "attempted_urls": attempted_urls,
+                "recommended_next_action": failure["recommended_next_action"],
+            }
+        )
+
+    result["_meta"] = meta
+    return meta
+
+
+def _normalize_active_records(records: list[dict]) -> list[dict]:
+    normalized_records = _ensure_status_compatibility(records)
+    for row in normalized_records:
+        _ensure_review_metadata(row)
+    return normalized_records
 
 
 def _review_queue_field_gaps(row: dict, field_sources: dict) -> tuple[list[str], list[str]]:
@@ -266,7 +316,7 @@ def _normalized_attempted_urls(attempted_urls: object, website: object) -> list[
     return normalized
 
 
-def _classify_review_failure(row: dict, meta: dict, missing_fields: list[str], low_confidence_fields: list[str]) -> dict[str, object]:
+def _classify_review_failure(meta: dict, missing_fields: list[str], low_confidence_fields: list[str]) -> dict[str, object]:
     retrieval_mode = _safe_text(meta.get("retrieval_mode", "unknown")).lower()
     status_detail = _safe_text(meta.get("status_detail", "")).lower()
     site_profile = _safe_text(meta.get("site_profile", "unknown")).lower()
@@ -515,11 +565,11 @@ def _build_records_from_preloaded_data() -> list[dict]:
 
 def _get_active_records() -> list[dict]:
     if scraping_status.get("results"):
-        return _ensure_status_compatibility(scraping_status["results"])
+        return _normalize_active_records(scraping_status["results"])
     state_records = _build_records_from_state()
     if state_records:
-        return _ensure_status_compatibility(state_records)
-    return _ensure_status_compatibility(_build_records_from_preloaded_data())
+        return _normalize_active_records(state_records)
+    return _normalize_active_records(_build_records_from_preloaded_data())
 
 
 def _collect_known_emails(records: list[dict]) -> list[str]:
@@ -907,6 +957,7 @@ def background_scraping_task(max_clubs=None, use_js_fallback=False):
                     }
 
             scraping_status["results"].append(result)
+            _ensure_review_metadata(result)
 
             mode = result.get("_meta", {}).get("retrieval_mode", "unknown")
             mode_counts = Counter(scraping_status.get("mode_counts", {}))
