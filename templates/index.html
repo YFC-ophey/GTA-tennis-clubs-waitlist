@@ -5,162 +5,752 @@
 {% block extra_css %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
 <style>
-    .filters-wrap {
-        margin-top: 14px;
-    }
-
-    .panel__head {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 16px;
-        flex-wrap: wrap;
-    }
-
-    .layout-grid {
+    .dashboard-head {
         display: grid;
-        grid-template-columns: 1.2fr 0.8fr;
-        gap: 16px;
-        margin-top: 14px;
+        grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+        gap: 18px;
+        align-items: stretch;
+        margin-bottom: 18px;
     }
 
-    .layout-grid--wide {
-        grid-template-columns: 1fr;
+    .hero-panel,
+    .finder-panel,
+    .panel-card,
+    .action-tile {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
     }
 
-    .chart-tall {
-        min-height: 230px;
-        margin-top: 8px;
+    .hero-panel {
+        min-height: 100%;
+        padding: clamp(22px, 3vw, 34px);
+        background:
+            linear-gradient(135deg, rgba(15, 23, 42, 0.94), rgba(11, 95, 89, 0.92)),
+            linear-gradient(180deg, #0f172a, #0b5f59);
+        color: #ffffff;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        gap: 26px;
+        overflow: hidden;
     }
 
-    .stats-card {
+    .hero-eyebrow {
+        margin: 0 0 10px;
+        color: rgba(255, 255, 255, 0.72);
+        font-size: 0.82rem;
+        font-weight: 700;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+    }
+
+    .hero-title {
+        margin: 0;
+        max-width: 780px;
+        font-size: clamp(2.1rem, 4.4vw, 4.4rem);
+        line-height: 0.95;
+        letter-spacing: 0;
+    }
+
+    .hero-copy {
+        margin: 18px 0 0;
+        max-width: 650px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: clamp(1rem, 1.4vw, 1.18rem);
+    }
+
+    .hero-actions {
         display: flex;
         flex-wrap: wrap;
-        justify-content: space-between;
         gap: 10px;
-        margin-top: 16px;
+        margin-top: 24px;
     }
 
-    .status-note {
-        margin-top: 14px;
-        padding: 12px;
-        border: 1px solid var(--line);
-        border-radius: var(--radius-md);
-        background: #fff;
+    .hero-actions .btn {
+        box-shadow: none;
     }
 
-    .status-note p {
+    .hero-actions .btn--ghost {
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.3);
+        background: rgba(255, 255, 255, 0.08);
+    }
+
+    .hero-footnote {
         margin: 0;
-    }
-
-    .legend-dot {
-        width: 10px;
-        height: 10px;
-        border-radius: 50%;
-        background: currentColor;
-    }
-
-    .map-empty {
-        color: var(--text-muted);
-        margin-top: 12px;
-    }
-
-    .court-filter-label {
-        margin-bottom: 4px;
-        color: var(--text-muted);
+        color: rgba(255, 255, 255, 0.66);
         font-size: 0.9rem;
     }
 
-    @media (max-width: 980px) {
-        .layout-grid {
+    .finder-panel {
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .finder-title-row,
+    .panel-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 14px;
+        flex-wrap: wrap;
+    }
+
+    .finder-title,
+    .panel-card h2 {
+        margin: 0;
+        color: var(--secondary);
+        font-size: 1.15rem;
+        line-height: 1.2;
+    }
+
+    .finder-subtitle,
+    .panel-card__subtitle {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-size: 0.92rem;
+    }
+
+    .finder-grid {
+        display: grid;
+        grid-template-columns: 1fr 180px 160px;
+        gap: 10px;
+        align-items: end;
+    }
+
+    .finder-field {
+        min-width: 0;
+    }
+
+    .finder-field .field-label {
+        margin-bottom: 6px;
+    }
+
+    .finder-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+    }
+
+    .finder-note {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+    }
+
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+    }
+
+    .kpi-card {
+        background: #ffffff;
+        color: var(--text);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 14px;
+        min-height: 94px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .kpi-card--accent {
+        background: linear-gradient(135deg, #0f766e, #0284c7);
+        color: #ffffff;
+        border-color: transparent;
+    }
+
+    .kpi-value {
+        font-size: clamp(1.55rem, 2.4vw, 2.1rem);
+        font-weight: 700;
+        line-height: 1.1;
+    }
+
+    .kpi-label {
+        color: #64748b;
+        font-size: 0.82rem;
+        line-height: 1.25;
+    }
+
+    .kpi-card--accent .kpi-label {
+        color: rgba(255, 255, 255, 0.86);
+    }
+
+    .control-panel {
+        background: var(--surface);
+        border-radius: var(--radius-lg);
+        border: 1px solid var(--line);
+        padding: 14px 16px;
+        box-shadow: var(--shadow-1);
+        margin-bottom: 16px;
+    }
+
+    .control-title {
+        margin: 0;
+        color: var(--secondary);
+        font-size: 1rem;
+    }
+
+    .control-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 10px;
+    }
+
+    .status-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        max-width: 100%;
+        padding: 7px 10px;
+        border: 1px solid var(--line);
+        background: #f8fafc;
+        border-radius: 999px;
+        font-size: 0.84rem;
+        color: #334155;
+        white-space: normal;
+    }
+
+    .status-dot--success { background: var(--success); }
+    .status-dot--warning { background: var(--warning); }
+    .status-dot--danger { background: var(--danger); }
+    .status-dot--taking { background: #0EA5E9; }
+
+    .panel-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.15fr) minmax(340px, 0.85fr);
+        gap: 16px;
+        align-items: stretch;
+    }
+
+    .panel-card {
+        padding: 16px;
+        min-width: 0;
+    }
+
+    .action-tile {
+        border-left: 5px solid var(--primary);
+        padding: 16px;
+        min-height: 130px;
+    }
+
+    .action-tile h3 {
+        margin: 0 0 8px;
+        color: var(--secondary);
+    }
+
+    .action-tile p {
+        margin: 0 0 16px;
+        color: var(--muted);
+    }
+
+    .filter-strip {
+        min-height: 34px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0 10px;
+        align-items: center;
+    }
+
+    .map-wrap {
+        height: min(58vh, 560px);
+        min-height: 390px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        margin-top: 6px;
+        overflow: hidden;
+        contain: layout paint;
+    }
+
+    .map-empty {
+        margin-top: 8px;
+        color: var(--muted);
+        font-size: 0.9rem;
+    }
+
+    .map-legend {
+        margin-top: 10px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+    }
+
+    .map-legend__item {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 6px 10px;
+        font-size: 0.84rem;
+        color: #334155;
+        background: #f8fafc;
+    }
+
+    .map-legend__swatch {
+        width: 10px;
+        height: 10px;
+        border-radius: 999px;
+    }
+
+    .result-count {
+        color: var(--muted);
+        font-size: 0.88rem;
+        white-space: nowrap;
+    }
+
+    .club-list {
+        margin-top: 12px;
+        display: grid;
+        gap: 10px;
+        max-height: min(58vh, 560px);
+        overflow: auto;
+        padding-right: 4px;
+    }
+
+    .club-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        padding: 13px;
+        background: #ffffff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    .club-card:hover,
+    .club-card:focus-within {
+        border-color: rgba(15, 118, 110, 0.45);
+        box-shadow: 0 8px 22px rgba(15, 23, 42, 0.07);
+    }
+
+    .club-card__top {
+        display: flex;
+        gap: 10px;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .club-card__name {
+        margin: 0;
+        color: var(--secondary);
+        font-size: 0.98rem;
+        line-height: 1.25;
+    }
+
+    .club-card__meta {
+        margin: 6px 0 0;
+        color: var(--muted);
+        font-size: 0.86rem;
+    }
+
+    .club-card__details {
+        margin-top: 10px;
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+    }
+
+    .club-card__detail {
+        min-width: 0;
+    }
+
+    .club-card__detail-label {
+        display: block;
+        color: #94a3b8;
+        font-size: 0.72rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    .club-card__detail-value {
+        display: block;
+        margin-top: 2px;
+        color: #334155;
+        font-size: 0.86rem;
+        overflow-wrap: anywhere;
+    }
+
+    .list-empty {
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 24px;
+        color: var(--muted);
+        background: #f8fafc;
+        text-align: center;
+    }
+
+    .state-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        white-space: nowrap;
+    }
+
+    .state-badge--taking { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+    .state-badge--open { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+    .state-badge--waitlist { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .state-badge--closed { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .state-badge--unknown,
+    .state-badge--other { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; }
+
+    .map-marker-pin {
+        width: 20px;
+        height: 20px;
+        border-radius: 999px;
+        border: 2px solid #fff;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        font-weight: 700;
+        font-size: 11px;
+        line-height: 1;
+        box-shadow: 0 1px 8px rgba(15, 23, 42, 0.25);
+        pointer-events: none;
+    }
+
+    .map-marker-pin--taking { background: #0EA5E9; }
+    .map-marker-pin--open { background: #0284c7; }
+    .map-marker-pin--waitlist { background: #f59e0b; }
+    .map-marker-pin--closed { background: #6b7280; }
+    .map-marker-pin--unknown { background: #94a3b8; }
+    .map-marker-pin--other { background: #8b5cf6; }
+
+    .map-popup {
+        min-width: 220px;
+    }
+
+    .map-popup__title {
+        margin: 0 0 4px;
+        color: #0f172a;
+        font-size: 0.95rem;
+    }
+
+    .map-popup__row {
+        margin: 2px 0;
+        color: #334155;
+        font-size: 0.9rem;
+    }
+
+    .map-popup__status {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 6px;
+        border-radius: 999px;
+        padding: 4px 8px;
+        font-size: 0.82rem;
+        font-weight: 600;
+    }
+
+    .map-popup__status--taking { background: #dbeafe; color: #1d4ed8; border: 1px solid #93c5fd; }
+    .map-popup__status--open { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+    .map-popup__status--waitlist { background: #fef3c7; color: #b45309; border: 1px solid #fcd34d; }
+    .map-popup__status--closed { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+    .map-popup__status--unknown,
+    .map-popup__status--other { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; }
+
+    .leaflet-popup-content {
+        margin: 10px 12px;
+        max-width: 260px;
+    }
+
+    .chart-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+    }
+
+    .chart-grid > div,
+    .chart-grid canvas {
+        min-width: 0;
+        max-width: 100%;
+    }
+
+    .analytics-grid {
+        margin-top: 16px;
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 280px;
+        gap: 16px;
+    }
+
+    .chart-card h3 {
+        margin: 4px 0 10px;
+        color: #334155;
+        font-size: 1rem;
+        font-weight: 600;
+    }
+
+    .filter-chip {
+        background: var(--surface);
+    }
+
+    .filter-chip:hover {
+        transform: translateY(-1px);
+    }
+
+    .filter-chip.active,
+    .quick-filter.active {
+        background: var(--primary);
+        color: #fff;
+        border-color: transparent;
+    }
+
+    .quick-filter {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        padding: 8px 12px;
+        font-size: 0.9rem;
+        color: #334155;
+        transition: background-color 0.15s ease, color 0.15s ease;
+    }
+
+    .quick-filter:hover {
+        background: #f8fafc;
+    }
+
+    .quick-filter:disabled,
+    .btn:disabled {
+        opacity: 0.55;
+        cursor: not-allowed;
+    }
+
+    @media (max-width: 1100px) {
+        .dashboard-head,
+        .panel-grid,
+        .analytics-grid,
+        .chart-grid {
             grid-template-columns: 1fr;
+        }
+
+        .stats-grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .finder-grid {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .finder-field:first-child {
+            grid-column: 1 / -1;
+        }
+
+        .chart-grid canvas {
+            min-height: 240px;
+        }
+    }
+
+    @media (max-width: 720px) {
+        .dashboard-head {
+            gap: 12px;
+        }
+
+        .hero-panel,
+        .finder-panel,
+        .panel-card {
+            padding: 15px;
+        }
+
+        .hero-title {
+            font-size: clamp(2rem, 12vw, 3rem);
+            line-height: 1;
+        }
+
+        .finder-grid,
+        .stats-grid,
+        .club-card__details {
+            grid-template-columns: 1fr;
+        }
+
+        .map-wrap,
+        .club-list {
+            height: 420px;
+            max-height: 420px;
+            min-height: 340px;
+        }
+
+        .result-count {
+            white-space: normal;
         }
     }
 </style>
 {% endblock %}
 
 {% block content %}
-<section class="panel">
-    <h1 class="section-title">Tennis Club Intelligence Hub</h1>
-    <p class="section-subtitle">Use Wimbledon-inspired analytics: click court-count or membership segments to filter the map, list, and summary views in real time.</p>
-    <div class="metric-grid">
-        <article class="metric-card">
-            <p class="metric-label">Total clubs</p>
-            <p class="metric-value" id="stat-total">{{ total_clubs }}</p>
-        </article>
-        <article class="metric-card">
-            <p class="metric-label">Visible clubs</p>
-            <p class="metric-value" id="stat-visible">0</p>
-        </article>
-        <article class="metric-card">
-            <p class="metric-label">Known emails</p>
-            <p class="metric-value" id="stat-emails">0</p>
-        </article>
-        <article class="metric-card">
-            <p class="metric-label">Needs update</p>
-            <p class="metric-value" id="stat-update">0</p>
-        </article>
-        <article class="metric-card">
-            <p class="metric-label">Mapped clubs</p>
-            <p class="metric-value" id="stat-mapped">0</p>
-        </article>
-    </div>
-</section>
-
-<section class="panel panel-soft">
-    <div class="panel__head">
+<section class="dashboard-head">
+    <article class="hero-panel" aria-labelledby="dashboard-title">
         <div>
-            <h2 class="section-title" style="font-size: 1.45rem;">Interactive Filters</h2>
-            <p class="section-subtitle">Select from chart segments or tap chip labels. Click again to remove each filter.</p>
-        </div>
-        <button id="clear-filters" class="btn btn--ghost" type="button">Clear filters</button>
-    </div>
-    <div class="filters-wrap" id="filter-pills" aria-live="polite" aria-label="Active filters">No active filters.</div>
-    <div class="legend" aria-label="Scrape status legend">
-        <span class="chip"><span class="legend-dot" style="background: var(--success);"></span>Success: usable extraction</span>
-        <span class="chip"><span class="legend-dot" style="background: var(--warning);"></span>Needs Update: partial or missing fields</span>
-        <span class="chip"><span class="legend-dot" style="background: var(--danger);"></span>Failed: no usable extraction</span>
-    </div>
-</section>
-
-<section class="panel">
-    <div class="layout-grid">
-    <section aria-label="Club map">
-            <div class="panel__head">
-                <div>
-                    <h2 class="section-title" style="font-size: 1.45rem;">Club map</h2>
-                    <p class="section-subtitle">Map is filtered by your active selections.</p>
-                </div>
+            <p class="hero-eyebrow">Greater Toronto tennis club finder</p>
+            <h1 id="dashboard-title" class="hero-title">Find the right club before you reach out.</h1>
+            <p class="hero-copy">Search public club records, compare published membership signals, and move from map discovery to directory review without hiding unknown data.</p>
+            <div class="hero-actions">
+                <a href="#club-discovery" class="btn">Explore clubs</a>
+                <a href="/results" class="btn btn--ghost">Open directory</a>
             </div>
-            <div id="map" class="map-wrap" aria-label="Club map"></div>
-            <p id="map-empty" class="map-empty" style="display:none;">No mapped clubs found for this filter.</p>
-        </section>
+        </div>
+        <p class="hero-footnote">Unknown means the source data did not publish that field.</p>
+    </article>
 
-        <section aria-label="Distribution charts">
+    <aside class="finder-panel" aria-label="club finder controls">
+        <div class="finder-title-row">
             <div>
-                    <p class="court-filter-label">Court Count Distribution</p>
-                <div class="chart-wrap">
-                    <canvas id="courtChart" aria-label="Court Count Distribution"></canvas>
-                </div>
+                <h2 class="finder-title">Club finder</h2>
+                <p class="finder-subtitle">Filter by name, city, membership signal, and courts.</p>
             </div>
-                <div>
-                    <p class="court-filter-label">Membership Status Distribution</p>
-                <div class="chart-wrap">
-                    <canvas id="membershipChart" aria-label="Membership Distribution"></canvas>
-                </div>
+            <span id="last-refreshed" class="result-count">Loading data...</span>
+        </div>
+
+        <div class="finder-grid">
+            <div class="finder-field">
+                <label class="field-label" for="club-search">Search</label>
+                <input id="club-search" class="input" type="text" placeholder="Club name, city, email, surface" autocomplete="off">
             </div>
-        </section>
+            <div class="finder-field">
+                <label class="field-label" for="membership-filter">Membership</label>
+                <select id="membership-filter" class="input">
+                    <option value="">Any published status</option>
+                    <option value="Taking players now">Taking players now</option>
+                    <option value="Open">Open</option>
+                    <option value="Waitlist">Waitlist</option>
+                    <option value="Closed">Closed</option>
+                    <option value="Unknown">Not published</option>
+                    <option value="Other">Other</option>
+                </select>
+            </div>
+            <div class="finder-field">
+                <label class="field-label" for="court-filter">Courts</label>
+                <select id="court-filter" class="input">
+                    <option value="">Any court count</option>
+                    <option value="1">1</option>
+                    <option value="2-4">2-4</option>
+                    <option value="5-9">5-9</option>
+                    <option value="10-14">10-14</option>
+                    <option value="15+">15+</option>
+                    <option value="N/A">Not published</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="finder-actions">
+            <button id="quick-filter-taking-now" type="button" class="quick-filter" onclick="toggleTakingPlayersFilter()">
+                Taking players now only
+            </button>
+            <button id="clear-controls" type="button" class="btn btn--ghost" onclick="clearFilters()">Reset filters</button>
+        </div>
+
+        <p class="finder-note">Charts and map markers share the same filters. Counts update from `/api/dashboard-data`.</p>
+
+        <div class="stats-grid" aria-live="polite">
+            <article class="kpi-card kpi-card--accent">
+                <div class="kpi-value" id="stat-scraped">0</div>
+                <div class="kpi-label">Visible clubs</div>
+            </article>
+            <article class="kpi-card">
+                <div class="kpi-value" id="stat-total">{{ total_clubs }}</div>
+                <div class="kpi-label">Total records</div>
+            </article>
+            <article class="kpi-card">
+                <div class="kpi-value" id="stat-mapped">0</div>
+                <div class="kpi-label">Mapped</div>
+            </article>
+            <article class="kpi-card">
+                <div class="kpi-value" id="stat-taking-now">0</div>
+                <div class="kpi-label">Taking players</div>
+            </article>
+            <article class="kpi-card">
+                <div class="kpi-value" id="stat-needs-update">0</div>
+                <div class="kpi-label">Needs update</div>
+            </article>
+        </div>
+    </aside>
+</section>
+
+<section class="control-panel">
+    <h2 class="control-title">Data status signals</h2>
+    <div class="control-row" aria-live="polite">
+        <span class="status-chip"><span class="status-dot status-dot--success"></span>Success: usable public record</span>
+        <span class="status-chip"><span class="status-dot status-dot--warning"></span>Needs Update: missing or low-confidence fields</span>
+        <span class="status-chip"><span class="status-dot status-dot--danger"></span>Failed: no usable extraction</span>
+        <span class="status-chip"><span class="status-dot status-dot--taking"></span>Taking players now: source indicates acceptance</span>
     </div>
 </section>
 
-<section class="panel">
-    <h2 class="section-title" style="font-size: 1.45rem;">Overview panel</h2>
-    <div class="stats-card">
-        <div class="status-note">
-            <p><strong id="dashboard-total-note">Loading…</strong> clubs loaded from the source list. Use the court and membership selectors to isolate groups for scouting, benchmarking, or outreach planning.</p>
+<section id="club-discovery" class="panel-grid">
+    <article class="panel-card" aria-label="club map and quick filters">
+        <div class="panel-title-row">
+            <div>
+                <h2>Map discovery</h2>
+                <p class="panel-card__subtitle">Tap markers for published details. Unmapped clubs remain in the list.</p>
+            </div>
+            <span id="map-count" class="result-count">0 mapped</span>
         </div>
-        <a class="btn" href="/results">Open Player Directory</a>
-    </div>
+        <div id="filter-pills" class="filter-strip"></div>
+        <div id="map" class="map-wrap"></div>
+        <div class="map-legend">
+            <span class="map-legend__item"><span class="map-legend__swatch" style="background:#0EA5E9"></span>Taking players now</span>
+            <span class="map-legend__item"><span class="map-legend__swatch" style="background:#0284c7"></span>Open</span>
+            <span class="map-legend__item"><span class="map-legend__swatch" style="background:#f59e0b"></span>Waitlist</span>
+            <span class="map-legend__item"><span class="map-legend__swatch" style="background:#6b7280"></span>Closed</span>
+            <span class="map-legend__item"><span class="map-legend__swatch" style="background:#94a3b8"></span>Unknown</span>
+            <span class="map-legend__item"><span class="map-legend__swatch" style="background:#8b5cf6"></span>Other</span>
+        </div>
+        <p id="map-empty" class="map-empty" style="display:none;">No mapped clubs match these filters. The list may still include clubs without published coordinates.</p>
+    </article>
+
+    <article class="panel-card" aria-label="club list">
+        <div class="panel-title-row">
+            <div>
+                <h2>Club list</h2>
+                <p class="panel-card__subtitle">Sorted by availability signal, then name. Unknown fields are labeled.</p>
+            </div>
+            <span id="result-count" class="result-count">0 clubs</span>
+        </div>
+        <div id="club-list" class="club-list" aria-live="polite">
+            <div class="list-empty">Loading clubs...</div>
+        </div>
+    </article>
+</section>
+
+<section class="analytics-grid">
+    <article class="panel-card chart-card">
+        <div class="panel-title-row">
+            <div>
+                <h2>Data coverage</h2>
+                <p class="panel-card__subtitle">See where the dataset is strong before you filter by courts or membership.</p>
+            </div>
+        </div>
+        <div class="chart-grid">
+            <div>
+                <h3>Published court counts</h3>
+                <canvas id="courtChart" height="220"></canvas>
+            </div>
+            <div>
+                <h3>Published membership signals</h3>
+                <canvas id="membershipChart" height="220"></canvas>
+            </div>
+        </div>
+        <p class="panel-card__subtitle" style="margin-top: 14px;">Useful for spotting where a filter is based on published club data and where the source still has gaps.</p>
+    </article>
+
+    <article class="action-tile surface-card">
+        <h3>Player Directory</h3>
+        <p>Review every record with contact details, scrape status, and export tooling.</p>
+        <a href="/results" class="btn">Open directory</a>
+    </article>
 </section>
 {% endblock %}
 
@@ -169,35 +759,27 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
     const courtBuckets = ["1", "2-4", "5-9", "10-14", "15+", "N/A"];
-    const membershipOrder = ["Open", "Waitlist", "Closed", "Unknown", "Other"];
-    let records = [];
-    let activeFilters = { courts: new Set(), memberships: new Set() };
+    const membershipOrder = ["Taking players now", "Open", "Waitlist", "Closed", "Unknown", "Other"];
+    const membershipColors = ["#0EA5E9", "#0284c7", "#f59e0b", "#6b7280", "#94a3b8", "#8b5cf6"];
+    let rawRecords = [];
+    let activeFilters = {
+        courts: new Set(),
+        memberships: new Set(),
+        takingPlayersNow: false,
+        query: "",
+        membershipSelect: "",
+        courtSelect: "",
+    };
     let mapInstance = null;
     let markersLayer = null;
     let courtChart = null;
     let membershipChart = null;
-    let dashboardMeta = {};
-
-    function normalizeStatus(value) {
-        if (value === "Success") return "Success";
-        if (value === "Failed") return "Failed";
-        return "Needs Update";
-    }
-
-    function normalizeMembership(value) {
-        const text = String(value || "").toLowerCase();
-        if (!text || text === "n/a") return "Unknown";
-        if (text.includes("wait")) return "Waitlist";
-        if (text.includes("close") || text.includes("full")) return "Closed";
-        if (text.includes("open")) return "Open";
-        return "Other";
-    }
 
     function bucketCourt(value) {
         if (!value || value === "N/A") return "N/A";
         const match = String(value).match(/\b(\d{1,3})\b/);
         if (!match) return "N/A";
-        const num = Number(match[1]);
+        const num = parseInt(match[1], 10);
         if (num === 1) return "1";
         if (num >= 2 && num <= 4) return "2-4";
         if (num >= 5 && num <= 9) return "5-9";
@@ -205,8 +787,160 @@
         return "15+";
     }
 
+    function normalizeMembership(value) {
+        const text = (value || "").toLowerCase();
+        if (!text || text === "n/a") return "Unknown";
+        if ((text.includes("taking") && text.includes("players")) || text.includes("accepting")) return "Taking players now";
+        if (text.includes("wait")) return "Waitlist";
+        if (text.includes("close") || text.includes("full")) return "Closed";
+        if (text.includes("open")) return "Open";
+        return "Other";
+    }
+
+    function membershipStateClass(value, isTakingPlayersNow) {
+        const key = normalizeMembership(value);
+        if (isTakingPlayersNow) {
+            return "taking";
+        }
+        if (key === "Open") return "open";
+        if (key === "Waitlist") return "waitlist";
+        if (key === "Closed") return "closed";
+        if (key === "Unknown") return "unknown";
+        return "other";
+    }
+
+    function escapeHtml(value) {
+        return String(value || "").replace(/[&<>"']/g, function(match) {
+            return ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;",
+            })[match];
+        });
+    }
+
+    function membershipDisplayLabel(value, isTakingPlayersNow) {
+        if (isTakingPlayersNow) {
+            return "Taking players now";
+        }
+        const key = normalizeMembership(value);
+        if (key === "Open") return "Open";
+        if (key === "Waitlist") return "Waitlist";
+        if (key === "Closed") return "Closed";
+        if (key === "Unknown") return "Not published";
+        return key;
+    }
+
+    function isPublished(value) {
+        const text = String(value || "").trim();
+        return !!text && !["n/a", "na", "unknown", "none", "null"].includes(text.toLowerCase());
+    }
+
+    function displayValue(value) {
+        return isPublished(value) ? value : "Not published";
+    }
+
+    function takingPlayersDisplay(row) {
+        if (isTakingPlayersNow(row)) {
+            return "Yes";
+        }
+        const membership = getMembershipState(row);
+        return membership === "Unknown" ? "Not published" : "No";
+    }
+
+    function markerIcon(value, isTakingPlayersNow) {
+        const cls = membershipStateClass(value, isTakingPlayersNow);
+        return L.divIcon({
+            className: "",
+            iconSize: [20, 20],
+            iconAnchor: [10, 10],
+            popupAnchor: [0, -8],
+            html: '<span class="map-marker-pin map-marker-pin--' + cls + '">' +
+                (cls === "taking" ? "!" : "&nbsp;") +
+                "</span>",
+        });
+    }
+
+    function markerPopupHtml(marker) {
+        const state = marker.membership_state || normalizeMembership(marker.membership_status);
+        const takingNow = !!marker.taking_players_now;
+        return [
+            '<div class="map-popup">',
+            '<p class="map-popup__title">' + escapeHtml(marker.club_name) + '</p>',
+            '<div class="map-popup__status map-popup__status--' + membershipStateClass(state, takingNow) + '">',
+            escapeHtml(membershipDisplayLabel(state, takingNow)),
+            '</div>',
+            '<p class="map-popup__row"><strong>Location:</strong> ' + escapeHtml(displayValue(marker.location)) + '</p>',
+            '<p class="map-popup__row"><strong>Courts:</strong> ' + escapeHtml(displayValue(marker.courts)) + '</p>',
+            '<p class="map-popup__row"><strong>Membership:</strong> ' + escapeHtml(state === "Unknown" ? "Not published" : state) + '</p>',
+            '<p class="map-popup__row"><strong>Taking players now:</strong> ' + escapeHtml(marker.taking_players_label) + '</p>',
+            '<p class="map-popup__row"><strong>Waitlist length:</strong> ' + escapeHtml(displayValue(marker.waitlist_length)) + '</p>',
+            '<p class="map-popup__row"><strong>Email:</strong> ' + escapeHtml(displayValue(marker.email)) + '</p>',
+            '</div>'
+        ].join("");
+    }
+
+    function getMembershipState(row) {
+        if (row["Taking Players Now"] !== undefined) {
+            if (parseBooleanField(row["Taking Players Now"])) {
+                return "Taking players now";
+            }
+        }
+        return row["Membership Status Normalized"] || normalizeMembership(row["Membership Status"]);
+    }
+
+    function parseBooleanField(value) {
+        if (typeof value === "boolean") {
+            return value;
+        }
+        if (typeof value === "number") {
+            return value === 1;
+        }
+        const text = String(value || "").trim().toLowerCase();
+        if (!text || text === "n/a" || text === "na" || text === "false" || text === "0" || text === "no") {
+            return false;
+        }
+        return text === "true" || text === "1" || text === "yes";
+    }
+
+    function isTakingPlayersNow(row) {
+        const explicit = row["Taking Players Now"];
+        if (explicit !== undefined) {
+            return parseBooleanField(explicit);
+        }
+        const state = getMembershipState(row);
+        return state === "Taking players now";
+    }
+
     function visibleRecords() {
-        let rows = records.slice();
+        let rows = rawRecords.slice();
+        if (activeFilters.query) {
+            const query = activeFilters.query.toLowerCase();
+            rows = rows.filter(function(row) {
+                return [
+                    row["Club Name"],
+                    row.Location,
+                    row.Email,
+                    row["Court Surface"],
+                    row["Club Type"],
+                    row.Website,
+                ].some(function(value) {
+                    return String(value || "").toLowerCase().includes(query);
+                });
+            });
+        }
+        if (activeFilters.courtSelect) {
+            rows = rows.filter(function(row) {
+                return bucketCourt(row["Number of Courts"]) === activeFilters.courtSelect;
+            });
+        }
+        if (activeFilters.membershipSelect) {
+            rows = rows.filter(function(row) {
+                return getMembershipState(row) === activeFilters.membershipSelect;
+            });
+        }
         if (activeFilters.courts.size > 0) {
             rows = rows.filter(function(row) {
                 return activeFilters.courts.has(bucketCourt(row["Number of Courts"]));
@@ -214,27 +948,30 @@
         }
         if (activeFilters.memberships.size > 0) {
             rows = rows.filter(function(row) {
-                return activeFilters.memberships.has(normalizeMembership(row["Membership Status"]));
+                return activeFilters.memberships.has(getMembershipState(row));
             });
+        }
+        if (activeFilters.takingPlayersNow) {
+            rows = rows.filter(isTakingPlayersNow);
         }
         return rows;
     }
 
-    function updateFilterPills() {
-        const chips = [];
-        activeFilters.courts.forEach(function(bucket) {
-            chips.push('<button class="chip active" type="button" aria-label="Remove court filter ' + bucket + '" onclick="toggleFilter(\'courts\', \'' + bucket + '\')">' + bucket + ' courts</button>');
-        });
-        activeFilters.memberships.forEach(function(type) {
-            chips.push('<button class="chip active" type="button" aria-label="Remove membership filter ' + type + '" onclick="toggleFilter(\'memberships\', \'' + type + '\')">' + type + '</button>');
-        });
+    let dashboardMeta = {};
 
-        if (chips.length === 0) {
-            $('#filter-pills').html('No active filters.');
-            return;
-        }
-        chips.push('<button class="chip chip--clear" type="button" onclick="clearFilters()">Clear all</button>');
-        $('#filter-pills').html(chips.join(''));
+    function updateStats(rows) {
+        const mappedCount = rows.filter(function(row) {
+            return row.lat !== undefined && row.lng !== undefined;
+        }).length;
+        $('#stat-total').text(dashboardMeta.total_clubs || rawRecords.length);
+        $('#stat-scraped').text(rows.length);
+        $('#stat-mapped').text(mappedCount);
+        $('#map-count').text(mappedCount + (mappedCount === 1 ? " mapped" : " mapped"));
+        $('#result-count').text(rows.length + (rows.length === 1 ? " club" : " clubs"));
+        $('#stat-taking-now').text(rows.filter(function(r) {
+            return isTakingPlayersNow(r);
+        }).length);
+        $('#stat-needs-update').text(rows.filter(r => applyStatusLabel(r["Scrape Status"]) !== "Success").length);
     }
 
     function toggleFilter(type, value) {
@@ -247,8 +984,99 @@
     }
 
     function clearFilters() {
-        activeFilters = { courts: new Set(), memberships: new Set() };
+        activeFilters = {
+            courts: new Set(),
+            memberships: new Set(),
+            takingPlayersNow: false,
+            query: "",
+            membershipSelect: "",
+            courtSelect: "",
+        };
+        $('#club-search').val("");
+        $('#membership-filter').val("");
+        $('#court-filter').val("");
+        $('#quick-filter-taking-now').removeClass('active');
         renderDashboard();
+    }
+
+    function clearSearchFilter() {
+        activeFilters.query = "";
+        $('#club-search').val("");
+        renderDashboard();
+    }
+
+    function clearSelectFilter(type) {
+        if (type === "membership") {
+            activeFilters.membershipSelect = "";
+            $('#membership-filter').val("");
+        }
+        if (type === "court") {
+            activeFilters.courtSelect = "";
+            $('#court-filter').val("");
+        }
+        renderDashboard();
+    }
+
+    function toggleTakingPlayersFilter() {
+        activeFilters.takingPlayersNow = !activeFilters.takingPlayersNow;
+        renderDashboard();
+        if (activeFilters.takingPlayersNow) {
+            $('#quick-filter-taking-now').addClass('active');
+        } else {
+            $('#quick-filter-taking-now').removeClass('active');
+        }
+    }
+
+    function updateFilterPills() {
+        const chips = [];
+        function chipOnclick(type, value) {
+            return 'toggleFilter(' + JSON.stringify(type) + ', ' + JSON.stringify(value) + ')';
+        }
+        if (activeFilters.query) {
+            chips.push('<button class="chip filter-chip active" type="button" onclick="clearSearchFilter()">Search: ' + escapeHtml(activeFilters.query) + ' ×</button>');
+        }
+        if (activeFilters.membershipSelect) {
+            chips.push('<button class="chip filter-chip active" type="button" onclick="clearSelectFilter(' + "'membership'" + ')">Membership: ' + escapeHtml(activeFilters.membershipSelect === "Unknown" ? "Not published" : activeFilters.membershipSelect) + ' ×</button>');
+        }
+        if (activeFilters.courtSelect) {
+            chips.push('<button class="chip filter-chip active" type="button" onclick="clearSelectFilter(' + "'court'" + ')">Courts: ' + escapeHtml(activeFilters.courtSelect === "N/A" ? "Not published" : activeFilters.courtSelect) + ' ×</button>');
+        }
+        activeFilters.courts.forEach(function(bucket) {
+            chips.push(
+                '<button class="chip filter-chip active" type="button" onclick="' + chipOnclick("courts", bucket) + '">Court: ' + escapeHtml(bucket === "N/A" ? "Not published" : bucket) + ' ×</button>'
+            );
+        });
+        activeFilters.memberships.forEach(function(membership) {
+            chips.push(
+                '<button class="chip filter-chip active" type="button" onclick="' + chipOnclick("memberships", membership) + '">Membership: ' + escapeHtml(membership === "Unknown" ? "Not published" : membership) + ' ×</button>'
+            );
+        });
+        if (activeFilters.takingPlayersNow) {
+            chips.push('<button class="chip filter-chip active" type="button" onclick="toggleTakingPlayersFilter()">Taking players now ×</button>');
+        }
+
+        if (chips.length === 0) {
+            $('#filter-pills').html('<span class="muted">No active filters.</span>');
+            return;
+        }
+
+        chips.push('<button class="chip filter-chip chip--clear" type="button" onclick="clearFilters()">Clear all ×</button>');
+        $('#filter-pills').html(chips.join(""));
+    }
+
+    function computeDistribution(rows, keyFn) {
+        const counts = {};
+        keyFn && rows.forEach(function(row) {
+            const key = keyFn(row);
+            counts[key] = (counts[key] || 0) + 1;
+        });
+        return counts;
+    }
+
+    function applyStatusLabel(status) {
+        if (status === "Success") return "Success";
+        if (status === "Failed") return "Failed";
+        return "Needs Update";
     }
 
     function initMap() {
@@ -256,12 +1084,12 @@
             mapInstance = L.map('map').setView([43.65, -79.38], 9);
             L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
                 maxZoom: 19,
-                attribution: '&copy; OpenStreetMap contributors',
+                attribution: '&copy; OpenStreetMap contributors'
             }).addTo(mapInstance);
             markersLayer = L.layerGroup().addTo(mapInstance);
-            return;
+        } else {
+            markersLayer.clearLayers();
         }
-        markersLayer.clearLayers();
     }
 
     function renderMap(rows) {
@@ -271,62 +1099,49 @@
             return row.lat !== undefined && row.lng !== undefined;
         });
 
-        markerRows.forEach(function(markerData) {
-            const popup = '<strong>' + (markerData.club_name || markerData["Club Name"] || 'N/A') + '</strong><br>'
-                + 'Location: ' + (markerData.location || markerData.Location || 'N/A') + '<br>'
-                + 'Courts: ' + (markerData.courts || markerData["Number of Courts"] || 'N/A') + '<br>'
-                + 'Membership: ' + (markerData["Membership Status"] || 'N/A') + '<br>'
-                + 'Email: ' + (markerData.email || markerData.Email || 'N/A');
-            L.marker([markerData.lat, markerData.lng]).addTo(markersLayer).bindPopup(popup);
-        });
-
         if (markerRows.length === 0) {
             $('#map-empty').show();
-            return;
         }
-        const bounds = L.featureGroup(markersLayer.getLayers()).getBounds();
-        if (bounds.isValid()) {
-            mapInstance.fitBounds(bounds.pad(0.25));
-        }
-    }
 
-    function computeDistribution(rows, keyFn) {
-        const dict = {};
-        rows.forEach(function(row) {
-            const key = keyFn(row);
-            dict[key] = (dict[key] || 0) + 1;
+        markerRows.forEach(function(marker) {
+            const isTaking = marker.taking_players_now === true;
+            L.marker([marker.lat, marker.lng], {
+                icon: markerIcon(marker.membership_state, isTaking),
+                title: marker.club_name,
+            }).addTo(markersLayer).bindPopup(markerPopupHtml(marker));
         });
-        return dict;
+
+        if (markerRows.length > 0) {
+            const group = L.featureGroup(markersLayer.getLayers());
+            mapInstance.fitBounds(group.getBounds().pad(0.2));
+        }
     }
 
-    function drawCourts(rows) {
-        const context = document.getElementById('courtChart');
+    function buildCourtChart(rows) {
+        const ctx = document.getElementById('courtChart');
         const dist = computeDistribution(rows, function(row) { return bucketCourt(row["Number of Courts"]); });
-        const values = courtBuckets.map(function(bucket) { return dist[bucket] || 0; });
-        const colors = ["#0f766e", "#0a8f6a", "#4f46e5", "#b7791f", "#dc6800", "#8a8794"];
-        const payload = {
-            labels: courtBuckets,
-            datasets: [{
-                data: values,
-                backgroundColor: colors,
-            }],
-        };
+        const values = courtBuckets.map(function(label) { return dist[label] || 0; });
+        const colors = ["#0f766e", "#0284c7", "#65a30d", "#f59e0b", "#94a3b8", "#64748b"];
 
         if (courtChart) {
-            courtChart.data = payload;
+            courtChart.data.datasets[0].data = values;
             courtChart.update();
             return;
         }
 
-        courtChart = new Chart(context, {
+        courtChart = new Chart(ctx, {
             type: 'bar',
-            data: payload,
+            data: {
+                labels: courtBuckets,
+                datasets: [{
+                    label: 'Clubs',
+                    data: values,
+                    backgroundColor: colors,
+                    borderRadius: 6,
+                }],
+            },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    legend: { display: false },
-                },
                 onClick: function(evt, elements) {
                     if (!elements || !elements.length) {
                         return;
@@ -334,111 +1149,174 @@
                     const index = elements[0].index;
                     toggleFilter('courts', courtBuckets[index]);
                 },
+                plugins: { legend: { display: false } },
             },
         });
     }
 
-    function drawMembership(rows) {
-        const context = document.getElementById('membershipChart');
-        const dist = computeDistribution(rows, function(row) { return normalizeMembership(row["Membership Status"]); });
+    function buildMembershipChart(rows) {
+        const ctx = document.getElementById('membershipChart');
+        const dist = computeDistribution(rows, function(row) { return getMembershipState(row); });
         const values = membershipOrder.map(function(label) { return dist[label] || 0; });
-        const colors = ["#0f766e", "#7c2d12", "#1d4ed8", "#6b7280", "#c026d3"];
-        const payload = {
-            labels: membershipOrder,
-            datasets: [{
-                data: values,
-                backgroundColor: colors,
-            }],
-        };
+        const colors = membershipColors;
 
         if (membershipChart) {
-            membershipChart.data = payload;
+            membershipChart.data.datasets[0].data = values;
             membershipChart.update();
             return;
         }
 
-        membershipChart = new Chart(context, {
+        membershipChart = new Chart(ctx, {
             type: 'doughnut',
-            data: payload,
+            data: {
+                labels: membershipOrder,
+                datasets: [{
+                    data: values,
+                    backgroundColor: colors,
+                }],
+            },
             options: {
                 responsive: true,
-                maintainAspectRatio: false,
-                cutout: '56%',
-                plugins: {
-                    legend: {
-                        labels: {
-                            color: "#2f1f4a",
-                        },
-                    },
-                },
                 onClick: function(evt, elements) {
                     if (!elements || !elements.length) {
                         return;
                     }
                     const index = elements[0].index;
-                    const selected = membershipOrder[index];
-                    toggleFilter('memberships', selected);
+                    toggleFilter('memberships', membershipOrder[index]);
                 },
             },
         });
     }
 
-    function updateStats(rows) {
-        const knownEmails = dashboardMeta.known_emails || [];
-        const mappedRows = rows.filter(function(row) {
-            return row.lat && row.lng;
-        });
-        const needsUpdate = rows.filter(function(row) {
-            return normalizeStatus(row["Scrape Status"]) !== 'Success';
-        }).length;
+    function stateRank(row) {
+        const state = getMembershipState(row);
+        if (state === "Taking players now") return 0;
+        if (state === "Open") return 1;
+        if (state === "Waitlist") return 2;
+        if (state === "Closed") return 3;
+        if (state === "Unknown") return 5;
+        return 4;
+    }
 
-        $('#stat-visible').text(rows.length);
-        $('#stat-mapped').text(mappedRows.length);
-        $('#stat-emails').text(Array.isArray(knownEmails) ? knownEmails.length : 0);
-        $('#stat-update').text(needsUpdate);
+    function renderClubList(rows) {
+        const listRows = rows.slice().sort(function(a, b) {
+            const rankDelta = stateRank(a) - stateRank(b);
+            if (rankDelta !== 0) return rankDelta;
+            return String(a["Club Name"] || "").localeCompare(String(b["Club Name"] || ""));
+        });
+
+        if (listRows.length === 0) {
+            $('#club-list').html('<div class="list-empty">No clubs match these filters. Reset filters or broaden your search.</div>');
+            return;
+        }
+
+        const cards = listRows.slice(0, 80).map(function(row) {
+            const state = getMembershipState(row);
+            const stateClass = membershipStateClass(state, isTakingPlayersNow(row));
+            const label = membershipDisplayLabel(state, isTakingPlayersNow(row));
+            const city = displayValue(row.Location);
+            const courts = displayValue(row["Number of Courts"]);
+            const waitlist = displayValue(row["Waitlist Length"]);
+            const email = displayValue(row.Email);
+            const surface = displayValue(row["Court Surface"]);
+
+            return [
+                '<article class="club-card">',
+                '<div class="club-card__top">',
+                '<div>',
+                '<h3 class="club-card__name">' + escapeHtml(row["Club Name"] || "Unknown club") + '</h3>',
+                '<p class="club-card__meta">' + escapeHtml(city) + ' · ' + escapeHtml(surface) + '</p>',
+                '</div>',
+                '<span class="state-badge state-badge--' + stateClass + '">' + escapeHtml(label) + '</span>',
+                '</div>',
+                '<div class="club-card__details">',
+                detailHtml("Courts", courts),
+                detailHtml("Waitlist", waitlist),
+                detailHtml("Taking players", takingPlayersDisplay(row)),
+                detailHtml("Email", email),
+                '</div>',
+                '</article>'
+            ].join("");
+        });
+
+        if (listRows.length > 80) {
+            cards.push('<div class="list-empty">Showing first 80 matches. Use search or filters to narrow the list.</div>');
+        }
+
+        $('#club-list').html(cards.join(""));
+    }
+
+    function detailHtml(label, value) {
+        return [
+            '<div class="club-card__detail">',
+            '<span class="club-card__detail-label">' + escapeHtml(label) + '</span>',
+            '<span class="club-card__detail-value">' + escapeHtml(value) + '</span>',
+            '</div>'
+        ].join("");
     }
 
     function renderDashboard() {
         const rows = visibleRecords();
-        const mapped = rows.map(function(row) {
+        const markers = rows.filter(function(row) {
+            return row.court_bucket || bucketCourt(row["Number of Courts"]);
+        }).map(function(row) {
             return {
-                club_name: row["Club Name"] || 'N/A',
-                Location: row.Location || 'N/A',
-                location: row.Location || 'N/A',
-                email: row.Email || 'N/A',
-                courts: row["Number of Courts"] || 'N/A',
-                "Membership Status": row["Membership Status"] || 'N/A',
+                club_name: row["Club Name"] || "Unknown",
+                location: row.Location || "N/A",
+                email: row.Email || "N/A",
+                membership_status: row["Membership Status"] || "N/A",
+                membership_state: getMembershipState(row),
+                courts: row["Number of Courts"] || "N/A",
+                waitlist_length: row["Waitlist Length"] || "N/A",
+                taking_players_now: isTakingPlayersNow(row),
+                taking_players_label: takingPlayersDisplay(row),
                 lat: row.lat,
                 lng: row.lng,
             };
         });
 
-        $('#stat-total').text(dashboardMeta.total_clubs || records.length || 0);
-        $('#dashboard-total-note').text(dashboardMeta.total_clubs || records.length || 0);
-        $('#stat-mapped').text(rows.filter(function(row) { return row.lat && row.lng; }).length);
+        rows.forEach(function(row) {
+            if (!row.hasOwnProperty("court_bucket")) {
+                row.court_bucket = bucketCourt(row["Number of Courts"]);
+            }
+        });
+
         updateStats(rows);
         updateFilterPills();
-        renderMap(mapped);
-        drawCourts(rows);
-        drawMembership(rows);
+        renderMap(markers);
+        renderClubList(rows);
+        buildCourtChart(rows);
+        buildMembershipChart(rows);
     }
 
     function loadDashboardData() {
-        $.getJSON('/api/dashboard-data', function(payload) {
-            dashboardMeta = payload || {};
-            records = Array.isArray(dashboardMeta.records) ? dashboardMeta.records : [];
+        $.getJSON('/api/dashboard-data', function(data) {
+            dashboardMeta = data || {};
+            rawRecords = data.records || [];
+            $('#last-refreshed').text('Updated ' + new Date().toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }));
             renderDashboard();
         }).fail(function() {
-            records = [];
-            dashboardMeta = {};
+            rawRecords = [];
+            $('#last-refreshed').text('Data unavailable');
             renderDashboard();
         });
     }
 
-    $(document).ready(function() {
+    $(function() {
+        $('#club-search').on('input', function() {
+            activeFilters.query = $(this).val().trim();
+            renderDashboard();
+        });
+        $('#membership-filter').on('change', function() {
+            activeFilters.membershipSelect = $(this).val();
+            renderDashboard();
+        });
+        $('#court-filter').on('change', function() {
+            activeFilters.courtSelect = $(this).val();
+            renderDashboard();
+        });
         loadDashboardData();
-        $('#clear-filters').on('click', clearFilters);
-        setInterval(loadDashboardData, 15000);
+        setInterval(loadDashboardData, 6000);
     });
 </script>
 {% endblock %}

@@ -1,442 +1,670 @@
 #!/usr/bin/env python3
 """
-Simple HTTP-based Tennis Club Web Scraper
-Uses requests and BeautifulSoup for reliable scraping
+Build-aligned hybrid tennis club scraper.
+
+Pipeline order:
+1) preloaded merge
+2) structured parser
+3) legacy text/table parser
+4) grouped-link parser
+5) contact subpage parser
+6) playwright fallback (optional, last resort)
 """
+
+from __future__ import annotations
+
+from dataclasses import dataclass, field
+import re
+import threading
+import time
+from typing import Dict, Iterable
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
-import re
-from typing import Dict
-from urllib.parse import urljoin, urlparse
-import time
+
+
+SCRAPE_FIELDS = [
+    "Email",
+    "Location",
+    "Club Type",
+    "Membership Status",
+    "Waitlist Length",
+    "Number of Courts",
+    "Court Surface",
+    "Operating Season",
+]
+
+CRITICAL_FIELDS = [
+    "Email",
+    "Location",
+    "Number of Courts",
+    "Court Surface",
+    "Operating Season",
+]
+
+REVIEW_FIELDS = ["Membership Status", "Waitlist Length"]
+
+FIELD_THRESHOLDS = {
+    "Email": 0.85,
+    "Location": 0.80,
+    "Club Type": 0.75,
+    "Membership Status": 0.75,
+    "Waitlist Length": 0.75,
+    "Number of Courts": 0.80,
+    "Court Surface": 0.75,
+    "Operating Season": 0.75,
+}
+
+PLAYWRIGHT_LOCK = threading.Lock()
+
+
+@dataclass
+class ClubRecord:
+    club_name: str
+    website: str
+    values: Dict[str, str] = field(default_factory=lambda: {k: "N/A" for k in SCRAPE_FIELDS})
+    confidence_by_field: Dict[str, float] = field(default_factory=lambda: {k: 0.0 for k in SCRAPE_FIELDS})
+    field_sources: Dict[str, Dict[str, str | float]] = field(default_factory=dict)
+    attempted_urls: list[str] = field(default_factory=list)
+    retrieval_history: list[Dict[str, object]] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
+    retrieval_mode: str = "failed"
+    status_detail: str = ""
+    needs_outreach: bool = False
+    site_profile: str = "unknown"
+
+    def set_field(self, key: str, value: str, confidence: float, source: str, stage: str) -> None:
+        self.values[key] = value
+        self.confidence_by_field[key] = confidence
+        self.field_sources[key] = {
+            "source": source,
+            "stage": stage,
+            "confidence": confidence,
+        }
+
+    def unresolved(self, fields: Iterable[str]) -> list[str]:
+        unresolved = []
+        for field in fields:
+            value = self.values.get(field, "N/A")
+            confidence = self.confidence_by_field.get(field, 0.0)
+            threshold = FIELD_THRESHOLDS.get(field, 0.0)
+            if value == "N/A" or confidence < threshold:
+                unresolved.append(field)
+        return unresolved
+
+    def has_usable_data(self) -> bool:
+        return any(
+            self.values.get(field, "N/A") != "N/A"
+            and self.confidence_by_field.get(field, 0.0) >= FIELD_THRESHOLDS.get(field, 0.0)
+            for field in SCRAPE_FIELDS
+        )
+
+    def status(self) -> str:
+        unresolved_critical = self.unresolved(CRITICAL_FIELDS)
+        if not unresolved_critical and self.has_usable_data():
+            return "Success"
+        if self.has_usable_data():
+            return "Partial"
+        return "Failed"
+
+    def to_result_dict(self) -> Dict[str, object]:
+        payload: Dict[str, object] = {
+            "Club Name": self.club_name,
+            "Website": self.website,
+            "Scrape Status": self.status(),
+        }
+        payload.update(self.values)
+        payload["_meta"] = {
+            "retrieval_mode": self.retrieval_mode,
+            "field_sources": self.field_sources,
+            "attempted_urls": self.attempted_urls,
+            "errors": self.errors,
+            "site_profile": self.site_profile,
+            "needs_outreach": self.needs_outreach,
+            "status_detail": self.status_detail,
+        }
+        return payload
+
 
 class TennisClubScraper:
-    def __init__(self, data_merger=None):
+    def __init__(self, data_merger=None, debug: bool = True):
         self.session = requests.Session()
-        # Better headers to avoid being blocked
-        self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Accept-Encoding': 'gzip, deflate',
-            'Connection': 'keep-alive',
-            'Upgrade-Insecure-Requests': '1'
-        })
+        self.session.headers.update(
+            {
+                "User-Agent": (
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                    "AppleWebKit/537.36 (KHTML, like Gecko) "
+                    "Chrome/120.0.0.0 Safari/537.36"
+                ),
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                "Accept-Language": "en-US,en;q=0.5",
+                "Accept-Encoding": "gzip, deflate",
+                "Connection": "keep-alive",
+                "Upgrade-Insecure-Requests": "1",
+            }
+        )
         self.timeout = 15
-        self.debug = True  # Enable debug logging
-        self.data_merger = data_merger  # Optional data merger for pre-populated data
+        self.max_retries = 3
+        self.retry_backoff_seconds = 1.0
+        self.debug = debug
+        self.data_merger = data_merger
+
+    def _log(self, message: str) -> None:
+        if self.debug:
+            print(message)
+
+    def _normalize_url(self, url: str) -> str:
+        url = (url or "").strip()
+        if not url:
+            return ""
+        if not url.startswith(("http://", "https://")):
+            url = f"https://{url}"
+        return url
+
+    def _url_candidates(self, url: str) -> list[str]:
+        normalized = self._normalize_url(url)
+        if not normalized:
+            return []
+
+        candidates = [normalized]
+        if normalized.startswith("https://"):
+            candidates.append("http://" + normalized[len("https://") :])
+        elif normalized.startswith("http://"):
+            candidates.append("https://" + normalized[len("http://") :])
+
+        expanded: list[str] = []
+        seen = set()
+        for candidate in candidates:
+            if candidate in seen:
+                continue
+            seen.add(candidate)
+            expanded.append(candidate)
+            if "//www." in candidate:
+                alt = candidate.replace("//www.", "//", 1)
+                if alt not in seen:
+                    seen.add(alt)
+                    expanded.append(alt)
+            else:
+                proto, rest = candidate.split("//", 1)
+                alt = f"{proto}//www.{rest}"
+                if alt not in seen:
+                    seen.add(alt)
+                    expanded.append(alt)
+        return expanded
+
+    def _fetch_html_soup(self, url: str) -> tuple[BeautifulSoup | None, str, int]:
+        for attempt in range(self.max_retries):
+            try:
+                response = self.session.get(url, timeout=self.timeout, verify=False, allow_redirects=True)
+                response.raise_for_status()
+                soup = BeautifulSoup(response.text, "html.parser")
+                page_text = soup.get_text(separator=" ", strip=True)
+                return soup, page_text, response.status_code
+            except Exception as exc:  # noqa: BLE001
+                if attempt < self.max_retries - 1:
+                    sleep_s = self.retry_backoff_seconds * (2 ** attempt)
+                    self._log(f"[DEBUG] fetch retry {attempt + 1}/{self.max_retries} for {url}: {exc}")
+                    time.sleep(sleep_s)
+                    continue
+                self._log(f"[DEBUG] fetch failed for {url}: {exc}")
+        return None, "", 0
+
+    def _profile_site(self, soup: BeautifulSoup, page_text: str) -> str:
+        scripts = soup.find_all("script")
+        script_text = " ".join((script.get_text() or "") for script in scripts[:10]).lower()
+        if len(page_text) < 250:
+            return "js_heavy"
+        if len(scripts) > 12 and any(framework in script_text for framework in ["react", "vue", "angular", "next"]):
+            return "js_heavy"
+        has_table = bool(soup.find("table"))
+        has_list = bool(soup.find("li"))
+        if has_table or has_list:
+            return "legacy_html"
+        return "structured_html"
 
     def extract_city_from_address(self, text: str) -> str:
-        """Extract city name from address text"""
-        # GTA cities pattern
         gta_cities = [
-            'Toronto', 'Mississauga', 'Brampton', 'Hamilton', 'Markham',
-            'Vaughan', 'Richmond Hill', 'Oakville', 'Burlington', 'Oshawa',
-            'Pickering', 'Ajax', 'Whitby', 'Newmarket', 'Aurora',
-            'Milton', 'Caledon', 'Georgina', 'Stouffville', 'King',
-            'Etobicoke', 'Scarborough', 'North York', 'East York'
+            "Toronto",
+            "Mississauga",
+            "Brampton",
+            "Hamilton",
+            "Markham",
+            "Vaughan",
+            "Richmond Hill",
+            "Oakville",
+            "Burlington",
+            "Oshawa",
+            "Pickering",
+            "Ajax",
+            "Whitby",
+            "Newmarket",
+            "Aurora",
+            "Milton",
+            "Caledon",
+            "Georgina",
+            "Stouffville",
+            "King",
+            "Etobicoke",
+            "Scarborough",
+            "North York",
+            "East York",
         ]
-
         text_lower = text.lower()
         for city in gta_cities:
             if city.lower() in text_lower:
                 return city
 
-        # Try postal code pattern (ends with Ontario city)
-        postal_match = re.search(r'([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+ON', text)
+        postal_match = re.search(r"([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*),?\s+ON", text)
         if postal_match:
             return postal_match.group(1)
 
-        return 'N/A'
+        return "N/A"
 
     def extract_email(self, soup: BeautifulSoup, page_text: str) -> str:
-        """Extract email address from page - Enhanced with multiple strategies"""
-
-        # Strategy 1: Look for mailto links (highest priority)
-        mailto_links = soup.find_all('a', href=re.compile(r'^mailto:', re.I))
-        if mailto_links:
-            email = mailto_links[0]['href'].replace('mailto:', '').split('?')[0].strip()
-            if '@' in email:
+        mailto_links = soup.find_all("a", href=re.compile(r"^mailto:", re.I))
+        for link in mailto_links:
+            email = link.get("href", "").replace("mailto:", "").split("?")[0].strip()
+            if "@" in email:
                 return email
 
-        # Strategy 2: Look in meta tags
-        meta_email = soup.find('meta', attrs={'name': re.compile(r'email', re.I)})
-        if meta_email and meta_email.get('content'):
-            email = meta_email['content'].strip()
-            if '@' in email:
-                return email
+        meta_email = soup.find("meta", attrs={"name": re.compile(r"email", re.I)})
+        if meta_email and meta_email.get("content") and "@" in meta_email["content"]:
+            return meta_email["content"].strip()
 
-        # Strategy 3: Look in contact section specifically
-        contact_section = soup.find(['div', 'section'], class_=re.compile(r'contact', re.I))
-        if contact_section:
-            contact_text = contact_section.get_text()
-            emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', contact_text)
-            if emails:
-                for e in emails:
-                    if not any(x in e.lower() for x in ['example', 'test', 'noreply']):
-                        return e
-
-        # Strategy 4: Look in footer
-        footer = soup.find('footer')
-        if footer:
-            footer_text = footer.get_text()
-            emails = re.findall(r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b', footer_text)
-            if emails:
-                for e in emails:
-                    if not any(x in e.lower() for x in ['example', 'test', 'noreply']):
-                        return e
-
-        # Strategy 5: Search entire page text with smart filtering
-        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        email_pattern = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b"
         emails = re.findall(email_pattern, page_text)
-
         if emails:
-            # Filter and prioritize
-            blacklist = ['example.com', 'test.com', 'placeholder', 'yourdomain', 'email.com',
-                        'sample.com', 'domain.com', 'sampleemail', 'noreply', 'no-reply',
-                        'privacy@', 'legal@', 'abuse@']
-
-            # Prioritize club-related emails
-            priority_keywords = ['info@', 'contact@', 'tennis@', 'club@', 'admin@', 'president@']
-
-            priority_emails = []
-            other_emails = []
-
-            for e in emails:
-                e_lower = e.lower()
-                # Skip blacklisted
-                if any(x in e_lower for x in blacklist):
+            blacklist = ["example", "test", "noreply", "no-reply", "privacy@", "abuse@", "legal@"]
+            for email in emails:
+                lowered = email.lower()
+                if any(token in lowered for token in blacklist):
                     continue
-                # Check priority
-                if any(keyword in e_lower for keyword in priority_keywords):
-                    priority_emails.append(e)
-                else:
-                    other_emails.append(e)
+                return email
 
-            # Return priority emails first
-            if priority_emails:
-                return priority_emails[0]
-            if other_emails:
-                return other_emails[0]
-
-        # Strategy 6: Look for obfuscated emails (e.g., "info AT domain DOT com")
-        obfuscated = re.search(r'(\w+)\s*(?:@|AT|at)\s*(\w+)\s*(?:\.|DOT|dot)\s*(\w+)', page_text, re.I)
+        obfuscated = re.search(r"(\w+)\s*(?:@|AT|at)\s*(\w+)\s*(?:\.|DOT|dot)\s*(\w+)", page_text, re.I)
         if obfuscated:
-            email = f"{obfuscated.group(1)}@{obfuscated.group(2)}.{obfuscated.group(3)}"
-            return email
+            return f"{obfuscated.group(1)}@{obfuscated.group(2)}.{obfuscated.group(3)}"
 
-        # Strategy 7: Check if there's a contact page link
-        contact_links = soup.find_all('a', href=re.compile(r'contact|email', re.I))
+        contact_links = soup.find_all("a", href=re.compile(r"contact|email", re.I))
         if contact_links:
-            return 'Contact form available'
+            return "Contact form available"
 
-        return 'N/A'
+        return "N/A"
 
-    def extract_waitlist_length(self, page_text: str, soup: BeautifulSoup) -> str:
-        """Extract waitlist length information"""
-        # Patterns for waitlist length
+    def extract_waitlist_length(self, page_text: str) -> str:
         patterns = [
-            r'waitlist[:\s]+(\d+)\s*(?:people|members|players)?',
-            r'(\d+)\s*(?:people|members|players)?\s+on\s+(?:the\s+)?waitlist',
-            r'waiting\s+list[:\s]+(\d+)',
-            r'(\d+)\s*year\s+waitlist',
-            r'(\d{1,3})\s*(?:\+)?\s*on\s+wait',
+            r"waitlist[:\s]+(\d+)\s*(?:people|members|players)?",
+            r"(\d+)\s*(?:people|members|players)?\s+on\s+(?:the\s+)?waitlist",
+            r"waiting\s+list[:\s]+(\d+)",
+            r"(\d+)\s*year\s+waitlist",
+            r"(\d{1,3})\s*(?:\+)?\s*on\s+wait",
         ]
-
         text_lower = page_text.lower()
         for pattern in patterns:
             match = re.search(pattern, text_lower, re.I)
             if match:
                 return match.group(1)
 
-        # Check for qualitative descriptions
-        if re.search(r'no\s+waitlist|waitlist\s+is\s+closed|not\s+accepting', text_lower, re.I):
-            return '0'
-        if re.search(r'long\s+waitlist|extensive\s+waitlist|several\s+years?', text_lower, re.I):
-            return 'Long'
+        if re.search(r"no\s+waitlist|waitlist\s+is\s+closed|not\s+accepting", text_lower, re.I):
+            return "0"
+        if re.search(r"long\s+waitlist|extensive\s+waitlist|several\s+years?", text_lower, re.I):
+            return "Long"
 
-        return 'N/A'
+        return "N/A"
 
     def extract_membership_status(self, page_text: str) -> str:
-        """Extract membership status"""
         text_lower = page_text.lower()
+        if re.search(r"(?:accepting|open)\s+(?:new\s+)?(?:members|memberships|applications)", text_lower, re.I):
+            return "Open"
+        if re.search(r"waitlist|waiting\s+list|join\s+(?:our\s+)?wait", text_lower, re.I):
+            return "Waitlist"
+        if re.search(r"not\s+accepting|membership\s+(?:is\s+)?closed|full\s+capacity", text_lower, re.I):
+            return "Closed"
+        return "N/A"
 
-        # Check for open membership
-        if re.search(r'(?:accepting|open)\s+(?:new\s+)?(?:members|memberships|applications)', text_lower, re.I):
-            return 'Open'
-
-        # Check for waitlist
-        if re.search(r'waitlist|waiting\s+list|join\s+(?:our\s+)?wait', text_lower, re.I):
-            return 'Waitlist'
-
-        # Check for closed
-        if re.search(r'not\s+accepting|membership\s+(?:is\s+)?closed|full\s+capacity', text_lower, re.I):
-            return 'Closed'
-
-        return 'N/A'
-
-    def extract_courts_count(self, page_text: str, soup: BeautifulSoup) -> str:
-        """Extract number of courts - Enhanced with multiple strategies"""
-
-        # Strategy 1: Look in facilities/amenities section
-        facilities = soup.find(['div', 'section'], class_=re.compile(r'facilit|amenity|about', re.I))
-        if facilities:
-            fac_text = facilities.get_text()
-            match = re.search(r'(\d+)\s+(?:tennis\s+)?courts?', fac_text, re.I)
-            if match:
-                count = int(match.group(1))
-                if 1 <= count <= 50:
-                    return str(count)
-
-        # Strategy 2: Comprehensive pattern matching
+    def extract_courts_count(self, page_text: str) -> str:
         patterns = [
-            r'(\d+)\s+(?:tennis\s+)?courts?(?:\s|,|\.|\)|$)',
-            r'courts?[:\s]+(\d+)',
-            r'total\s+(?:of\s+)?(\d+)\s+courts?',
-            r'we\s+have\s+(\d+)\s+courts?',
-            r'featuring\s+(\d+)\s+courts?',
-            r'(\d+)\s+(?:indoor|outdoor)\s+courts?',
-            r'club\s+has\s+(\d+)\s+courts?',
-            r'facilities\s+include\s+(\d+)\s+courts?',
-            r'(\d+)[-\s]court',  # e.g., "4-court facility"
-            r'with\s+(\d+)\s+courts?',
+            r"(\d+)\s+(?:tennis\s+)?courts?(?:\s|,|\.|\)|$)",
+            r"courts?[:\s]+(\d+)",
+            r"total\s+(?:of\s+)?(\d+)\s+courts?",
+            r"we\s+have\s+(\d+)\s+courts?",
+            r"featuring\s+(\d+)\s+courts?",
+            r"(\d+)[-\s]court",
         ]
-
         for pattern in patterns:
-            matches = re.finditer(pattern, page_text, re.I)
-            for match in matches:
+            for match in re.finditer(pattern, page_text, re.I):
                 count = int(match.group(1))
-                # Sanity check - tennis clubs typically have 1-50 courts
                 if 1 <= count <= 50:
                     return str(count)
 
-        # Strategy 3: Look for spelled-out numbers
-        word_to_num = {
-            'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
-            'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10
+        words = {
+            "one": 1,
+            "two": 2,
+            "three": 3,
+            "four": 4,
+            "five": 5,
+            "six": 6,
+            "seven": 7,
+            "eight": 8,
+            "nine": 9,
+            "ten": 10,
         }
-        for word, num in word_to_num.items():
-            if re.search(rf'\b{word}\s+(?:tennis\s+)?courts?', page_text, re.I):
-                return str(num)
-
-        return 'N/A'
+        for word, count in words.items():
+            if re.search(rf"\b{word}\s+(?:tennis\s+)?courts?", page_text, re.I):
+                return str(count)
+        return "N/A"
 
     def extract_court_surface(self, page_text: str) -> str:
-        """Extract court surface type - Enhanced"""
         text_lower = page_text.lower()
-
-        surfaces_found = []
-
-        # Hard courts (most common)
-        if re.search(r'\bhard\s*courts?|\bhardcourts?|\bhard[-\s]surface|\basphalt|\bconcrete\s*courts?', text_lower):
-            surfaces_found.append('Hard')
-
-        # Clay courts
-        if re.search(r'\bclay\s*courts?|\bred\s*clay|\bhar-tru|\bgreen\s*clay', text_lower):
-            surfaces_found.append('Clay')
-
-        # Grass courts
-        if re.search(r'\bgrass\s*courts?|\blawn\s*courts?', text_lower):
-            surfaces_found.append('Grass')
-
-        # Indoor/Outdoor
-        if re.search(r'\bindoor\s*courts?|\benclosed|\bbubble|\bdome', text_lower):
-            surfaces_found.append('Indoor')
-        if re.search(r'\boutdoor\s*courts?|\bopen-air', text_lower):
-            if 'Indoor' not in surfaces_found:  # Don't add if already has indoor
-                surfaces_found.append('Outdoor')
-
-        # Synthetic/Other
-        if re.search(r'\bsynthetic|\bartificial\s*grass|\bturf\s*courts?', text_lower):
-            surfaces_found.append('Synthetic')
-
-        if surfaces_found:
-            return ', '.join(set(surfaces_found))  # Remove duplicates
-
-        return 'N/A'
+        surfaces: list[str] = []
+        if re.search(r"\bhard\s*courts?|\bhardcourts?|\basphalt|\bconcrete\s*courts?", text_lower):
+            surfaces.append("Hard")
+        if re.search(r"\bclay\s*courts?|\bred\s*clay|\bhar-tru|\bgreen\s*clay", text_lower):
+            surfaces.append("Clay")
+        if re.search(r"\bgrass\s*courts?|\blawn\s*courts?", text_lower):
+            surfaces.append("Grass")
+        if re.search(r"\bindoor\s*courts?|\benclosed|\bbubble|\bdome", text_lower):
+            surfaces.append("Indoor")
+        if re.search(r"\boutdoor\s*courts?|\bopen-air", text_lower):
+            surfaces.append("Outdoor")
+        if re.search(r"\bsynthetic|\bartificial\s*grass|\bturf\s*courts?", text_lower):
+            surfaces.append("Synthetic")
+        if surfaces:
+            return ", ".join(sorted(set(surfaces)))
+        return "N/A"
 
     def extract_operating_season(self, page_text: str) -> str:
-        """Extract operating season"""
         text_lower = page_text.lower()
+        if "year round" in text_lower or "year-round" in text_lower or "all year" in text_lower:
+            return "Year-round"
+        if "seasonal" in text_lower and ("april" in text_lower or "may" in text_lower):
+            return "Seasonal (Spring-Fall)"
+        if "outdoor only" in text_lower:
+            return "Seasonal"
+        if "indoor" in text_lower and "outdoor" in text_lower:
+            return "Year-round"
+        return "N/A"
 
-        if 'year round' in text_lower or 'year-round' in text_lower or 'all year' in text_lower:
-            return 'Year-round'
-        if 'seasonal' in text_lower:
-            if 'april' in text_lower or 'may' in text_lower:
-                return 'Seasonal (Spring-Fall)'
-        if 'outdoor only' in text_lower:
-            return 'Seasonal'
-        if 'indoor' in text_lower and 'outdoor' in text_lower:
-            return 'Year-round'
-
-        return 'N/A'
-
-    def extract_club_type(self, page_text: str, soup: BeautifulSoup) -> str:
-        """Extract club type (private/public)"""
+    def extract_club_type(self, page_text: str) -> str:
         text_lower = page_text.lower()
+        if re.search(r"private\s+club|members?\s+only|membership\s+required", text_lower, re.I):
+            return "Private"
+        if re.search(r"public|community|municipal|city\s+of", text_lower, re.I):
+            return "Public"
+        if re.search(r"commercial", text_lower, re.I):
+            return "Commercial"
+        return "N/A"
 
-        if re.search(r'private\s+club|members?\s+only|membership\s+required', text_lower, re.I):
-            return 'Private'
-        if re.search(r'public|community|municipal|city\s+of', text_lower, re.I):
-            return 'Public'
+    def _finding(self, value: str, confidence: float, source_url: str) -> tuple[str, float, str] | None:
+        value = (value or "").strip()
+        if not value or value == "N/A":
+            return None
+        return value, confidence, source_url
 
-        return 'N/A'
-
-    def scrape_club(self, url: str, club_name: str) -> Dict:
-        """Scrape a single tennis club website"""
-        result = {
-            'Club Name': club_name,
-            'Website': url,
-            'Email': 'N/A',
-            'Location': 'N/A',
-            'Club Type': 'N/A',
-            'Membership Status': 'N/A',
-            'Waitlist Length': 'N/A',
-            'Number of Courts': 'N/A',
-            'Court Surface': 'N/A',
-            'Operating Season': 'N/A',
-            'Scrape Status': 'Failed'  # Track success/failure
+    def _parse_structured(
+        self,
+        soup: BeautifulSoup,
+        page_text: str,
+        source_url: str,
+    ) -> Dict[str, tuple[str, float, str]]:
+        extracted: Dict[str, tuple[str, float, str]] = {}
+        candidates = {
+            "Email": self._finding(self.extract_email(soup, page_text), 0.90, source_url),
+            "Location": self._finding(self.extract_city_from_address(page_text), 0.85, source_url),
+            "Club Type": self._finding(self.extract_club_type(page_text), 0.75, source_url),
+            "Membership Status": self._finding(self.extract_membership_status(page_text), 0.75, source_url),
+            "Waitlist Length": self._finding(self.extract_waitlist_length(page_text), 0.75, source_url),
+            "Number of Courts": self._finding(self.extract_courts_count(page_text), 0.85, source_url),
+            "Court Surface": self._finding(self.extract_court_surface(page_text), 0.80, source_url),
+            "Operating Season": self._finding(self.extract_operating_season(page_text), 0.75, source_url),
         }
+        for key, item in candidates.items():
+            if item is not None:
+                extracted[key] = item
+        return extracted
 
-        # Check data merger first for existing data
-        if self.data_merger:
-            existing_data = self.data_merger.get_existing_data(club_name, url)
-            if existing_data:
-                if self.debug:
-                    print(f"[DEBUG] Found existing data for {club_name} from {existing_data.get('source', 'database')}")
+    def _parse_legacy_text_table(
+        self,
+        soup: BeautifulSoup,
+        page_text: str,
+        source_url: str,
+    ) -> Dict[str, tuple[str, float, str]]:
+        extracted = self._parse_structured(soup, page_text, source_url)
 
-                # Use existing data where available
-                for key in ['Email', 'Location', 'Club Type', 'Membership Status',
-                           'Number of Courts', 'Court Surface', 'Operating Season']:
-                    if key in existing_data and existing_data[key] != 'N/A':
-                        result[key] = existing_data[key]
+        for row in soup.find_all("tr"):
+            cells = row.find_all(["th", "td"])
+            if len(cells) < 2:
+                continue
+            key = cells[0].get_text(" ", strip=True).lower()
+            value = cells[1].get_text(" ", strip=True)
+            if "court" in key:
+                finding = self._finding(self.extract_courts_count(value), 0.82, source_url)
+                if finding:
+                    extracted["Number of Courts"] = finding
+            if "surface" in key:
+                finding = self._finding(self.extract_court_surface(value), 0.82, source_url)
+                if finding:
+                    extracted["Court Surface"] = finding
+            if "membership" in key:
+                finding = self._finding(self.extract_membership_status(value), 0.72, source_url)
+                if finding:
+                    extracted["Membership Status"] = finding
 
-                # If we have email and some other data, consider it a success without scraping
-                if result['Email'] != 'N/A' or result['Number of Courts'] != 'N/A':
-                    result['Scrape Status'] = f"Pre-loaded ({existing_data.get('source', 'DB')})"
-                    if self.debug:
-                        found_fields = [k for k, v in result.items() if v != 'N/A' and k not in ['Club Name', 'Website', 'Scrape Status']]
-                        print(f"[DEBUG] Pre-loaded data fields: {found_fields}")
-                    # Still try to scrape for missing data, but don't fail if it doesn't work
-                    # Fall through to scraping below
-                    pass
+        for li in soup.find_all("li"):
+            text = li.get_text(" ", strip=True)
+            if "@" in text:
+                email_match = re.search(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b", text)
+                if email_match:
+                    extracted["Email"] = (email_match.group(0), 0.80, source_url)
 
+        return extracted
+
+    def _parse_grouped_links(self, soup: BeautifulSoup, base_url: str) -> Dict[str, tuple[str, float, str]]:
+        links = soup.find_all("a", href=True)
+        grouped: Dict[str, int] = {}
+        for link in links:
+            href = urljoin(base_url, link.get("href", ""))
+            if not href.startswith(("http://", "https://")):
+                continue
+            grouped[href] = grouped.get(href, 0) + 1
+
+        candidates = [href for href, count in grouped.items() if count >= 2][:3]
+        combined: Dict[str, tuple[str, float, str]] = {}
+        for href in candidates:
+            soup_detail, page_text, status = self._fetch_html_soup(href)
+            if not soup_detail or status < 200 or status >= 400:
+                continue
+            details = self._parse_legacy_text_table(soup_detail, page_text, href)
+            for key, value in details.items():
+                existing = combined.get(key)
+                if existing is None or value[1] > existing[1]:
+                    combined[key] = value
+        return combined
+
+    def _parse_contact_subpages(self, soup: BeautifulSoup, base_url: str) -> Dict[str, tuple[str, float, str]]:
+        keywords = ["contact", "about", "membership", "facility", "waitlist"]
+        candidates: list[str] = []
+        for link in soup.find_all("a", href=True):
+            href = urljoin(base_url, link.get("href", ""))
+            text = (link.get_text(" ", strip=True) or "").lower()
+            if any(keyword in href.lower() or keyword in text for keyword in keywords):
+                if href not in candidates:
+                    candidates.append(href)
+            if len(candidates) >= 4:
+                break
+
+        combined: Dict[str, tuple[str, float, str]] = {}
+        for href in candidates:
+            sub_soup, sub_text, status = self._fetch_html_soup(href)
+            if not sub_soup or status < 200 or status >= 400:
+                continue
+            extracted = self._parse_legacy_text_table(sub_soup, sub_text, href)
+            for key, value in extracted.items():
+                existing = combined.get(key)
+                if existing is None or value[1] > existing[1]:
+                    combined[key] = value
+        return combined
+
+    def _parse_playwright_fallback(self, url: str, source_url: str) -> Dict[str, tuple[str, float, str]]:
         try:
-            # Make sure URL has protocol
-            if not url.startswith(('http://', 'https://')):
-                url = 'https://' + url
+            from playwright.sync_api import sync_playwright
+        except Exception:  # noqa: BLE001
+            return {}
 
-            if self.debug:
-                print(f"[DEBUG] Scraping {club_name}: {url}")
+        with PLAYWRIGHT_LOCK:
+            try:
+                with sync_playwright() as playwright:
+                    browser = playwright.chromium.launch(headless=True)
+                    page = browser.new_page()
+                    page.goto(url, wait_until="networkidle", timeout=30000)
+                    html = page.content()
+                    browser.close()
+            except Exception:  # noqa: BLE001
+                return {}
 
-            # Try with SSL verification disabled from the start (many tennis club sites have issues)
-            response = self.session.get(url, timeout=self.timeout, verify=False, allow_redirects=True)
+        soup = BeautifulSoup(html, "html.parser")
+        text = soup.get_text(separator=" ", strip=True)
+        extracted = self._parse_legacy_text_table(soup, text, source_url)
+        downweighted: Dict[str, tuple[str, float, str]] = {}
+        for key, (value, confidence, src) in extracted.items():
+            downweighted[key] = (value, min(confidence, 0.70), src)
+        return downweighted
 
-            if self.debug:
-                print(f"[DEBUG] Status Code: {response.status_code}")
-                print(f"[DEBUG] Final URL after redirects: {response.url}")
+    def _apply_extracted_fields(
+        self,
+        record: ClubRecord,
+        extracted: Dict[str, tuple[str, float, str]],
+        stage: str,
+    ) -> list[str]:
+        updated_fields: list[str] = []
+        for key, (value, confidence, source_url) in extracted.items():
+            current_value = record.values.get(key, "N/A")
+            current_confidence = record.confidence_by_field.get(key, 0.0)
+            current_source = record.field_sources.get(key, {}).get("source", "")
+            threshold = FIELD_THRESHOLDS.get(key, 0.0)
 
-            response.raise_for_status()
+            if current_value != "N/A" and current_confidence >= threshold:
+                continue
 
-            # Parse HTML
-            soup = BeautifulSoup(response.text, 'html.parser')
-
-            # Check if it's a JavaScript-heavy site
-            is_js_heavy = False
-            scripts = soup.find_all('script')
-            if len(scripts) > 10:  # Lots of scripts
-                script_text = ' '.join([s.string or '' for s in scripts[:5]])
-                if any(framework in script_text.lower() for framework in ['react', 'vue', 'angular', 'next']):
-                    is_js_heavy = True
-                    if self.debug:
-                        print(f"[DEBUG] ⚠️  JavaScript-heavy site detected - data may be limited")
-
-            # Remove script and style elements
-            for script in soup(["script", "style", "noscript"]):
-                script.decompose()
-
-            page_text = soup.get_text(separator=' ', strip=True)
-
-            if self.debug:
-                print(f"[DEBUG] Page text length: {len(page_text)} characters")
-                if len(page_text) < 500:
-                    print(f"[DEBUG] ⚠️  Very little visible text - likely JS-rendered")
-                print(f"[DEBUG] First 200 chars: {page_text[:200]}")
-
-            # Only extract if we have reasonable content
-            if len(page_text) < 200:
-                result['Scrape Status'] = 'JS-heavy (limited data)'
-                if self.debug:
-                    print(f"[DEBUG] ⚠️  Insufficient content - skipping detailed extraction")
-            else:
-                # Extract all data fields (only if pre-loaded data not complete)
-                if result['Email'] == 'N/A':
-                    result['Email'] = self.extract_email(soup, page_text)
-                if result['Location'] == 'N/A':
-                    result['Location'] = self.extract_city_from_address(page_text)
-                if result['Club Type'] == 'N/A':
-                    result['Club Type'] = self.extract_club_type(page_text, soup)
-                if result['Membership Status'] == 'N/A':
-                    result['Membership Status'] = self.extract_membership_status(page_text)
-                if result['Waitlist Length'] == 'N/A':
-                    result['Waitlist Length'] = self.extract_waitlist_length(page_text, soup)
-                if result['Number of Courts'] == 'N/A':
-                    result['Number of Courts'] = self.extract_courts_count(page_text, soup)
-                if result['Court Surface'] == 'N/A':
-                    result['Court Surface'] = self.extract_court_surface(page_text)
-                if result['Operating Season'] == 'N/A':
-                    result['Operating Season'] = self.extract_operating_season(page_text)
-
-                # Update status based on what was found
-                if result['Scrape Status'].startswith('Pre-loaded'):
-                    # Keep pre-loaded status
-                    pass
-                elif is_js_heavy and len([v for v in result.values() if v == 'N/A']) > 5:
-                    result['Scrape Status'] = 'Success (JS-limited)'
+            should_replace = False
+            if current_value == "N/A":
+                should_replace = True
+            elif confidence > current_confidence:
+                if current_source == "preloaded" and confidence <= current_confidence:
+                    should_replace = False
                 else:
-                    result['Scrape Status'] = 'Success'
+                    should_replace = True
 
-            if self.debug:
-                found_fields = [k for k, v in result.items() if v != 'N/A' and k not in ['Club Name', 'Website', 'Scrape Status']]
-                print(f"[DEBUG] Found data for: {found_fields}")
-                missing_fields = [k for k, v in result.items() if v == 'N/A' and k not in ['Club Name', 'Website', 'Scrape Status']]
-                if missing_fields:
-                    print(f"[DEBUG] Missing data for: {missing_fields}")
+            if should_replace:
+                record.set_field(key, value, confidence, source=source_url, stage=stage)
+                updated_fields.append(key)
 
-            # Small delay to be respectful
-            time.sleep(0.5)
+        if updated_fields:
+            record.retrieval_history.append({"stage": stage, "updated_fields": updated_fields})
+        return updated_fields
 
-        except requests.exceptions.Timeout:
-            error_msg = f"Timeout after {self.timeout}s"
-            print(f"[ERROR] {club_name}: {error_msg}")
-            result['Scrape Status'] = error_msg
+    def _populate_preloaded(self, record: ClubRecord, club_name: str, website: str) -> None:
+        if not self.data_merger:
+            return
+        existing_data = self.data_merger.get_existing_data(club_name, website)
+        if not existing_data:
+            return
 
-        except requests.exceptions.HTTPError as e:
-            error_msg = f"HTTP {e.response.status_code}"
-            print(f"[ERROR] {club_name}: {error_msg}")
-            result['Scrape Status'] = error_msg
+        for key in [
+            "Email",
+            "Location",
+            "Club Type",
+            "Membership Status",
+            "Number of Courts",
+            "Court Surface",
+            "Operating Season",
+        ]:
+            value = existing_data.get(key, "N/A")
+            if value and value != "N/A":
+                record.set_field(key, str(value), confidence=0.93, source="preloaded", stage="preloaded")
 
-        except requests.exceptions.ConnectionError:
-            error_msg = "Connection failed"
-            print(f"[ERROR] {club_name}: {error_msg}")
-            result['Scrape Status'] = error_msg
+        record.retrieval_history.append(
+            {
+                "stage": "preloaded",
+                "updated_fields": [f for f in SCRAPE_FIELDS if record.values.get(f, "N/A") != "N/A"],
+                "source": existing_data.get("source", "DB"),
+            }
+        )
 
-        except requests.exceptions.TooManyRedirects:
-            error_msg = "Too many redirects"
-            print(f"[ERROR] {club_name}: {error_msg}")
-            result['Scrape Status'] = error_msg
+    def _choose_retrieval_mode(self, record: ClubRecord) -> str:
+        stage_count: Dict[str, int] = {}
+        for details in record.field_sources.values():
+            stage = str(details.get("stage", "unknown"))
+            stage_count[stage] = stage_count.get(stage, 0) + 1
+        if not stage_count:
+            return "failed"
+        best_stage = sorted(stage_count.items(), key=lambda item: (-item[1], item[0]))[0][0]
+        return best_stage
 
-        except Exception as e:
-            error_msg = f"{type(e).__name__}: {str(e)[:100]}"
-            print(f"[ERROR] {club_name}: {error_msg}")
-            result['Scrape Status'] = error_msg
+    def scrape_club(self, url: str, club_name: str) -> Dict[str, object]:
+        normalized_url = self._normalize_url(url)
+        record = ClubRecord(club_name=club_name, website=normalized_url or "N/A")
 
-        return result
+        self._populate_preloaded(record, club_name, normalized_url)
+
+        soup: BeautifulSoup | None = None
+        page_text = ""
+        source_url = normalized_url
+
+        for candidate_url in self._url_candidates(normalized_url):
+            record.attempted_urls.append(candidate_url)
+            candidate_soup, candidate_text, status_code = self._fetch_html_soup(candidate_url)
+            if candidate_soup and 200 <= status_code < 400:
+                soup = candidate_soup
+                page_text = candidate_text
+                source_url = candidate_url
+                break
+
+        if soup is None:
+            record.errors.append("Unable to fetch website via HTTP")
+            record.retrieval_mode = self._choose_retrieval_mode(record)
+            record.needs_outreach = bool(record.unresolved(REVIEW_FIELDS))
+            record.status_detail = "http_fetch_failed"
+            return record.to_result_dict()
+
+        record.site_profile = self._profile_site(soup, page_text)
+
+        parsers = [
+            ("structured", lambda: self._parse_structured(soup, page_text, source_url)),
+            ("legacy_text_table", lambda: self._parse_legacy_text_table(soup, page_text, source_url)),
+            ("grouped_link", lambda: self._parse_grouped_links(soup, source_url)),
+            ("contact_subpage", lambda: self._parse_contact_subpages(soup, source_url)),
+        ]
+
+        for stage_name, parser in parsers:
+            extracted = parser()
+            self._apply_extracted_fields(record, extracted, stage=stage_name)
+
+        unresolved_after_http = record.unresolved(CRITICAL_FIELDS)
+        if unresolved_after_http:
+            rendered = self._parse_playwright_fallback(source_url, source_url)
+            if rendered:
+                self._apply_extracted_fields(record, rendered, stage="playwright")
+            else:
+                record.errors.append("playwright_fallback_unavailable_or_failed")
+
+        record.retrieval_mode = self._choose_retrieval_mode(record)
+        record.needs_outreach = bool(record.unresolved(REVIEW_FIELDS))
+
+        if record.status() == "Success":
+            record.status_detail = "critical_fields_resolved"
+        elif record.status() == "Partial":
+            missing = ",".join(record.unresolved(CRITICAL_FIELDS))
+            record.status_detail = f"missing_critical:{missing}"
+        else:
+            record.status_detail = "no_usable_fields"
+
+        time.sleep(0.3)
+        return record.to_result_dict()
 
 
-if __name__ == '__main__':
-    # Test the scraper
+if __name__ == "__main__":
     scraper = TennisClubScraper()
-    test_result = scraper.scrape_club('https://www.example-tennis-club.com', 'Test Club')
-    print(test_result)
+    sample = scraper.scrape_club("https://www.example-tennis-club.com", "Test Club")
+    print(sample)

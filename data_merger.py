@@ -14,6 +14,7 @@ class DataMerger:
         self.toronto_data = None
         self.ota_data = None
         self.excel_data = None
+        self.excel_run_data = None
         self.merged_data = {}
 
     def load_data(self):
@@ -36,7 +37,8 @@ class DataMerger:
 
         # Load main Excel file
         try:
-            self.excel_data = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx')
+            self.excel_data = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx', sheet_name='data')
+            self.excel_run_data = pd.read_excel('GTA_Tennis_clubs_raw_data .xlsx', sheet_name='run')
             print(f"✓ Main Excel file: {len(self.excel_data)} clubs")
         except Exception as e:
             print(f"⚠ Could not load Excel data: {e}")
@@ -145,7 +147,99 @@ class DataMerger:
                 if url_key and url_key not in self.merged_data:
                     self.merged_data[url_key] = data
 
+        # Process previously scraped workbook rows as enrichment only.
+        # These values are noisier than OTA/Toronto, so they fill gaps but do not overwrite.
+        if self.excel_run_data is not None:
+            for _, row in self.excel_run_data.iterrows():
+                club_name = row.get('Club Name', '')
+                website = row.get('Website URL', '')
+
+                if pd.isna(club_name):
+                    continue
+
+                name_key = self.normalize_name(club_name)
+                url_key = self.normalize_url(website)
+                existing = self.merged_data.get(name_key) or self.merged_data.get(url_key)
+
+                data = {
+                    'source': 'Workbook Run',
+                    'Club Name': club_name,
+                    'Email': self.clean_email(row.get('Email', '')),
+                    'Location': self.clean_location(row.get('Location', '')),
+                    'Club Type': self.map_club_type(row.get('Club Type', '')),
+                    'Membership Status': self.map_membership_status(row.get('Membership Status', '')),
+                    'Court Surface': self.clean_court_surface(row.get('Court Surface', '')),
+                    'Operating Season': self.clean_operating_season(row.get('Operating Season', '')),
+                    'Website': website if pd.notna(website) else 'N/A',
+                }
+
+                if existing is None:
+                    existing = data
+                else:
+                    self.merge_missing_fields(existing, data)
+
+                if name_key:
+                    self.merged_data[name_key] = existing
+                if url_key:
+                    self.merged_data[url_key] = existing
+
         print(f"✓ Built lookup dictionary with {len(self.merged_data)} entries")
+
+    def is_missing(self, value: object) -> bool:
+        if pd.isna(value):
+            return True
+        text = str(value).strip()
+        return not text or text.lower() in {'n/a', 'na', 'not found', 'none', 'nan', 'null'}
+
+    def merge_missing_fields(self, existing: Dict, incoming: Dict) -> None:
+        for key, value in incoming.items():
+            if key == 'source':
+                continue
+            if self.is_missing(value):
+                continue
+            if self.is_missing(existing.get(key, 'N/A')):
+                existing[key] = value
+
+        source = existing.get('source', '')
+        incoming_source = incoming.get('source', '')
+        if incoming_source and incoming_source not in str(source):
+            existing['source'] = f"{source}+{incoming_source}" if source else incoming_source
+
+    def clean_email(self, value: object) -> str:
+        if self.is_missing(value):
+            return 'N/A'
+        text = str(value).strip()
+        return text if '@' in text else 'N/A'
+
+    def clean_location(self, value: object) -> str:
+        if self.is_missing(value):
+            return 'N/A'
+        text = re.sub(r'\s+', ' ', str(value)).strip()
+        if len(text) > 60:
+            return 'N/A'
+        noisy_terms = ['home', 'programs', 'registration', 'contact us', 'skip to content']
+        lowered = text.lower()
+        if any(term in lowered for term in noisy_terms):
+            return 'N/A'
+        return text
+
+    def clean_court_surface(self, value: object) -> str:
+        if self.is_missing(value):
+            return 'N/A'
+        text = str(value).strip()
+        lowered = text.lower()
+        if any(surface in lowered for surface in ['hard', 'clay', 'grass', 'indoor', 'outdoor']):
+            return text
+        return 'N/A'
+
+    def clean_operating_season(self, value: object) -> str:
+        if self.is_missing(value):
+            return 'N/A'
+        text = str(value).strip()
+        lowered = text.lower()
+        if any(season in lowered for season in ['year-round', 'year round', 'summer', 'winter', 'seasonal']):
+            return text
+        return 'N/A'
 
     def map_club_type(self, club_type: str) -> str:
         """Map club type to standard format"""

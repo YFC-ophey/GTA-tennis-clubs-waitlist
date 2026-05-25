@@ -4,689 +4,1084 @@ GTA Tennis Clubs Web Scraper - Flask Application
 Wimbledon Championship Theme
 """
 
-from flask import Flask, render_template, request, jsonify
-import pandas as pd
-import json
+from __future__ import annotations
+
+from collections import Counter
+import csv
 import os
-import re
 from datetime import datetime
-from scraper_simple import TennisClubScraper
-from email_agent import EmailAgent
-from data_merger import initialize_data_merger
+import json
+from pathlib import Path
+import re
 import threading
+from typing import Iterable
+
+from flask import Flask, jsonify, render_template, request
 import requests
-from urllib.parse import urlparse
+import pandas as pd
+from bs4 import BeautifulSoup
 
-app = Flask(__name__)
-RAW_DATA_FILE = 'GTA_Tennis_clubs_raw_data .xlsx'
+from data_merger import initialize_data_merger
+from email_agent import EmailAgent
+from scraper_simple import CRITICAL_FIELDS, FIELD_THRESHOLDS, REVIEW_FIELDS, TennisClubScraper
 
-RECORD_FIELDS = [
-    'Club Name', 'Website', 'Email', 'Location',
-    'Club Type', 'Membership Status', 'Waitlist Length',
-    'Number of Courts', 'Court Surface', 'Operating Season', 'Scrape Status'
-]
+try:
+    from scraper_hybrid import HybridScraper, PLAYWRIGHT_AVAILABLE
+except ImportError:
+    HybridScraper = None
+    PLAYWRIGHT_AVAILABLE = False
 
-# Initialize data merger with CSV data on startup
-print("\n" + "="*80)
-print("🎾 Initializing Tennis Club Data Portal")
-print("="*80)
-global_data_merger = initialize_data_merger()
-print("✓ Data merger initialized successfully")
-print("="*80 + "\n")
 
-# Global variables for tracking scraping progress
-scraping_status = {
-    'running': False,
-    'progress': 0,
-    'total': 0,
-    'current_club': '',
-    'results': [],
-    'errors': []
+BASE_DIR = Path(__file__).resolve().parent
+STATE_FILE = BASE_DIR / "data" / "current_club_state.json"
+FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "").strip()
+REQUEST_TIMEOUT = 12
+
+CITY_COORDINATES = {
+    "Toronto": (43.653225, -79.383186),
+    "Mississauga": (43.5890, -79.6441),
+    "Brampton": (43.7315, -79.7624),
+    "Markham": (43.8561, -79.3370),
+    "Vaughan": (43.8361, -79.5085),
+    "Richmond Hill": (43.8828, -79.4403),
+    "Oakville": (43.4675, -79.6877),
+    "Burlington": (43.3255, -79.7990),
+    "Oshawa": (43.8971, -78.8658),
+    "Pickering": (43.8508, -79.0870),
+    "Ajax": (43.8508, -79.0204),
+    "Whitby": (43.8971, -78.9428),
+    "Milton": (43.5168, -79.8827),
+    "Hamilton": (43.2557, -79.8711),
+    "Scarborough": (43.7731, -79.2578),
+    "Etobicoke": (43.6542, -79.5659),
+    "North York": (43.7542, -79.4207),
+    "East York": (43.6997, -79.3324),
+    "Aurora": (44.0065, -79.4504),
+    "Newmarket": (44.0592, -79.4613),
+    "Thornhill": (43.8157, -79.4234),
+    "Woodbridge": (43.7762, -79.6093),
+    "Caledon": (43.8754, -79.8590),
+    "Stouffville": (43.9706, -79.2443),
+    "Barrie": (44.3894, -79.6903),
+    "Ottawa": (45.4215, -75.6972),
+    "Nepean": (45.3349, -75.7241),
+    "Gloucester": (45.4501, -75.5891),
+    "Guelph": (43.5448, -80.2482),
+    "Cambridge": (43.3616, -80.3144),
+    "Kingston": (44.2312, -76.4860),
+    "London": (42.9849, -81.2453),
+    "Niagara-on-the-Lake": (43.2550, -79.0710),
+    "Welland": (42.9922, -79.2483),
 }
 
 
-def _normalize_text(value):
-    if value is None or (isinstance(value, float) and pd.isna(value)):
-        return 'N/A'
-    if isinstance(value, str):
-        value = value.strip()
-        return value if value else 'N/A'
-    return str(value).strip() if str(value).strip() else 'N/A'
+def _normalize_status(value: object) -> str:
+    text = str(value or "").strip().lower()
+    if text in {"success", "succeeded", "complete", "done"}:
+        return "Success"
+    if text in {"failed", "failure", "error"}:
+        return "Failed"
+    if text == "partial" or text == "needs update":
+        return "Needs Update"
+    return "Needs Update"
 
 
-def _safe_get(mapping, keys):
-    if not mapping:
-        return 'N/A'
-    for key in keys:
-        if key in mapping:
-            value = _normalize_text(mapping.get(key))
-            if value != 'N/A':
-                return value
-    lowered = {str(k).lower(): v for k, v in mapping.items() if k is not None}
-    for key in keys:
-        value = _normalize_text(lowered.get(str(key).lower()))
-        if value != 'N/A':
-            return value
-    return 'N/A'
+def _format_status_for_display(value: object) -> str:
+    return _normalize_status(value)
 
 
-def _extract_coordinates(*values):
-    patterns = [
-        r'[?&]lat=([-+]?\d{1,2}(?:\.\d+)?)[&,]lng=([-+]?\d{1,3}(?:\.\d+)?)',
-        r'@(-?\d{1,2}\.\d+),\s*(-?\d{1,3}\.\d+)',
-        r'lat[=:](-?\d{1,2}\.\d+).*?lng[=:](-?\d{1,3}\.\d+)',
-    ]
-    for text in values:
-        if not text or text == 'N/A':
+def _ensure_status_compatibility(rows: Iterable[dict]) -> list[dict]:
+    normalized = []
+    for row in rows:
+        if not isinstance(row, dict):
             continue
-        for pattern in patterns:
-            match = re.search(pattern, text)
-            if match:
-                try:
-                    return float(match.group(1)), float(match.group(2))
-                except ValueError:
-                    continue
-    return None, None
+        status = row.get("Scrape Status", "")
+        normalized.append(dict(row, **{"Scrape Status": _format_status_for_display(status)}))
+    return normalized
 
 
-def _normalize_name(value):
-    if global_data_merger:
+app = Flask(__name__)
+app.config["TEMPLATES_AUTO_RELOAD"] = True
+app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+
+print("\n" + "=" * 80)
+print("🎾 Initializing Tennis Club Data Portal")
+print("=" * 80)
+global_data_merger = initialize_data_merger()
+print("✓ Data merger initialized successfully")
+if PLAYWRIGHT_AVAILABLE:
+    print("✓ JavaScript scraper available (Playwright installed)")
+else:
+    print("ℹ️  JavaScript scraper not available (install: pip install playwright)")
+print("=" * 80 + "\n")
+
+
+scraping_status = {
+    "running": False,
+    "progress": 0,
+    "total": 0,
+    "current_club": "",
+    "results": [],
+    "errors": [],
+    "mode_counts": {},
+    "changed_since_last_run": False,
+    "review_queue": [],
+    "review_queue_count": 0,
+    "coverage_metrics": {},
+}
+
+
+def _normalize_value(value: object) -> str:
+    text = str(value or "").strip()
+    return text.casefold()
+
+
+def _canonical_signature(results: list[dict]) -> list[tuple[str, ...]]:
+    signatures = []
+    for row in results:
+        signatures.append(
+            (
+                _normalize_value(row.get("Club Name", "")),
+                _normalize_value(row.get("Website", "")),
+                _normalize_value(row.get("Email", "N/A")),
+                _normalize_value(row.get("Location", "N/A")),
+                _normalize_value(row.get("Club Type", "N/A")),
+                _normalize_value(row.get("Membership Status", "N/A")),
+                _normalize_value(row.get("Waitlist Length", "N/A")),
+                _normalize_value(row.get("Number of Courts", "N/A")),
+                _normalize_value(row.get("Court Surface", "N/A")),
+                _normalize_value(row.get("Operating Season", "N/A")),
+                _normalize_value(row.get("Scrape Status", "Failed")),
+            )
+        )
+    return sorted(signatures)
+
+
+def _load_previous_signatures() -> list[tuple[str, ...]]:
+    if not STATE_FILE.exists():
+        return []
+    try:
+        payload = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        if not isinstance(payload, list):
+            return []
+        return _canonical_signature(payload)
+    except Exception:  # noqa: BLE001
+        return []
+
+
+def _persist_canonical_state(results: list[dict]) -> bool:
+    previous = _load_previous_signatures()
+    current = _canonical_signature(results)
+
+    STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    STATE_FILE.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
+    return previous != current
+
+
+def _result_without_meta(result: dict) -> dict:
+    return {k: v for k, v in result.items() if k != "_meta"}
+
+
+def _compute_mode_counts(results: list[dict]) -> dict[str, int]:
+    counter = Counter()
+    for row in results:
+        mode = row.get("_meta", {}).get("retrieval_mode", "unknown")
+        counter[mode] += 1
+    return dict(counter)
+
+
+def _build_review_queue(results: list[dict]) -> list[dict]:
+    queue: list[dict] = []
+    for row in results:
+        meta = row.get("_meta", {})
+        field_sources = meta.get("field_sources", {})
+
+        def _is_confident(field: str) -> bool:
+            threshold = FIELD_THRESHOLDS.get(field, 0.0)
+            confidence = field_sources.get(field, {}).get("confidence", 0.0)
+            try:
+                confidence_value = float(confidence)
+            except (TypeError, ValueError):
+                confidence_value = 0.0
+            return confidence_value >= threshold
+
+        missing = [
+            field
+            for field in REVIEW_FIELDS
+            if str(row.get(field, "N/A")).strip() in {"", "N/A"} or not _is_confident(field)
+        ]
+
+        low_confidence_fields = [
+            field
+            for field in REVIEW_FIELDS
+            if str(row.get(field, "N/A")).strip() not in {"", "N/A"} and not _is_confident(field)
+        ]
+        high_value_low_confidence = [
+            field
+            for field in CRITICAL_FIELDS
+            if field not in REVIEW_FIELDS and str(row.get(field, "N/A")).strip() not in {"", "N/A"} and not _is_confident(field)
+        ]
+        if (
+            meta.get("needs_outreach")
+            or missing
+            or low_confidence_fields
+            or high_value_low_confidence
+        ):
+            queue.append(
+                {
+                    "Club Name": row.get("Club Name", "Unknown"),
+                    "Website": row.get("Website", "N/A"),
+                    "Email": row.get("Email", "N/A"),
+                    "Missing Fields": ", ".join(missing) if missing else "",
+                    "Low Confidence Fields": ", ".join([*low_confidence_fields, *high_value_low_confidence]),
+                    "Recommendation": "email_or_contact_form",
+                    "Retrieval Mode": meta.get("retrieval_mode", "unknown"),
+                    "Status": row.get("Scrape Status", "Partial"),
+                }
+            )
+    return queue
+
+
+def _safe_text(value: object) -> str:
+    return str(value or "").strip()
+
+
+def _extract_website(row: object) -> str:
+    for key in ("Website", "Website URL", "website_url", "website"):
         try:
-            return global_data_merger.normalize_name(_normalize_text(value))
-        except Exception:
-            pass
-    value = _normalize_text(value).lower().replace(' tennis club', '').replace(' tc', '')
-    value = re.sub(r'\s+', ' ', value).strip()
-    return value
+            value = row.get(key, "")  # type: ignore[attr-defined]
+        except AttributeError:
+            value = ""
+        text = _safe_text(value)
+        if text and text.lower() not in {"n/a", "na", "nan", "none"}:
+            return text
+    return ""
 
 
-def _normalize_url(value):
-    if global_data_merger:
-        try:
-            return global_data_merger.normalize_url(_normalize_text(value))
-        except Exception:
-            pass
-    text = _normalize_text(value).lower()
-    if text in {'n/a', 'na'}:
-        return ''
-    parsed = urlparse(text)
-    netloc = parsed.netloc.lower().replace('www.', '')
-    path = parsed.path.rstrip('/')
-    return (netloc + path).strip()
+def _parse_int(value: object) -> int | None:
+    text = _safe_text(value)
+    if not text or text in {"N/A", "NA", "n/a"}:
+        return None
+    match = re.search(r"\b(\d{1,3})\b", text)
+    if not match:
+        return None
+    try:
+        number = int(match.group(1))
+    except ValueError:
+        return None
+    if number < 0:
+        return None
+    return number
 
 
-def _build_base_records():
-    """Build a deterministic, merged club list from source data."""
-    records = []
-    seen_names = set()
+def _court_bucket(count: int | None) -> str:
+    if count is None:
+        return "N/A"
+    if count == 1:
+        return "1"
+    if 2 <= count <= 4:
+        return "2-4"
+    if 5 <= count <= 9:
+        return "5-9"
+    if 10 <= count <= 14:
+        return "10-14"
+    return "15+"
+
+
+def _normalize_membership(value: object) -> str:
+    text = _safe_text(value).lower()
+    if not text or text in {"n/a", "na", "unknown"}:
+        return "Unknown"
+    if ("take" in text and "player" in text) or "accepting" in text:
+        return "Taking players now"
+    if "wait" in text:
+        return "Waitlist"
+    if "close" in text or "full" in text:
+        return "Closed"
+    if "open" in text:
+        return "Open"
+    return "Other"
+
+
+def _normalize_membership_for_payload(value: object) -> str:
+    return _normalize_membership(value)
+
+
+def _is_taking_players_now(value: object) -> bool:
+    normalized = _normalize_membership_for_payload(value)
+    if normalized == "Taking players now":
+        return True
+    return normalized in {"Open", "Waitlist"}
+
+
+def _normalize_city(value: object) -> str:
+    text = _safe_text(value).lower().replace(",", " ")
+    for city in CITY_COORDINATES:
+        if city.lower() in text:
+            return city
+    return ""
+
+
+def _build_marker(record: dict) -> dict | None:
+    city = _normalize_city(record.get("Location", ""))
+    if not city:
+        return None
+
+    lat, lng = CITY_COORDINATES[city]
+    courts = _parse_int(record.get("Number of Courts", "N/A"))
+    return {
+        "name": record.get("Club Name", "Unknown"),
+        "club_name": record.get("Club Name", "Unknown"),
+        "location": record.get("Location", ""),
+        "email": record.get("Email", "N/A"),
+        "website": record.get("Website", "N/A"),
+        "membership_status": record.get("Membership Status", "N/A"),
+        "membership_status_normalized": record.get(
+            "Membership Status Normalized",
+            _normalize_membership_for_payload(record.get("Membership Status", "")),
+        ),
+        "taking_players_now": record.get(
+            "Taking Players Now",
+            _is_taking_players_now(record.get("Membership Status", "")),
+        ),
+        "courts": record.get("Number of Courts", "N/A"),
+        "court_bucket": _court_bucket(courts if isinstance(courts, int) else _parse_int(courts)),
+        "lat": lat,
+        "lng": lng,
+    }
+
+
+def _build_records_from_state() -> list[dict]:
+    if not STATE_FILE.exists():
+        return []
+    try:
+        payload = json.loads(STATE_FILE.read_text(encoding="utf-8"))
+        if isinstance(payload, list):
+            return [row for row in payload if isinstance(row, dict)]
+    except Exception:  # noqa: BLE001
+        return []
+    return []
+
+
+def _build_records_from_preloaded_data() -> list[dict]:
+    excel_file = BASE_DIR / "GTA_Tennis_clubs_raw_data .xlsx"
+    if not excel_file.exists():
+        return []
 
     try:
-        df = pd.read_excel(RAW_DATA_FILE)
-    except Exception:
-        return records
+        df = pd.read_excel(excel_file)
+    except Exception:  # noqa: BLE001
+        return []
+
+    records: list[dict] = []
+    seen: set[str] = set()
+    preloaded_fields = [
+        "Email",
+        "Location",
+        "Club Type",
+        "Membership Status",
+        "Number of Courts",
+        "Court Surface",
+        "Operating Season",
+    ]
 
     for _, row in df.iterrows():
-        row_dict = row.to_dict()
-        club_name = _normalize_text(row_dict.get('Club Name'))
-        if club_name == 'N/A':
+        name = _safe_text(row.get("Club Name"))
+        website = _extract_website(row)
+        if not name or name.casefold() in seen:
             continue
+        seen.add(name.casefold())
 
-        name_key = _normalize_name(club_name)
-        if name_key in seen_names:
-            continue
-        seen_names.add(name_key)
+        entry = global_data_merger.get_existing_data(name, website) if global_data_merger else None
+        if entry is None:
+            entry = {}
 
-        website = _safe_get(row_dict, ['Website', 'website', 'website_url', 'Website URL'])
-        existing_data = global_data_merger.get_existing_data(club_name, website) if global_data_merger else None
-
-        row_email = _safe_get(row_dict, ['Email', 'email'])
-        row_location = _safe_get(row_dict, ['Location', 'location'])
-        row_club_type = _safe_get(row_dict, ['Club Type', 'Type', 'club_type', 'type'])
-        row_membership = _safe_get(row_dict, ['Membership Status', 'membership'])
-        row_waitlist = _safe_get(row_dict, ['Waitlist Length', 'waitlist', 'Waitlist'])
-        row_courts = _safe_get(row_dict, ['Number of Courts', 'courts'])
-        row_surface = _safe_get(row_dict, ['Court Surface', 'Surface', 'surface'])
-        row_season = _safe_get(row_dict, ['Operating Season', 'Season', 'operating season'])
-        existing_email = _safe_get(existing_data or {}, ['Email', 'email'])
-        existing_location = _safe_get(existing_data or {}, ['Location', 'location'])
-        existing_club_type = _safe_get(existing_data or {}, ['Club Type', 'club_type', 'Type', 'type'])
-        existing_membership = _safe_get(existing_data or {}, ['Membership Status', 'membership_status', 'Membership', 'membership'])
-        existing_waitlist = _safe_get(existing_data or {}, ['Waitlist Length', 'Waitlist', 'waitlist'])
-        existing_courts = _safe_get(existing_data or {}, ['Number of Courts', 'courts'])
-        existing_surface = _safe_get(existing_data or {}, ['Court Surface', 'Surface', 'surface'])
-        existing_season = _safe_get(existing_data or {}, ['Operating Season', 'Season', 'operating season'])
-
-        record = {
-            'Club Name': club_name,
-            'Website': website,
-            'Email': row_email if row_email != 'N/A' else existing_email,
-            'Location': row_location if row_location != 'N/A' else existing_location,
-            'Club Type': row_club_type if row_club_type != 'N/A' else existing_club_type,
-            'Membership Status': row_membership if row_membership != 'N/A' else existing_membership,
-            'Waitlist Length': row_waitlist if row_waitlist != 'N/A' else existing_waitlist,
-            'Number of Courts': row_courts if row_courts != 'N/A' else existing_courts,
-            'Court Surface': row_surface if row_surface != 'N/A' else existing_surface,
-            'Operating Season': row_season if row_season != 'N/A' else existing_season,
-            'Scrape Status': f"Pre-loaded ({existing_data.get('source', 'DB')})" if existing_data else 'No website'
+        field_sources = {
+            key: {"source": entry.get("source", "DB"), "stage": "preloaded", "confidence": 0.93}
+            for key in preloaded_fields
+            if _safe_text(entry.get(key)) not in {"", "N/A"}
         }
 
-        # Copy known coordinates from merged sources
-        source_location = _safe_get(existing_data or {}, ['Location', 'location', 'google map', 'map', 'google_map', 'google map_url', 'google map url'])
-        latitude, longitude = _extract_coordinates(
-            _safe_get(row_dict, ['Location', 'location']),
-            source_location,
-            _safe_get(existing_data or {}, ['Website', 'website', 'Website URL']),
-            _safe_get(existing_data or {}, ['google map', 'google map url', 'google_map', 'map', 'Location']),
+        records.append(
+            {
+                "Club Name": name,
+                "Website": _safe_text(entry.get("Website")) or website or "N/A",
+                "Email": entry.get("Email", "N/A"),
+                "Location": entry.get("Location", "N/A"),
+                "Club Type": entry.get("Club Type", "N/A"),
+                "Membership Status": entry.get("Membership Status", "N/A"),
+                "Waitlist Length": entry.get("Waitlist Length", "N/A"),
+                "Number of Courts": entry.get("Number of Courts", "N/A"),
+                "Court Surface": entry.get("Court Surface", "N/A"),
+                "Operating Season": entry.get("Operating Season", "N/A"),
+                "Scrape Status": "Success",
+                "_meta": {
+                    "retrieval_mode": "preloaded",
+                    "field_sources": field_sources,
+                    "attempted_urls": [],
+                    "errors": [],
+                    "site_profile": "preloaded",
+                    "needs_outreach": bool(
+                        _safe_text(entry.get("Membership Status")) in {"", "N/A"}
+                        or _safe_text(entry.get("Waitlist Length")) in {"", "N/A"}
+                    ),
+                    "status_detail": "preloaded_local_sources",
+                },
+            }
         )
-        if latitude is not None and longitude is not None:
-            record['lat'] = latitude
-            record['lng'] = longitude
-
-        # Fallback status if key fields are present from sources
-        if record['Scrape Status'].startswith('Pre-loaded'):
-            if (record['Email'] != 'N/A' and record['Membership Status'] != 'N/A' and record['Number of Courts'] != 'N/A'):
-                record['Scrape Status'] = 'Success'
-            elif record['Email'] != 'N/A':
-                record['Scrape Status'] = 'Partial'
-            else:
-                record['Scrape Status'] = 'No website'
-
-        records.append(record)
-
-    records.sort(key=lambda row: row['Club Name'].lower())
     return records
 
 
-def _merge_scraped_records(base_records, scraped_results):
-    """Overlay the latest scrape results onto base source records."""
-    if not base_records:
-        return [dict(result) for result in (scraped_results or [])]
-
-    merged = []
-    result_index_name = {}
-    result_index_website = {}
-
-    for result in scraped_results or []:
-        key_name = _normalize_name(result.get('Club Name'))
-        key_website = _normalize_url(result.get('Website'))
-        if key_name:
-            result_index_name[key_name] = result
-        if key_website:
-            result_index_website[key_website] = result
-
-    used = set()
-
-    for base in base_records:
-        normalized_name = _normalize_name(base.get('Club Name'))
-        normalized_web = _normalize_url(base.get('Website'))
-
-        candidate = result_index_name.pop(normalized_name, None)
-        if candidate is None and normalized_web:
-            candidate = result_index_website.pop(normalized_web, None)
-
-        if candidate:
-            used.add(id(candidate))
-            merged_record = dict(base)
-            for field in RECORD_FIELDS:
-                candidate_value = _normalize_text(candidate.get(field))
-                if candidate_value != 'N/A':
-                    merged_record[field] = candidate_value
-            if _normalize_text(candidate.get('lat')) != 'N/A' and _normalize_text(candidate.get('lng')) != 'N/A':
-                merged_record['lat'] = _normalize_text(candidate.get('lat'))
-                merged_record['lng'] = _normalize_text(candidate.get('lng'))
-            merged.append(merged_record)
-        else:
-            merged.append(base)
-
-    # Add truly new scraped entries not in base sources
-    for result in scraped_results or []:
-        if id(result) in used:
-            continue
-        name = _normalize_text(result.get('Club Name'))
-        if name == 'N/A':
-            continue
-        merged.append({field: _normalize_text(result.get(field)) for field in RECORD_FIELDS})
-
-    return merged
+def _get_active_records() -> list[dict]:
+    if scraping_status.get("results"):
+        return _ensure_status_compatibility(scraping_status["results"])
+    state_records = _build_records_from_state()
+    if state_records:
+        return _ensure_status_compatibility(state_records)
+    return _ensure_status_compatibility(_build_records_from_preloaded_data())
 
 
-def _normalize_scrape_status(status_value):
-    """Map legacy scrape statuses to compatible status classes."""
-    if not status_value or status_value == 'N/A':
-        return 'Failed'
-
-    status = _normalize_text(status_value)
-    if status == 'N/A':
-        return 'Failed'
-    if status == 'Success' or status.startswith('Success ('):
-        return 'Success'
-    if status.startswith('Pre-loaded'):
-        return 'Success'
-    if status in {'Failed', 'No website'}:
-        return 'Failed'
-    if status.startswith('JS-heavy'):
-        return 'Partial'
-    if status.startswith('Error:') or status.startswith('Error'):
-        return 'Failed'
-    return 'Needs Update'
-
-
-def _record_needs_update(record):
-    return _normalize_scrape_status(record.get('Scrape Status', 'Failed')) != 'Success'
-
-
-def _known_emails(records):
+def _collect_known_emails(records: list[dict]) -> list[str]:
     emails = []
-    for record in records:
-        email = _normalize_text(record.get('Email'))
-        if email != 'N/A' and '@' in email and not email.lower().startswith('mailto:'):
+    seen = set()
+    for row in records:
+        email = _safe_text(row.get("Email"))
+        if "@" in email and email not in seen and email.lower() != "contact form available":
+            seen.add(email)
             emails.append(email)
-    unique = sorted(set(emails))
-    return unique
+    return emails
 
 
-def _is_valid_field(value):
-    return _normalize_text(value) not in {'N/A', ''}
+def _count_eligible_for_coverage(df: pd.DataFrame, target_fields: list[str]) -> int:
+    eligible = 0
+    for _, row in df.iterrows():
+        website = _extract_website(row)
+        if not website:
+            continue
+        existing = global_data_merger.get_existing_data(row.get("Club Name", ""), website) if global_data_merger else None
+        if existing is None:
+            eligible += 1
+            continue
+        if any(str(existing.get(field, "N/A") or "N/A") == "N/A" for field in target_fields):
+            eligible += 1
+    return eligible
 
 
-def _build_payload_records(records):
-    payload = []
-    for record in records:
-        normalized = dict(record)
-        if _normalize_scrape_status(normalized.get('Scrape Status')) == 'Needs Update':
-            if _is_valid_field(normalized.get('Email')) or _is_valid_field(normalized.get('Membership Status')) or _is_valid_field(normalized.get('Number of Courts')):
-                normalized['Scrape Status'] = 'Partial'
-            else:
-                normalized['Scrape Status'] = 'Failed'
-        elif _normalize_scrape_status(normalized.get('Scrape Status')) == 'Success':
-            normalized['Scrape Status'] = 'Success'
-        payload.append(normalized)
-    return payload
+def _compute_coverage_metrics(results: list[dict], denominator: int) -> dict:
+    tracked_fields = ["Number of Courts", "Court Surface", "Operating Season", "Membership Status", "Email", "Location"]
+    metrics: dict[str, dict[str, float | int]] = {"denominator": {"count": denominator, "pct": 100.0}}
 
+    if denominator <= 0:
+        for field in tracked_fields:
+            metrics[field] = {"count": 0, "pct": 0.0}
+        metrics["acceptance_count"] = {"count": 0, "pct": 0.0}
+        return metrics
 
-def _get_current_records():
-    base_records = _build_base_records()
-    if scraping_status['running']:
-        merged = _merge_scraped_records(base_records, scraping_status['results'])
-    else:
-        # After a scrape completes, keep latest results visible over source list.
-        merged = _merge_scraped_records(base_records, scraping_status['results'])
-    return _build_payload_records(merged)
+    website_results = [row for row in results if str(row.get("Website", "") or "").strip() not in {"", "N/A"}]
+    for field in tracked_fields:
+        count = 0
+        for row in website_results:
+            value = str(row.get(field, "N/A") or "").strip()
+            confidence = (
+                row.get("_meta", {})
+                .get("field_sources", {})
+                .get(field, {})
+                .get("confidence", 0.0)
+            )
+            try:
+                confidence_value = float(confidence)
+            except (TypeError, ValueError):
+                confidence_value = 0.0
 
+            threshold = FIELD_THRESHOLDS.get(field, 0.0)
+            if value and value != "N/A" and confidence_value >= threshold:
+                count += 1
+        metrics[field] = {"count": count, "pct": round((count / denominator) * 100, 1)}
 
-def _get_coverage_stats(records):
-    total = len(records)
-    success = sum(1 for row in records if _normalize_scrape_status(row.get('Scrape Status')) == 'Success')
-    partial_or_failed = total - success
-    needs_update = sum(1 for row in records if _record_needs_update(row))
-    known_emails = len(_known_emails(records))
-    return {
-        'total_clubs': total,
-        'success_count': success,
-        'needs_update_count': needs_update,
-        'partial_or_failed_count': partial_or_failed,
-        'known_emails_count': known_emails,
-        'email_coverage': round((known_emails / total * 100), 2) if total else 0,
+    acceptance_count = sum(
+        1 for row in website_results if _is_taking_players_now(row.get("Membership Status", ""))
+    )
+    metrics["acceptance_count"] = {
+        "count": acceptance_count,
+        "pct": round((acceptance_count / denominator) * 100, 1),
     }
+    return metrics
 
 
-def _normalize_club_name_for_output(value):
-    return re.sub(r'\s+', ' ', _normalize_text(value)).strip()
-
-
-def _estimate_court_count_from_query(query, *, source):
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (compatible; tennis-club-dashboard/1.0)'
-    }
-    url = 'https://duckduckgo.com/html/'
-    response = requests.get(url, params={'q': query}, headers=headers, timeout=15)
-    if response.status_code != 200:
-        return None
-
-    snippets = []
-    for raw in re.findall(r'(?s)<a rel="nofollow" class="result__snippet".*?>(.*?)</a>', response.text):
-        snippets.append(re.sub(r'<[^>]+>', ' ', raw))
-
-    for snippet in snippets:
-        match = re.search(r'(\d{1,2})\s+(?:outdoor|indoor)?\s*courts?', snippet, re.I)
-        if match:
-            count = int(match.group(1))
-            if 1 <= count <= 60:
-                return {
-                    'estimated_courts': str(count),
-                    'confidence': 0.43,
-                    'evidence': snippet.strip()[:240],
-                    'source': source,
-                }
-    return None
-
-
-def _estimate_with_firecrawl(query):
-    api_key = os.getenv('FIRECRAWL_API_KEY')
-    if not api_key:
-        return None
-
-    try:
-        response = requests.post(
-            'https://api.firecrawl.dev/v1/search',
-            headers={'Authorization': f'Bearer {api_key}', 'Content-Type': 'application/json'},
-            json={'query': query, 'limit': 5},
-            timeout=15
+def _build_payload_records(records: list[dict]) -> list[dict]:
+    payload_records = []
+    for row in records:
+        if not isinstance(row, dict):
+            continue
+        normalized_membership = _normalize_membership_for_payload(row.get("Membership Status", ""))
+        payload_records.append(
+            {
+                **row,
+                "Membership Status Normalized": normalized_membership,
+                "Taking Players Now": _is_taking_players_now(normalized_membership),
+            }
         )
-    except Exception:
-        return None
+    return payload_records
 
-    if response.status_code != 200:
-        return None
+
+def _search_web_snippets(query: str, max_results: int = 5) -> list[str]:
+    if not query.strip():
+        return []
+
+    headers = {
+        "User-Agent": "Mozilla/5.0 (compatible; GTA-Tennis-Scraper/1.0)",
+        "Accept": "text/html,application/xhtml+xml",
+    }
+    results: list[str] = []
+
+    if FIRECRAWL_API_KEY:
+        try:
+            response = requests.post(
+                "https://api.firecrawl.dev/v1/search",
+                json={"query": query, "limit": max_results, "sources": ["search"], "autoparse": True},
+                headers={"Authorization": f"Bearer {FIRECRAWL_API_KEY}", "Content-Type": "application/json"},
+                timeout=REQUEST_TIMEOUT,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            for item in payload.get("data", [])[:max_results]:
+                text = _safe_text(item.get("snippet") or item.get("content") or "")
+                if text:
+                    results.append(text)
+        except Exception:  # noqa: BLE001
+            pass
+        if results:
+            return results
 
     try:
-        payload = response.json()
-    except Exception:
-        return None
+        response = requests.get(
+            "https://duckduckgo.com/html/",
+            params={"q": query},
+            headers=headers,
+            timeout=REQUEST_TIMEOUT,
+        )
+        response.raise_for_status()
+    except Exception:  # noqa: BLE001
+        return []
 
-    results = payload.get('data') or payload.get('results') or []
-    for result in results[:5]:
-        snippet = _normalize_text(result.get('snippet', ''))
-        match = re.search(r'(\d{1,2})\s+(?:outdoor|indoor)?\s*courts?', snippet, re.I)
-        if match:
-            count = int(match.group(1))
-            if 1 <= count <= 60:
-                return {
-                    'estimated_courts': str(count),
-                    'confidence': 0.7,
-                    'evidence': snippet[:240],
-                    'source': result.get('url') or result.get('title', 'Firecrawl'),
-                }
+    soup = BeautifulSoup(response.text, "html.parser")
+    for item in soup.select(".result__snippet"):
+        snippet = _safe_text(item.get_text(" ", strip=True))
+        if snippet:
+            results.append(snippet)
+        if len(results) >= max_results:
+            break
+
+    if not results:
+        for item in soup.select("a.result__a + .result__body"):
+            snippet = _safe_text(item.get_text(" ", strip=True))
+            if snippet:
+                results.append(snippet)
+            if len(results) >= max_results:
+                break
+
+    return results[:max_results]
+
+
+def _extract_court_count_from_text(text: str) -> int | None:
+    if not text:
+        return None
+    patterns = [
+        r"(\d{1,3})\s*(?:tennis\s+)?courts?\b",
+        r"courts?\s*(?:\(|:)?\s*(\d{1,3})",
+        r"number\s+of\s+(\d{1,3})\s+tennis\s+courts",
+        r"(\d{1,3})\s*court[s]?\s*facility",
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, text, flags=re.IGNORECASE)
+        if not match:
+            continue
+        try:
+            value = int(match.group(1))
+        except ValueError:
+            continue
+        if 1 <= value <= 50:
+            return value
     return None
 
-def background_scraping_task(max_clubs=None):
+
+def _estimate_courts_from_search(club_name: str, location: str) -> dict[str, object]:
+    location_clause = _safe_text(location) or "GTA"
+    queries = [
+        f"{club_name} {location_clause} number of courts",
+        f"{club_name} {location_clause} tennis courts",
+        f"{club_name} {location_clause} \"tennis club\" \"reviews\" \"courts\"",
+        f"{club_name} {location_clause} site:google.com reviews courts",
+        f"{club_name} {location_clause} site:yelp.com tennis courts",
+    ]
+
+    best: dict[str, object] = {"courts": "N/A", "confidence": 0.0, "evidence": ""}
+    for query in queries:
+        for snippet in _search_web_snippets(query, max_results=4):
+            detected = _extract_court_count_from_text(snippet)
+            if detected is not None:
+                best = {
+                    "courts": str(detected),
+                    "confidence": 0.62,
+                    "evidence": snippet[:250],
+                    "query": query,
+                }
+                return best
+
+    return best
+
+
+def _write_outputs(results: list[dict], review_queue: list[dict], changed: bool) -> str | None:
+    if not results:
+        return None
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    output_json = BASE_DIR / f"scraped_data_{timestamp}.json"
+    output_csv = BASE_DIR / f"scraped_data_{timestamp}.csv"
+    evidence_jsonl = BASE_DIR / f"scraped_evidence_{timestamp}.jsonl"
+    review_csv = BASE_DIR / f"review_queue_{timestamp}.csv"
+
+    output_json.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
+
+    flat_results = [_result_without_meta(row) for row in results]
+    pd.DataFrame(flat_results).to_csv(output_csv, index=False)
+
+    with evidence_jsonl.open("w", encoding="utf-8") as handle:
+        for row in results:
+            evidence_row = {
+                "Club Name": row.get("Club Name"),
+                "Website": row.get("Website"),
+                "Scrape Status": row.get("Scrape Status"),
+                "_meta": row.get("_meta", {}),
+                "changed_since_last_run": changed,
+            }
+            handle.write(json.dumps(evidence_row, ensure_ascii=False) + "\n")
+
+    review_headers = [
+        "Club Name",
+        "Website",
+        "Email",
+        "Missing Fields",
+        "Low Confidence Fields",
+        "Recommendation",
+        "Retrieval Mode",
+        "Status",
+    ]
+    with review_csv.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=review_headers)
+        writer.writeheader()
+        for row in review_queue:
+            writer.writerow(row)
+
+    return timestamp
+
+
+def background_scraping_task(max_clubs=None, use_js_fallback=False):
     """Background task to run the scraper"""
     global scraping_status
 
     try:
-        # Load Excel file
-        excel_file = 'GTA_Tennis_clubs_raw_data .xlsx'
+        excel_file = BASE_DIR / "GTA_Tennis_clubs_raw_data .xlsx"
         df = pd.read_excel(excel_file)
 
-        # Limit clubs if specified
         if max_clubs:
             df = df.head(max_clubs)
 
-        scraping_status['total'] = len(df)
-        scraping_status['results'] = []
-        scraping_status['errors'] = []
+        scraping_status["total"] = len(df)
+        scraping_status["results"] = []
+        scraping_status["errors"] = []
+        scraping_status["mode_counts"] = {}
+        scraping_status["changed_since_last_run"] = False
+        scraping_status["review_queue"] = []
+        scraping_status["review_queue_count"] = 0
+        scraping_status["coverage_metrics"] = {}
 
-        # Initialize scraper with data merger for pre-loaded data
-        scraper = TennisClubScraper(data_merger=global_data_merger)
+        target_fields = [
+            "Number of Courts",
+            "Court Surface",
+            "Operating Season",
+            "Membership Status",
+            "Email",
+            "Location",
+        ]
+        coverage_denominator = _count_eligible_for_coverage(df, target_fields)
 
-        # Scrape each club
+        if use_js_fallback and HybridScraper is not None:
+            print("[INFO] Using hybrid scraper (JavaScript fallback enabled)")
+            scraper = HybridScraper(data_merger=global_data_merger, use_js_fallback=True)
+        else:
+            if use_js_fallback and HybridScraper is None:
+                print("[WARNING] JavaScript fallback requested but hybrid scraper is unavailable")
+            scraper = TennisClubScraper(data_merger=global_data_merger, debug=False)
+
         for idx, row in df.iterrows():
-            if not scraping_status['running']:
+            if not scraping_status["running"]:
                 break
 
-            club_name = row.get('Club Name', 'Unknown')
-            website = row.get('Website', '')
+            club_name = row.get("Club Name", "Unknown")
+            website = _extract_website(row)
 
-            scraping_status['current_club'] = club_name
-            scraping_status['progress'] = idx + 1
+            scraping_status["current_club"] = club_name
+            scraping_status["progress"] = idx + 1
 
-            if pd.notna(website) and website.strip():
+            if website:
                 try:
                     result = scraper.scrape_club(website, club_name)
-                    scraping_status['results'].append(result)
-                except Exception as e:
-                    error_msg = f"Error scraping {club_name}: {str(e)}"
-                    scraping_status['errors'].append(error_msg)
-                    print(error_msg)
-            else:
-                # No website, but check if we have data in our database
-                existing_data = global_data_merger.get_existing_data(club_name, '') if global_data_merger else None
-                if existing_data:
+                except Exception as exc:  # noqa: BLE001
+                    error_msg = f"Error scraping {club_name}: {exc}"
+                    scraping_status["errors"].append(error_msg)
                     result = {
-                        'Club Name': club_name,
-                        'Website': 'N/A',
-                        'Email': existing_data.get('Email', 'N/A'),
-                        'Location': existing_data.get('Location', 'N/A'),
-                        'Club Type': existing_data.get('Club Type', 'N/A'),
-                        'Membership Status': existing_data.get('Membership Status', 'N/A'),
-                        'Waitlist Length': 'N/A',
-                        'Number of Courts': existing_data.get('Number of Courts', 'N/A'),
-                        'Court Surface': 'N/A',
-                        'Operating Season': 'N/A',
-                        'Scrape Status': f"Pre-loaded ({existing_data.get('source', 'DB')})"
+                        "Club Name": club_name,
+                        "Website": website,
+                        "Email": "N/A",
+                        "Location": "N/A",
+                        "Club Type": "N/A",
+                        "Membership Status": "N/A",
+                        "Waitlist Length": "N/A",
+                        "Number of Courts": "N/A",
+                        "Court Surface": "N/A",
+                        "Operating Season": "N/A",
+                        "Scrape Status": "Failed",
+                        "_meta": {
+                            "retrieval_mode": "failed",
+                            "field_sources": {},
+                            "attempted_urls": [website],
+                            "errors": [str(exc)],
+                            "site_profile": "unknown",
+                            "needs_outreach": True,
+                            "status_detail": "exception",
+                        },
+                    }
+            else:
+                existing_data = global_data_merger.get_existing_data(club_name, "") if global_data_merger else None
+                if existing_data:
+                    preloaded_sources: dict[str, dict[str, object]] = {}
+                    preloaded_fields = [
+                        "Email",
+                        "Location",
+                        "Club Type",
+                        "Membership Status",
+                        "Number of Courts",
+                        "Court Surface",
+                        "Operating Season",
+                    ]
+                    for preloaded_field in preloaded_fields:
+                        value = existing_data.get(preloaded_field, "N/A")
+                        if value and value != "N/A":
+                            preloaded_sources[preloaded_field] = {
+                                "source": existing_data.get("source", "DB"),
+                                "stage": "preloaded",
+                                "confidence": 0.93,
+                            }
+                    result = {
+                        "Club Name": club_name,
+                        "Website": "N/A",
+                        "Email": existing_data.get("Email", "N/A"),
+                        "Location": existing_data.get("Location", "N/A"),
+                        "Club Type": existing_data.get("Club Type", "N/A"),
+                        "Membership Status": existing_data.get("Membership Status", "N/A"),
+                        "Waitlist Length": "N/A",
+                        "Number of Courts": existing_data.get("Number of Courts", "N/A"),
+                        "Court Surface": existing_data.get("Court Surface", "N/A"),
+                        "Operating Season": existing_data.get("Operating Season", "N/A"),
+                        "Scrape Status": "Success",
+                        "_meta": {
+                            "retrieval_mode": "preloaded",
+                            "field_sources": preloaded_sources,
+                            "attempted_urls": [],
+                            "errors": [],
+                            "site_profile": "no_website",
+                            "needs_outreach": True,
+                            "status_detail": "preloaded_no_website",
+                        },
                     }
                 else:
                     result = {
-                        'Club Name': club_name,
-                        'Website': 'N/A',
-                        'Email': 'N/A',
-                        'Location': 'N/A',
-                        'Club Type': 'N/A',
-                        'Membership Status': 'N/A',
-                        'Waitlist Length': 'N/A',
-                        'Number of Courts': 'N/A',
-                        'Court Surface': 'N/A',
-                        'Operating Season': 'N/A',
-                        'Scrape Status': 'No website'
+                        "Club Name": club_name,
+                        "Website": "N/A",
+                        "Email": "N/A",
+                        "Location": "N/A",
+                        "Club Type": "N/A",
+                        "Membership Status": "N/A",
+                        "Waitlist Length": "N/A",
+                        "Number of Courts": "N/A",
+                        "Court Surface": "N/A",
+                        "Operating Season": "N/A",
+                        "Scrape Status": "Failed",
+                        "_meta": {
+                            "retrieval_mode": "no_website",
+                            "field_sources": {},
+                            "attempted_urls": [],
+                            "errors": ["no_website"],
+                            "site_profile": "no_website",
+                            "needs_outreach": True,
+                            "status_detail": "no_website",
+                        },
                     }
-                scraping_status['results'].append(result)
 
-        # Save results
-        if scraping_status['results']:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            output_file = f'scraped_data_{timestamp}.json'
-            with open(output_file, 'w') as f:
-                json.dump(scraping_status['results'], f, indent=2)
+            scraping_status["results"].append(result)
 
-            # Also save as CSV
-            csv_file = f'scraped_data_{timestamp}.csv'
-            results_df = pd.DataFrame(scraping_status['results'])
-            results_df.to_csv(csv_file, index=False)
+            mode = result.get("_meta", {}).get("retrieval_mode", "unknown")
+            mode_counts = Counter(scraping_status.get("mode_counts", {}))
+            mode_counts[mode] += 1
+            scraping_status["mode_counts"] = dict(mode_counts)
 
-        scraping_status['running'] = False
+        review_queue = _build_review_queue(scraping_status["results"])
+        changed = _persist_canonical_state(scraping_status["results"]) if scraping_status["results"] else False
+        scraping_status["changed_since_last_run"] = changed
+        scraping_status["review_queue"] = review_queue
+        scraping_status["review_queue_count"] = len(review_queue)
+        scraping_status["coverage_metrics"] = _compute_coverage_metrics(scraping_status["results"], coverage_denominator)
 
-    except Exception as e:
-        scraping_status['errors'].append(f"Fatal error: {str(e)}")
-        scraping_status['running'] = False
+        _write_outputs(scraping_status["results"], review_queue, changed)
 
-@app.route('/')
+        scraping_status["running"] = False
+
+    except Exception as exc:  # noqa: BLE001
+        scraping_status["errors"].append(f"Fatal error: {exc}")
+        scraping_status["running"] = False
+
+
+@app.route("/")
 def index():
     """Dashboard page"""
-    dashboard_records = _get_current_records()
-    total_clubs = len(dashboard_records)
-    return render_template('index.html', total_clubs=total_clubs or 0)
+    active_records = _get_active_records()
+    total_clubs = len(active_records)
+    return render_template("index.html", total_clubs=total_clubs)
 
-@app.route('/scraper')
+
+@app.route("/scraper")
 def scraper():
-    """Scraper page"""
-    return render_template('scraper.html')
+    return render_template("scraper.html")
 
-@app.route('/results')
+
+@app.route("/results")
 def results():
-    """Results viewer page"""
-    return render_template('results.html')
+    return render_template("results.html")
 
-@app.route('/email')
+
+@app.route("/players")
+def players():
+    return render_template("results.html")
+
+
+@app.route("/email")
 def email():
-    """Email management page"""
-    return render_template('email.html')
+    return render_template("email.html")
 
-@app.route('/api/start-scraping', methods=['POST'])
+
+@app.route("/api/start-scraping", methods=["POST"])
 def start_scraping():
-    """Start the scraping process"""
     global scraping_status
 
-    if scraping_status['running']:
-        return jsonify({'error': 'Scraping already in progress'}), 400
+    if scraping_status["running"]:
+        return jsonify({"error": "Scraping already in progress"}), 400
 
     data = request.get_json() or {}
-    max_clubs = data.get('max_clubs')
+    max_clubs = data.get("max_clubs")
+    use_js_fallback = data.get("use_js_fallback", False)
 
-    # Reset status
     scraping_status = {
-        'running': True,
-        'progress': 0,
-        'total': 0,
-        'current_club': '',
-        'results': [],
-        'errors': []
+        "running": True,
+        "progress": 0,
+        "total": 0,
+        "current_club": "",
+        "results": [],
+        "errors": [],
+        "mode_counts": {},
+        "changed_since_last_run": False,
+        "review_queue": [],
+        "review_queue_count": 0,
+        "coverage_metrics": {},
     }
 
-    # Start background thread
-    thread = threading.Thread(target=background_scraping_task, args=(max_clubs,))
+    thread = threading.Thread(target=background_scraping_task, args=(max_clubs, use_js_fallback))
     thread.daemon = True
     thread.start()
 
-    return jsonify({'message': 'Scraping started'})
+    return jsonify({"message": "Scraping started", "js_fallback_enabled": bool(use_js_fallback and PLAYWRIGHT_AVAILABLE)})
 
-@app.route('/api/scraping-status')
+
+@app.route("/api/scraping-status")
 def get_scraping_status():
-    """Get current scraping status"""
-    return jsonify({
-        'running': scraping_status['running'],
-        'progress': scraping_status['progress'],
-        'total': scraping_status['total'],
-        'current_club': scraping_status['current_club'],
-        'errors_count': len(scraping_status['errors']),
-        'results_count': len(scraping_status['results'])
-    })
+    return jsonify(
+        {
+            "running": scraping_status["running"],
+            "progress": scraping_status["progress"],
+            "total": scraping_status["total"],
+            "current_club": scraping_status["current_club"],
+            "errors_count": len(scraping_status["errors"]),
+            "results_count": len(scraping_status["results"]),
+            "mode_counts": scraping_status.get("mode_counts", {}),
+            "changed_since_last_run": scraping_status.get("changed_since_last_run", False),
+            "review_queue_count": scraping_status.get("review_queue_count", 0),
+            "coverage_metrics": scraping_status.get("coverage_metrics", {}),
+        }
+    )
 
-@app.route('/api/results')
+
+@app.route("/api/results")
 def get_results():
-    """Get scraping results"""
-    records = _get_current_records()
+    active_records = _ensure_status_compatibility(_get_active_records())
     return jsonify({
-        'results': records,
-        'errors': scraping_status['errors'],
-        'known_emails': _known_emails(records),
-        'result_count': len(records),
-        '_meta': _get_coverage_stats(records),
+        "results": active_records,
+        "known_emails": _collect_known_emails(active_records),
+        "errors": scraping_status.get("errors", []),
     })
 
 
-@app.route('/api/dashboard-data')
+@app.route("/api/dashboard-data")
 def get_dashboard_data():
-    """Get data consumed by the interactive dashboard."""
-    records = _get_current_records()
-    coverage = _get_coverage_stats(records)
-    return jsonify({
-        'records': records,
-        'total_clubs': coverage['total_clubs'],
-        'known_emails': _known_emails(records),
-        'stats': coverage,
-        'generated_at': datetime.utcnow().isoformat() + 'Z',
-    })
+    records = _get_active_records()
+    records = _ensure_status_compatibility(records)
+    known_emails = _collect_known_emails(records)
+
+    markers = []
+    dashboard_records = _build_payload_records(records)
+    for row_data in dashboard_records:
+        row_data["court_bucket"] = row_data.get("court_bucket") or _court_bucket(_parse_int(row_data.get("Number of Courts", "N/A")))
+        marker = _build_marker(row_data)
+        if marker is not None:
+            row_data["lat"] = marker["lat"]
+            row_data["lng"] = marker["lng"]
+            markers.append(marker)
+
+    court_distribution: Counter[str] = Counter()
+    membership_distribution: Counter[str] = Counter()
+    for row in dashboard_records:
+        courts = _parse_int(row.get("Number of Courts", "N/A"))
+        court_distribution[_court_bucket(courts)] += 1
+        membership_distribution[row.get("Membership Status Normalized", _normalize_membership(row.get("Membership Status", "")))] += 1
+
+    known_email_count = len(known_emails)
+    acceptance_count = sum(1 for row in dashboard_records if row.get("Taking Players Now") is True)
+
+    return jsonify(
+        {
+            "records": dashboard_records,
+            "total_clubs": len(records),
+            "known_emails": known_emails,
+            "known_emails_count": known_email_count,
+            "success_count": len([row for row in records if row.get("Scrape Status") == "Success"]),
+            "needs_update_count": len([row for row in records if row.get("Scrape Status") != "Success"]),
+            "acceptance_count": acceptance_count,
+            "court_distribution": dict(court_distribution),
+            "membership_distribution": dict(membership_distribution),
+            "map_data": {"markers": markers},
+        }
+    )
 
 
-@app.route('/api/court-count-research', methods=['POST'])
+@app.route("/api/review-queue")
+def review_queue():
+    return jsonify(
+        {
+            "review_queue": scraping_status.get("review_queue", []),
+            "count": scraping_status.get("review_queue_count", 0),
+        }
+    )
+
+
+@app.route("/api/court-count-research", methods=["POST"])
 def court_count_research():
-    """Suggest court counts for unresolved clubs using web snippets."""
-    try:
-        data = request.get_json() or {}
-        clubs = data.get('clubs', [])
-        max_records = int(data.get('max_records', 12))
-    except Exception:
-        return jsonify({'error': 'Invalid request body'}), 400
+    payload = request.get_json(silent=True) or {}
+    requested_records = payload.get("clubs") or []
+    max_records = payload.get("max_records", 8)
 
-    if not isinstance(clubs, list):
-        return jsonify({'error': 'Expected clubs list'}), 400
+    if not isinstance(max_records, int):
+        try:
+            max_records = int(max_records)
+        except (TypeError, ValueError):
+            max_records = 8
 
-    suggestions = []
-    for club in clubs[:max_records]:
-        club_name = _normalize_club_name_for_output(club.get('Club Name') or club.get('club_name'))
-        if not club_name or club_name == 'N/A':
-            continue
+    if max_records <= 0:
+        max_records = 8
+    if max_records > 20:
+        max_records = 20
 
-        location = _normalize_club_name_for_output(club.get('Location', ''))
-        query = f"{club_name} {location} tennis courts"
+    if requested_records:
+        candidate_rows = [row for row in requested_records if isinstance(row, dict)]
+    else:
+        candidate_rows = [
+            row
+            for row in _get_active_records()
+            if _parse_int(row.get("Number of Courts", "N/A")) is None
+        ]
 
-        # Prefer firecrawl when available
-        suggestion = _estimate_with_firecrawl(query)
-        if not suggestion:
-            suggestion = _estimate_court_count_from_query(query, source='duckduckgo')
+    results: list[dict[str, object]] = []
+    for row in candidate_rows[:max_records]:
+        name = _safe_text(row.get("Club Name", "Unknown"))
+        location = _safe_text(row.get("Location", ""))
+        result = _estimate_courts_from_search(name, location)
+        results.append(
+            {
+                "club_name": name,
+                "location": location,
+                "website": _safe_text(row.get("Website", "")),
+                "estimated_courts": result["courts"],
+                "confidence": result["confidence"],
+                "evidence": result["evidence"],
+            }
+        )
 
-        if suggestion is None:
-            suggestions.append({
-                'club_name': club_name,
-                'location': location or 'N/A',
-                'estimated_courts': 'N/A',
-                'confidence': 0.0,
-                'evidence': 'No web snippet match yet. Configure FIRECRAWL_API_KEY for improved lookup.',
-            })
-            continue
+    return jsonify({"results": results})
 
-        suggestions.append({
-            'club_name': club_name,
-            'location': location or 'N/A',
-            'estimated_courts': suggestion['estimated_courts'],
-            'confidence': suggestion['confidence'],
-            'evidence': suggestion['evidence'],
-        })
 
-    return jsonify({'results': suggestions, 'count': len(suggestions)})
-
-@app.route('/api/email-preview', methods=['POST'])
+@app.route("/api/email-preview", methods=["POST"])
 def preview_emails():
-    """Preview emails that would be sent"""
     try:
         data = request.get_json()
-        template = data.get('template', '')
+        template = data.get("template", "")
 
-        # Get clubs with missing data
         clubs_to_contact = []
-        for result in scraping_status['results']:
-            if (result.get('Email') != 'N/A' and
-                result.get('Email') and
-                (result.get('Waitlist Length') == 'N/A' or
-                 result.get('Membership Status') == 'N/A')):
+        for result in scraping_status["results"]:
+            if (
+                result.get("Email") != "N/A"
+                and result.get("Email")
+                and (result.get("Waitlist Length") == "N/A" or result.get("Membership Status") == "N/A")
+            ):
                 clubs_to_contact.append(result)
 
-        # Generate preview
         email_agent = EmailAgent()
         previews = []
 
-        for club in clubs_to_contact[:5]:  # Preview first 5
+        for club in clubs_to_contact[:5]:
             subject, body = email_agent.generate_email(club, template)
-            previews.append({
-                'club_name': club['Club Name'],
-                'email': club['Email'],
-                'subject': subject,
-                'body': body
-            })
+            previews.append(
+                {
+                    "club_name": club["Club Name"],
+                    "email": club["Email"],
+                    "subject": subject,
+                    "body": body,
+                }
+            )
 
-        return jsonify({
-            'total_emails': len(clubs_to_contact),
-            'previews': previews
-        })
+        return jsonify({"total_emails": len(clubs_to_contact), "previews": previews})
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": str(exc)}), 500
 
-@app.route('/api/send-emails', methods=['POST'])
+
+@app.route("/api/send-emails", methods=["POST"])
 def send_emails():
-    """Send emails to clubs"""
     try:
         data = request.get_json()
-        template = data.get('template', '')
-        dry_run = data.get('dry_run', True)
+        template = data.get("template", "")
+        dry_run = data.get("dry_run", True)
 
-        # Get clubs with missing data
         clubs_to_contact = []
-        for result in scraping_status['results']:
-            if (result.get('Email') != 'N/A' and
-                result.get('Email') and
-                (result.get('Waitlist Length') == 'N/A' or
-                 result.get('Membership Status') == 'N/A')):
+        for result in scraping_status["results"]:
+            if (
+                result.get("Email") != "N/A"
+                and result.get("Email")
+                and (result.get("Waitlist Length") == "N/A" or result.get("Membership Status") == "N/A")
+            ):
                 clubs_to_contact.append(result)
 
         if dry_run:
-            return jsonify({
-                'message': 'Dry run completed',
-                'total_emails': len(clubs_to_contact),
-                'dry_run': True
-            })
+            return jsonify({"message": "Dry run completed", "total_emails": len(clubs_to_contact), "dry_run": True})
 
-        # Actually send emails
         email_agent = EmailAgent()
         sent_count = 0
         failed_count = 0
@@ -694,22 +1089,17 @@ def send_emails():
         for club in clubs_to_contact:
             try:
                 subject, body = email_agent.generate_email(club, template)
-                email_agent.send_email(club['Email'], subject, body)
+                email_agent.send_email(club["Email"], subject, body)
                 sent_count += 1
-            except Exception as e:
+            except Exception as exc:  # noqa: BLE001
                 failed_count += 1
-                print(f"Failed to send to {club['Club Name']}: {e}")
+                print(f"Failed to send to {club['Club Name']}: {exc}")
 
-        return jsonify({
-            'message': 'Emails sent',
-            'sent': sent_count,
-            'failed': failed_count,
-            'total': len(clubs_to_contact)
-        })
+        return jsonify({"message": "Emails sent", "sent": sent_count, "failed": failed_count, "total": len(clubs_to_contact)})
 
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+    except Exception as exc:  # noqa: BLE001
+        return jsonify({"error": str(exc)}), 500
 
-if __name__ == '__main__':
-    # Run on port 5001 to avoid macOS AirPlay conflict
-    app.run(debug=True, host='0.0.0.0', port=5001)
+
+if __name__ == "__main__":
+    app.run(debug=True, host="0.0.0.0", port=5001)
