@@ -235,3 +235,48 @@ def test_build_review_queue_includes_low_confidence_fields():
     assert 'Membership Status' in entry['Missing Fields']
     assert 'Location' in entry['Low Confidence Fields']
     assert 'Number of Courts' in entry['Low Confidence Fields']
+
+
+def test_build_review_queue_classifies_missing_critical_fields():
+    row = {
+        'Club Name': 'Missing Critical Club',
+        'Website': 'https://missing-critical.example',
+        'Email': 'N/A',
+        'Location': 'N/A',
+        'Club Type': 'Private',
+        'Membership Status': 'Open',
+        'Waitlist Length': 'N/A',
+        'Number of Courts': 'N/A',
+        'Court Surface': 'Hard',
+        'Operating Season': 'Year-round',
+        'Scrape Status': 'Partial',
+        '_meta': {
+            'retrieval_mode': 'structured',
+            'status_detail': 'missing_critical:Email,Location,NumberOfCourts',
+            'attempted_urls': ['https://missing-critical.example/contact', 'https://missing-critical.example'],
+            'errors': [],
+            'site_profile': 'standard',
+            'needs_outreach': True,
+            'field_sources': {
+                'Club Type': {'confidence': 0.95},
+                'Membership Status': {'confidence': 0.92},
+                'Court Surface': {'confidence': 0.96},
+                'Operating Season': {'confidence': 0.97},
+            },
+        },
+    }
+
+    queue = app_module._build_review_queue([row])
+    assert len(queue) == 1
+
+    entry = queue[0]
+    assert entry['failure_reason'] == 'partial_unpublished'
+    assert entry['failed_stage'] == 'post_processing'
+    assert entry['recommended_next_action'] == 'manual_review_or_contact_club'
+    assert entry['missing_fields'] == ['Email', 'Location', 'Number of Courts', 'Waitlist Length']
+    assert entry['attempted_urls'] == [
+        'https://missing-critical.example/contact',
+        'https://missing-critical.example',
+    ]
+    assert 'Email' in entry['Missing Fields']
+    assert 'Location' in entry['Missing Fields']

@@ -195,51 +195,132 @@ def _build_review_queue(results: list[dict]) -> list[dict]:
     for row in results:
         meta = row.get("_meta", {})
         field_sources = meta.get("field_sources", {})
+        actual_missing_fields, low_confidence_fields = _review_queue_field_gaps(row, field_sources)
+        missing_fields = list(dict.fromkeys([*actual_missing_fields, *low_confidence_fields]))
+        attempted_urls = _normalized_attempted_urls(meta.get("attempted_urls"), row.get("Website"))
+        failure = _classify_review_failure(row, meta, actual_missing_fields, low_confidence_fields)
 
-        def _is_confident(field: str) -> bool:
-            threshold = FIELD_THRESHOLDS.get(field, 0.0)
-            confidence = field_sources.get(field, {}).get("confidence", 0.0)
-            try:
-                confidence_value = float(confidence)
-            except (TypeError, ValueError):
-                confidence_value = 0.0
-            return confidence_value >= threshold
-
-        missing = [
-            field
-            for field in REVIEW_FIELDS
-            if str(row.get(field, "N/A")).strip() in {"", "N/A"} or not _is_confident(field)
-        ]
-
-        low_confidence_fields = [
-            field
-            for field in REVIEW_FIELDS
-            if str(row.get(field, "N/A")).strip() not in {"", "N/A"} and not _is_confident(field)
-        ]
-        high_value_low_confidence = [
-            field
-            for field in CRITICAL_FIELDS
-            if field not in REVIEW_FIELDS and str(row.get(field, "N/A")).strip() not in {"", "N/A"} and not _is_confident(field)
-        ]
-        if (
-            meta.get("needs_outreach")
-            or missing
-            or low_confidence_fields
-            or high_value_low_confidence
-        ):
+        if meta.get("needs_outreach") or missing_fields or low_confidence_fields:
             queue.append(
                 {
                     "Club Name": row.get("Club Name", "Unknown"),
                     "Website": row.get("Website", "N/A"),
                     "Email": row.get("Email", "N/A"),
-                    "Missing Fields": ", ".join(missing) if missing else "",
-                    "Low Confidence Fields": ", ".join([*low_confidence_fields, *high_value_low_confidence]),
-                    "Recommendation": "email_or_contact_form",
+                    "Missing Fields": ", ".join(missing_fields) if missing_fields else "",
+                    "Low Confidence Fields": ", ".join(low_confidence_fields),
+                    "Recommendation": failure["recommended_next_action"],
                     "Retrieval Mode": meta.get("retrieval_mode", "unknown"),
                     "Status": row.get("Scrape Status", "Partial"),
+                    "failure_reason": failure["failure_reason"],
+                    "failed_stage": failure["failed_stage"],
+                    "missing_fields": missing_fields,
+                    "attempted_urls": attempted_urls,
+                    "recommended_next_action": failure["recommended_next_action"],
                 }
             )
     return queue
+
+
+def _review_queue_field_gaps(row: dict, field_sources: dict) -> tuple[list[str], list[str]]:
+    ordered_fields = list(dict.fromkeys([*CRITICAL_FIELDS, *REVIEW_FIELDS]))
+    missing_fields: list[str] = []
+    low_confidence_fields: list[str] = []
+
+    for field in ordered_fields:
+        value = str(row.get(field, "N/A")).strip()
+        threshold = FIELD_THRESHOLDS.get(field, 0.0)
+        confidence = field_sources.get(field, {}).get("confidence", 0.0)
+        try:
+            confidence_value = float(confidence)
+        except (TypeError, ValueError):
+            confidence_value = 0.0
+
+        is_missing = value in {"", "N/A"}
+        is_low_confidence = not is_missing and confidence_value < threshold
+        if is_missing:
+            missing_fields.append(field)
+        if is_low_confidence:
+            low_confidence_fields.append(field)
+
+    return missing_fields, low_confidence_fields
+
+
+def _normalized_attempted_urls(attempted_urls: object, website: object) -> list[str]:
+    normalized: list[str] = []
+
+    if isinstance(attempted_urls, list):
+        candidates = attempted_urls
+    elif attempted_urls:
+        candidates = [attempted_urls]
+    else:
+        candidates = []
+
+    for candidate in candidates:
+        text = _safe_text(candidate)
+        if text and text not in normalized:
+            normalized.append(text)
+
+    website_text = _safe_text(website)
+    if website_text and website_text.lower() not in {"n/a", "na", "none", "nan"} and website_text not in normalized:
+        normalized.append(website_text)
+    return normalized
+
+
+def _classify_review_failure(row: dict, meta: dict, missing_fields: list[str], low_confidence_fields: list[str]) -> dict[str, object]:
+    retrieval_mode = _safe_text(meta.get("retrieval_mode", "unknown")).lower()
+    status_detail = _safe_text(meta.get("status_detail", "")).lower()
+    site_profile = _safe_text(meta.get("site_profile", "unknown")).lower()
+    errors = " ".join(
+        _safe_text(error).lower()
+        for error in meta.get("errors", [])
+        if _safe_text(error)
+    )
+
+    if retrieval_mode == "no_website" or site_profile == "no_website" or status_detail == "preloaded_no_website":
+        return {
+            "failure_reason": "no_website",
+            "failed_stage": "source_selection",
+            "recommended_next_action": "verify_official_website_or_manual_outreach",
+        }
+
+    if (
+        retrieval_mode == "failed"
+        or "http_fetch_failed" in status_detail
+        or "unable to fetch" in errors
+        or "fetch_failed" in errors
+    ):
+        return {
+            "failure_reason": "fetch_failed",
+            "failed_stage": "fetch",
+            "recommended_next_action": "retry_with_browser_automation_or_verify_url",
+        }
+
+    if site_profile == "js_heavy" or retrieval_mode == "js_heavy" or "js_heavy" in status_detail:
+        return {
+            "failure_reason": "js_heavy",
+            "failed_stage": "render",
+            "recommended_next_action": "use_browser_automation_or_site_adapter",
+        }
+
+    if missing_fields:
+        return {
+            "failure_reason": "partial_unpublished",
+            "failed_stage": "post_processing",
+            "recommended_next_action": "manual_review_or_contact_club",
+        }
+
+    if low_confidence_fields:
+        return {
+            "failure_reason": "parser_mismatch",
+            "failed_stage": "parse",
+            "recommended_next_action": "inspect_parser_and_source_html",
+        }
+
+    return {
+        "failure_reason": "manual_review_needed",
+        "failed_stage": "post_processing",
+        "recommended_next_action": "manual_review",
+    }
 
 
 def _safe_text(value: object) -> str:
@@ -667,6 +748,11 @@ def _write_outputs(results: list[dict], review_queue: list[dict], changed: bool)
         "Recommendation",
         "Retrieval Mode",
         "Status",
+        "failure_reason",
+        "failed_stage",
+        "missing_fields",
+        "attempted_urls",
+        "recommended_next_action",
     ]
     with review_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=review_headers)
