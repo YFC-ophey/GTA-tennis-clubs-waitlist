@@ -34,6 +34,7 @@ except ImportError:
 
 BASE_DIR = Path(__file__).resolve().parent
 STATE_FILE = BASE_DIR / "data" / "current_club_state.json"
+REVIEW_QUEUE_FILE = BASE_DIR / "data" / "current_review_queue.json"
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "").strip()
 REQUEST_TIMEOUT = 12
 
@@ -176,6 +177,23 @@ def _persist_canonical_state(results: list[dict]) -> bool:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(json.dumps(results, indent=2, ensure_ascii=False), encoding="utf-8")
     return previous != current
+
+
+def _load_persisted_review_queue() -> list[dict]:
+    if not REVIEW_QUEUE_FILE.exists():
+        return []
+    try:
+        payload = json.loads(REVIEW_QUEUE_FILE.read_text(encoding="utf-8"))
+        if isinstance(payload, list):
+            return [row for row in payload if isinstance(row, dict)]
+    except Exception:  # noqa: BLE001
+        return []
+    return []
+
+
+def _persist_review_queue(review_queue: list[dict]) -> None:
+    REVIEW_QUEUE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    REVIEW_QUEUE_FILE.write_text(json.dumps(review_queue, indent=2, ensure_ascii=False), encoding="utf-8")
 
 
 def _result_without_meta(result: dict) -> dict:
@@ -572,6 +590,16 @@ def _get_active_records() -> list[dict]:
     return _normalize_active_records(_build_records_from_preloaded_data())
 
 
+def _get_active_review_queue() -> list[dict]:
+    if scraping_status.get("running"):
+        return list(scraping_status.get("review_queue", []))
+
+    runtime_queue = scraping_status.get("review_queue", [])
+    if runtime_queue:
+        return list(runtime_queue)
+    return _load_persisted_review_queue()
+
+
 def _collect_known_emails(records: list[dict]) -> list[str]:
     emails = []
     seen = set()
@@ -809,6 +837,8 @@ def _write_outputs(results: list[dict], review_queue: list[dict], changed: bool)
         writer.writeheader()
         for row in review_queue:
             writer.writerow(row)
+
+    _persist_review_queue(review_queue)
 
     return timestamp
 
@@ -1112,10 +1142,11 @@ def get_dashboard_data():
 
 @app.route("/api/review-queue")
 def review_queue():
+    queue = _get_active_review_queue()
     return jsonify(
         {
-            "review_queue": scraping_status.get("review_queue", []),
-            "count": scraping_status.get("review_queue_count", 0),
+            "review_queue": queue,
+            "count": len(queue),
         }
     )
 

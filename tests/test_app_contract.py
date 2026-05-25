@@ -1,3 +1,5 @@
+import json
+
 import app as app_module
 
 
@@ -200,6 +202,58 @@ def test_dashboard_data_exposes_known_email_list():
     payload = client.get('/api/dashboard-data').get_json()
     assert payload['known_emails_count'] == 1
     assert payload['known_emails'] == ['a@ex.com']
+
+
+def test_review_queue_endpoint_returns_persisted_structured_queue(tmp_path, monkeypatch):
+    review_queue_file = tmp_path / 'data' / 'current_review_queue.json'
+    review_queue_file.parent.mkdir(parents=True, exist_ok=True)
+    review_queue_file.write_text(
+        json.dumps(
+            [
+                {
+                    'Club Name': 'Persisted Club',
+                    'Website': 'https://persisted.example',
+                    'Email': 'N/A',
+                    'Missing Fields': 'Email, Location',
+                    'Low Confidence Fields': '',
+                    'Recommendation': 'Manual review',
+                    'Retrieval Mode': 'structured',
+                    'Status': 'Needs Update',
+                    'failure_reason': 'partial_unpublished',
+                    'failed_stage': 'post_processing',
+                    'missing_fields': ['Email', 'Location'],
+                    'attempted_urls': ['https://persisted.example'],
+                    'recommended_next_action': 'manual_review_or_contact_club',
+                }
+            ],
+            indent=2,
+        ),
+        encoding='utf-8',
+    )
+
+    monkeypatch.setattr(app_module, 'BASE_DIR', tmp_path)
+    monkeypatch.setattr(app_module, 'REVIEW_QUEUE_FILE', review_queue_file)
+    app_module.scraping_status = {
+        'running': False,
+        'progress': 0,
+        'total': 0,
+        'current_club': '',
+        'errors': [],
+        'results': [],
+        'mode_counts': {},
+        'changed_since_last_run': False,
+        'review_queue': [],
+        'review_queue_count': 0,
+        'coverage_metrics': {},
+    }
+
+    client = app_module.app.test_client()
+    payload = client.get('/api/review-queue').get_json()
+
+    assert payload['count'] == 1
+    assert payload['review_queue'][0]['failure_reason'] == 'partial_unpublished'
+    assert payload['review_queue'][0]['failed_stage'] == 'post_processing'
+    assert payload['review_queue'][0]['recommended_next_action'] == 'manual_review_or_contact_club'
 
 
 def test_build_review_queue_includes_low_confidence_fields():
