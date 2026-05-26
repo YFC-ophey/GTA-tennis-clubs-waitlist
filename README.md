@@ -2,10 +2,12 @@
 
 [![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Flask](https://img.shields.io/badge/flask-3.x-green.svg)](https://flask.palletsprojects.com/)
+[![Pages](https://img.shields.io/badge/pages-live-2ea44f.svg)](https://yfc-ophey.github.io/GTA-tennis-clubs-waitlist/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A Wimbledon-inspired data portal for collecting and visualizing GTA tennis club information.  
-Current branch includes scraping orchestration, interactive dashboard pages, and a data review pipeline suitable for handling large-scale extraction gaps.
+**Live site:** [yfc-ophey.github.io/GTA-tennis-clubs-waitlist](https://yfc-ophey.github.io/GTA-tennis-clubs-waitlist/) (public dashboard + club finder, auto-deployed from `main`)
+
+A Wimbledon-inspired data portal for collecting and visualizing GTA tennis club information. Includes scraping orchestration, interactive dashboard pages, and a data review pipeline suitable for handling large-scale extraction gaps.
 
 ## ✨ Features
 
@@ -23,9 +25,12 @@ Current branch includes scraping orchestration, interactive dashboard pages, and
 - `scraper_simple.py` — scraping logic.
 - `data_merger.py` — source data normalization and merge helpers.
 - `email_agent.py` — email preview/send utilities.
-- `templates/` — HTML templates (`index`, `results`, `scraper`, `email`).
-- `data/` — working Excel source.
+- `templates/` — Jinja templates (`index`, `results`, `scraper`, `email`) for the Flask app.
+- `data/` — working Excel source and `current_club_state.json` snapshot.
 - `GTA_Tennis_clubs_raw_data .xlsx` — root-level raw data source used by current app.
+- `docs/` — pre-rendered static snapshot served by GitHub Pages (`index.html`, `results/index.html`).
+- `scripts/build_github_pages.py` — regenerates `docs/` from current data.
+- `.github/workflows/static.yml` — Actions workflow that deploys `docs/` to Pages on every push to `main`.
 
 ## 🚀 Quick Start
 
@@ -57,26 +62,24 @@ Open:
 
 The app runs on port `5001` to avoid common local conflicts.
 
-## 🌐 GitHub Pages Snapshot
+## 🌐 GitHub Pages Deployment
 
-This branch also generates a static public snapshot in `docs/` for GitHub Pages.
+The public site at [yfc-ophey.github.io/GTA-tennis-clubs-waitlist](https://yfc-ophey.github.io/GTA-tennis-clubs-waitlist/) is auto-deployed from `main` via the workflow in `.github/workflows/static.yml`. It uploads the `docs/` folder as the Pages artifact, so `docs/index.html` becomes the site root.
 
-Published URL:
+**To refresh the live site with current data:**
 
-- `https://yfc-ophey.github.io/GTA-tennis-clubs-waitlist/`
-
-To enable it in GitHub:
-
-1. Open repository settings.
-2. Go to **Pages**.
-3. Select the `main` branch and the `/docs` folder as the source.
-4. Save and wait for GitHub to publish the site.
+```bash
+python scripts/build_github_pages.py   # regenerates docs/ from current_club_state.json
+git add docs/
+git commit -m "chore: refresh docs snapshot"
+git push origin main                    # workflow deploys within ~1 min
+```
 
 The Pages snapshot exposes the public dashboard and club finder. The scraping and email tools remain in the Flask app for local use.
 
 ## 🧭 Default Development Workflow
 
-See [`WORKFLOW.md`](/Users/opheliachen/projects/GTA%20Tennis%20Clubs/GTA-tennis-clubs-waitlist/.worktrees/codex-wimbledon-dashboard/WORKFLOW.md) for the required sequence.
+See [`WORKFLOW.md`](./WORKFLOW.md) for the required sequence.
 
 ## 🔌 API Endpoints
 
