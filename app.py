@@ -34,6 +34,7 @@ except ImportError:
 
 BASE_DIR = Path(__file__).resolve().parent
 STATE_FILE = BASE_DIR / "data" / "current_club_state.json"
+REVIEW_QUEUE_FILE = BASE_DIR / "data" / "current_review_queue.json"
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "").strip()
 REQUEST_TIMEOUT = 12
 
@@ -178,6 +179,23 @@ def _persist_canonical_state(results: list[dict]) -> bool:
     return previous != current
 
 
+def _load_persisted_review_queue() -> list[dict]:
+    if not REVIEW_QUEUE_FILE.exists():
+        return []
+    try:
+        payload = json.loads(REVIEW_QUEUE_FILE.read_text(encoding="utf-8"))
+        if isinstance(payload, list):
+            return [row for row in payload if isinstance(row, dict)]
+    except Exception:  # noqa: BLE001
+        return []
+    return []
+
+
+def _persist_review_queue(review_queue: list[dict]) -> None:
+    REVIEW_QUEUE_FILE.parent.mkdir(parents=True, exist_ok=True)
+    REVIEW_QUEUE_FILE.write_text(json.dumps(review_queue, indent=2, ensure_ascii=False), encoding="utf-8")
+
+
 def _result_without_meta(result: dict) -> dict:
     return {k: v for k, v in result.items() if k != "_meta"}
 
@@ -193,53 +211,184 @@ def _compute_mode_counts(results: list[dict]) -> dict[str, int]:
 def _build_review_queue(results: list[dict]) -> list[dict]:
     queue: list[dict] = []
     for row in results:
-        meta = row.get("_meta", {})
-        field_sources = meta.get("field_sources", {})
+        review_state = _build_review_state(row)
+        meta = _ensure_review_metadata(row, review_state)
+        missing_fields = review_state["missing_fields"]
+        low_confidence_fields = review_state["low_confidence_fields"]
+        failure = review_state["failure"]
 
-        def _is_confident(field: str) -> bool:
-            threshold = FIELD_THRESHOLDS.get(field, 0.0)
-            confidence = field_sources.get(field, {}).get("confidence", 0.0)
-            try:
-                confidence_value = float(confidence)
-            except (TypeError, ValueError):
-                confidence_value = 0.0
-            return confidence_value >= threshold
-
-        missing = [
-            field
-            for field in REVIEW_FIELDS
-            if str(row.get(field, "N/A")).strip() in {"", "N/A"} or not _is_confident(field)
-        ]
-
-        low_confidence_fields = [
-            field
-            for field in REVIEW_FIELDS
-            if str(row.get(field, "N/A")).strip() not in {"", "N/A"} and not _is_confident(field)
-        ]
-        high_value_low_confidence = [
-            field
-            for field in CRITICAL_FIELDS
-            if field not in REVIEW_FIELDS and str(row.get(field, "N/A")).strip() not in {"", "N/A"} and not _is_confident(field)
-        ]
-        if (
-            meta.get("needs_outreach")
-            or missing
-            or low_confidence_fields
-            or high_value_low_confidence
-        ):
+        if meta.get("needs_outreach") or missing_fields or low_confidence_fields:
             queue.append(
                 {
                     "Club Name": row.get("Club Name", "Unknown"),
                     "Website": row.get("Website", "N/A"),
                     "Email": row.get("Email", "N/A"),
-                    "Missing Fields": ", ".join(missing) if missing else "",
-                    "Low Confidence Fields": ", ".join([*low_confidence_fields, *high_value_low_confidence]),
-                    "Recommendation": "email_or_contact_form",
+                    "Missing Fields": ", ".join(missing_fields) if missing_fields else "",
+                    "Low Confidence Fields": ", ".join(low_confidence_fields),
+                    "Recommendation": failure["recommended_next_action"],
                     "Retrieval Mode": meta.get("retrieval_mode", "unknown"),
                     "Status": row.get("Scrape Status", "Partial"),
+                    "failure_reason": failure["failure_reason"],
+                    "failed_stage": failure["failed_stage"],
+                    "missing_fields": missing_fields,
+                    "attempted_urls": review_state["attempted_urls"],
+                    "recommended_next_action": failure["recommended_next_action"],
                 }
             )
     return queue
+
+
+def _build_review_state(result: dict) -> dict[str, object]:
+    meta = dict(result.get("_meta", {}))
+    field_sources = meta.get("field_sources", {})
+    actual_missing_fields, low_confidence_fields = _review_queue_field_gaps(result, field_sources)
+    attempted_urls = _normalized_attempted_urls(meta.get("attempted_urls"), result.get("Website"))
+    failure = _classify_review_failure(meta, actual_missing_fields, low_confidence_fields)
+    missing_fields = list(dict.fromkeys([*actual_missing_fields, *low_confidence_fields]))
+
+    return {
+        "meta": meta,
+        "actual_missing_fields": actual_missing_fields,
+        "low_confidence_fields": low_confidence_fields,
+        "missing_fields": missing_fields,
+        "attempted_urls": attempted_urls,
+        "failure": failure,
+    }
+
+
+def _ensure_review_metadata(result: dict, review_state: dict[str, object] | None = None) -> dict:
+    if review_state is None:
+        review_state = _build_review_state(result)
+
+    meta = dict(review_state["meta"])
+    actual_missing_fields = review_state["actual_missing_fields"]
+    low_confidence_fields = review_state["low_confidence_fields"]
+    missing_fields = review_state["missing_fields"]
+    attempted_urls = review_state["attempted_urls"]
+    failure = review_state["failure"]
+
+    if actual_missing_fields or low_confidence_fields or meta.get("needs_outreach"):
+        meta.update(
+            {
+                "failure_reason": failure["failure_reason"],
+                "failed_stage": failure["failed_stage"],
+                "missing_fields": missing_fields,
+                "attempted_urls": attempted_urls,
+                "recommended_next_action": failure["recommended_next_action"],
+            }
+        )
+
+    result["_meta"] = meta
+    return meta
+
+
+def _normalize_active_records(records: list[dict]) -> list[dict]:
+    normalized_records = _ensure_status_compatibility(records)
+    for row in normalized_records:
+        _ensure_review_metadata(row)
+    return normalized_records
+
+
+def _review_queue_field_gaps(row: dict, field_sources: dict) -> tuple[list[str], list[str]]:
+    ordered_fields = list(dict.fromkeys([*CRITICAL_FIELDS, *REVIEW_FIELDS]))
+    missing_fields: list[str] = []
+    low_confidence_fields: list[str] = []
+
+    for field in ordered_fields:
+        value = str(row.get(field, "N/A")).strip()
+        threshold = FIELD_THRESHOLDS.get(field, 0.0)
+        confidence = field_sources.get(field, {}).get("confidence", 0.0)
+        try:
+            confidence_value = float(confidence)
+        except (TypeError, ValueError):
+            confidence_value = 0.0
+
+        is_missing = value in {"", "N/A"}
+        is_low_confidence = not is_missing and confidence_value < threshold
+        if is_missing:
+            missing_fields.append(field)
+        if is_low_confidence:
+            low_confidence_fields.append(field)
+
+    return missing_fields, low_confidence_fields
+
+
+def _normalized_attempted_urls(attempted_urls: object, website: object) -> list[str]:
+    normalized: list[str] = []
+
+    if isinstance(attempted_urls, list):
+        candidates = attempted_urls
+    elif attempted_urls:
+        candidates = [attempted_urls]
+    else:
+        candidates = []
+
+    for candidate in candidates:
+        text = _safe_text(candidate)
+        if text and text not in normalized:
+            normalized.append(text)
+
+    website_text = _safe_text(website)
+    if website_text and website_text.lower() not in {"n/a", "na", "none", "nan"} and website_text not in normalized:
+        normalized.append(website_text)
+    return normalized
+
+
+def _classify_review_failure(meta: dict, missing_fields: list[str], low_confidence_fields: list[str]) -> dict[str, object]:
+    retrieval_mode = _safe_text(meta.get("retrieval_mode", "unknown")).lower()
+    status_detail = _safe_text(meta.get("status_detail", "")).lower()
+    site_profile = _safe_text(meta.get("site_profile", "unknown")).lower()
+    errors = " ".join(
+        _safe_text(error).lower()
+        for error in meta.get("errors", [])
+        if _safe_text(error)
+    )
+
+    if retrieval_mode == "no_website" or site_profile == "no_website" or status_detail == "preloaded_no_website":
+        return {
+            "failure_reason": "no_website",
+            "failed_stage": "source_selection",
+            "recommended_next_action": "verify_official_website_or_manual_outreach",
+        }
+
+    if (
+        retrieval_mode == "failed"
+        or "http_fetch_failed" in status_detail
+        or "unable to fetch" in errors
+        or "fetch_failed" in errors
+    ):
+        return {
+            "failure_reason": "fetch_failed",
+            "failed_stage": "fetch",
+            "recommended_next_action": "retry_with_browser_automation_or_verify_url",
+        }
+
+    if site_profile == "js_heavy" or retrieval_mode == "js_heavy" or "js_heavy" in status_detail:
+        return {
+            "failure_reason": "js_heavy",
+            "failed_stage": "render",
+            "recommended_next_action": "use_browser_automation_or_site_adapter",
+        }
+
+    if missing_fields:
+        return {
+            "failure_reason": "partial_unpublished",
+            "failed_stage": "post_processing",
+            "recommended_next_action": "manual_review_or_contact_club",
+        }
+
+    if low_confidence_fields:
+        return {
+            "failure_reason": "parser_mismatch",
+            "failed_stage": "parse",
+            "recommended_next_action": "inspect_parser_and_source_html",
+        }
+
+    return {
+        "failure_reason": "manual_review_needed",
+        "failed_stage": "post_processing",
+        "recommended_next_action": "manual_review",
+    }
 
 
 def _safe_text(value: object) -> str:
@@ -434,11 +583,29 @@ def _build_records_from_preloaded_data() -> list[dict]:
 
 def _get_active_records() -> list[dict]:
     if scraping_status.get("results"):
-        return _ensure_status_compatibility(scraping_status["results"])
+        return _normalize_active_records(scraping_status["results"])
     state_records = _build_records_from_state()
     if state_records:
-        return _ensure_status_compatibility(state_records)
-    return _ensure_status_compatibility(_build_records_from_preloaded_data())
+        return _normalize_active_records(state_records)
+    return _normalize_active_records(_build_records_from_preloaded_data())
+
+
+def _get_active_review_queue() -> list[dict]:
+    if scraping_status.get("running"):
+        return list(scraping_status.get("review_queue", []))
+
+    runtime_queue = scraping_status.get("review_queue", [])
+    if runtime_queue:
+        return list(runtime_queue)
+    return _load_persisted_review_queue()
+
+
+def _page_context(active_nav: str) -> dict[str, str]:
+    return {
+        "active_nav": active_nav,
+        "home_href": "/",
+        "results_href": "/results/",
+    }
 
 
 def _collect_known_emails(records: list[dict]) -> list[str]:
@@ -667,12 +834,19 @@ def _write_outputs(results: list[dict], review_queue: list[dict], changed: bool)
         "Recommendation",
         "Retrieval Mode",
         "Status",
+        "failure_reason",
+        "failed_stage",
+        "missing_fields",
+        "attempted_urls",
+        "recommended_next_action",
     ]
     with review_csv.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.DictWriter(handle, fieldnames=review_headers)
         writer.writeheader()
         for row in review_queue:
             writer.writerow(row)
+
+    _persist_review_queue(review_queue)
 
     return timestamp
 
@@ -821,6 +995,7 @@ def background_scraping_task(max_clubs=None, use_js_fallback=False):
                     }
 
             scraping_status["results"].append(result)
+            _ensure_review_metadata(result)
 
             mode = result.get("_meta", {}).get("retrieval_mode", "unknown")
             mode_counts = Counter(scraping_status.get("mode_counts", {}))
@@ -848,27 +1023,29 @@ def index():
     """Dashboard page"""
     active_records = _get_active_records()
     total_clubs = len(active_records)
-    return render_template("index.html", total_clubs=total_clubs)
+    return render_template("index.html", total_clubs=total_clubs, **_page_context("overview"))
 
 
 @app.route("/scraper")
 def scraper():
-    return render_template("scraper.html")
+    return render_template("scraper.html", **_page_context("scraper"))
 
 
 @app.route("/results")
+@app.route("/results/")
 def results():
-    return render_template("results.html")
+    return render_template("results.html", **_page_context("results"))
 
 
 @app.route("/players")
+@app.route("/players/")
 def players():
-    return render_template("results.html")
+    return render_template("results.html", **_page_context("results"))
 
 
 @app.route("/email")
 def email():
-    return render_template("email.html")
+    return render_template("email.html", **_page_context("email"))
 
 
 @app.route("/api/start-scraping", methods=["POST"])
@@ -975,10 +1152,11 @@ def get_dashboard_data():
 
 @app.route("/api/review-queue")
 def review_queue():
+    queue = _get_active_review_queue()
     return jsonify(
         {
-            "review_queue": scraping_status.get("review_queue", []),
-            "count": scraping_status.get("review_queue_count", 0),
+            "review_queue": queue,
+            "count": len(queue),
         }
     )
 

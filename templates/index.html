@@ -599,7 +599,7 @@
             <p class="hero-copy">Search public club records, compare published membership signals, and move from map discovery to directory review without hiding unknown data.</p>
             <div class="hero-actions">
                 <a href="#club-discovery" class="btn">Explore clubs</a>
-                <a href="/results" class="btn btn--ghost">Open directory</a>
+                <a href="{{ results_href | default('/results/') }}" class="btn btn--ghost">Open directory</a>
             </div>
         </div>
         <p class="hero-footnote">Unknown means the source data did not publish that field.</p>
@@ -749,12 +749,18 @@
     <article class="action-tile surface-card">
         <h3>Player Directory</h3>
         <p>Review every record with contact details, scrape status, and export tooling.</p>
-        <a href="/results" class="btn">Open directory</a>
+        <a href="{{ results_href | default('/results/') }}" class="btn">Open directory</a>
     </article>
 </section>
 {% endblock %}
 
 {% block extra_js %}
+{% if dashboard_data_json %}
+<script>
+    window.__GTA_DASHBOARD_DATA__ = {{ dashboard_data_json | safe }};
+    window.__GTA_STATIC_SITE__ = true;
+</script>
+{% endif %}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.2/dist/chart.umd.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <script>
@@ -1290,6 +1296,13 @@
     }
 
     function loadDashboardData() {
+        if (window.__GTA_DASHBOARD_DATA__) {
+            dashboardMeta = window.__GTA_DASHBOARD_DATA__ || {};
+            rawRecords = dashboardMeta.records || [];
+            $('#last-refreshed').text('Static snapshot');
+            renderDashboard();
+            return;
+        }
         $.getJSON('/api/dashboard-data', function(data) {
             dashboardMeta = data || {};
             rawRecords = data.records || [];
@@ -1316,7 +1329,9 @@
             renderDashboard();
         });
         loadDashboardData();
-        setInterval(loadDashboardData, 6000);
+        if (!window.__GTA_STATIC_SITE__) {
+            setInterval(loadDashboardData, 6000);
+        }
     });
 </script>
 {% endblock %}

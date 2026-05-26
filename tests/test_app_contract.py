@@ -1,3 +1,5 @@
+import json
+
 import app as app_module
 
 
@@ -202,6 +204,58 @@ def test_dashboard_data_exposes_known_email_list():
     assert payload['known_emails'] == ['a@ex.com']
 
 
+def test_review_queue_endpoint_returns_persisted_structured_queue(tmp_path, monkeypatch):
+    review_queue_file = tmp_path / 'data' / 'current_review_queue.json'
+    review_queue_file.parent.mkdir(parents=True, exist_ok=True)
+    review_queue_file.write_text(
+        json.dumps(
+            [
+                {
+                    'Club Name': 'Persisted Club',
+                    'Website': 'https://persisted.example',
+                    'Email': 'N/A',
+                    'Missing Fields': 'Email, Location',
+                    'Low Confidence Fields': '',
+                    'Recommendation': 'Manual review',
+                    'Retrieval Mode': 'structured',
+                    'Status': 'Needs Update',
+                    'failure_reason': 'partial_unpublished',
+                    'failed_stage': 'post_processing',
+                    'missing_fields': ['Email', 'Location'],
+                    'attempted_urls': ['https://persisted.example'],
+                    'recommended_next_action': 'manual_review_or_contact_club',
+                }
+            ],
+            indent=2,
+        ),
+        encoding='utf-8',
+    )
+
+    monkeypatch.setattr(app_module, 'BASE_DIR', tmp_path)
+    monkeypatch.setattr(app_module, 'REVIEW_QUEUE_FILE', review_queue_file)
+    app_module.scraping_status = {
+        'running': False,
+        'progress': 0,
+        'total': 0,
+        'current_club': '',
+        'errors': [],
+        'results': [],
+        'mode_counts': {},
+        'changed_since_last_run': False,
+        'review_queue': [],
+        'review_queue_count': 0,
+        'coverage_metrics': {},
+    }
+
+    client = app_module.app.test_client()
+    payload = client.get('/api/review-queue').get_json()
+
+    assert payload['count'] == 1
+    assert payload['review_queue'][0]['failure_reason'] == 'partial_unpublished'
+    assert payload['review_queue'][0]['failed_stage'] == 'post_processing'
+    assert payload['review_queue'][0]['recommended_next_action'] == 'manual_review_or_contact_club'
+
+
 def test_build_review_queue_includes_low_confidence_fields():
     row = {
         'Club Name': 'Confidence Club',
@@ -235,3 +289,90 @@ def test_build_review_queue_includes_low_confidence_fields():
     assert 'Membership Status' in entry['Missing Fields']
     assert 'Location' in entry['Low Confidence Fields']
     assert 'Number of Courts' in entry['Low Confidence Fields']
+
+
+def test_build_review_queue_classifies_missing_critical_fields():
+    row = {
+        'Club Name': 'Missing Critical Club',
+        'Website': 'https://missing-critical.example',
+        'Email': 'N/A',
+        'Location': 'N/A',
+        'Club Type': 'Private',
+        'Membership Status': 'Open',
+        'Waitlist Length': 'N/A',
+        'Number of Courts': 'N/A',
+        'Court Surface': 'Hard',
+        'Operating Season': 'Year-round',
+        'Scrape Status': 'Partial',
+        '_meta': {
+            'retrieval_mode': 'structured',
+            'status_detail': 'missing_critical:Email,Location,NumberOfCourts',
+            'attempted_urls': ['https://missing-critical.example/contact', 'https://missing-critical.example'],
+            'errors': [],
+            'site_profile': 'standard',
+            'needs_outreach': True,
+            'field_sources': {
+                'Club Type': {'confidence': 0.95},
+                'Membership Status': {'confidence': 0.92},
+                'Court Surface': {'confidence': 0.96},
+                'Operating Season': {'confidence': 0.97},
+            },
+        },
+    }
+
+    queue = app_module._build_review_queue([row])
+    assert len(queue) == 1
+
+    entry = queue[0]
+    assert entry['failure_reason'] == 'partial_unpublished'
+    assert entry['failed_stage'] == 'post_processing'
+    assert entry['recommended_next_action'] == 'manual_review_or_contact_club'
+    assert entry['missing_fields'] == ['Email', 'Location', 'Number of Courts', 'Waitlist Length']
+    assert entry['attempted_urls'] == [
+        'https://missing-critical.example/contact',
+        'https://missing-critical.example',
+    ]
+    assert 'Email' in entry['Missing Fields']
+    assert 'Location' in entry['Missing Fields']
+
+
+def test_ensure_review_metadata_annotates_unresolved_result():
+    result = {
+        'Club Name': 'Missing Critical Club',
+        'Website': 'https://missing-critical.example',
+        'Email': 'N/A',
+        'Location': 'N/A',
+        'Club Type': 'Private',
+        'Membership Status': 'Open',
+        'Waitlist Length': 'N/A',
+        'Number of Courts': 'N/A',
+        'Court Surface': 'Hard',
+        'Operating Season': 'Year-round',
+        'Scrape Status': 'Partial',
+        '_meta': {
+            'retrieval_mode': 'structured',
+            'status_detail': 'missing_critical:Email,Location,NumberOfCourts',
+            'attempted_urls': ['https://missing-critical.example/contact', 'https://missing-critical.example'],
+            'errors': [],
+            'site_profile': 'standard',
+            'needs_outreach': True,
+            'field_sources': {
+                'Club Type': {'confidence': 0.95},
+                'Membership Status': {'confidence': 0.92},
+                'Court Surface': {'confidence': 0.96},
+                'Operating Season': {'confidence': 0.97},
+            },
+        },
+    }
+
+    meta = app_module._ensure_review_metadata(result)
+
+    assert meta['failure_reason'] == 'partial_unpublished'
+    assert meta['failed_stage'] == 'post_processing'
+    assert meta['recommended_next_action'] == 'manual_review_or_contact_club'
+    assert meta['missing_fields'] == ['Email', 'Location', 'Number of Courts', 'Waitlist Length']
+    assert meta['attempted_urls'] == [
+        'https://missing-critical.example/contact',
+        'https://missing-critical.example',
+    ]
+    assert result['_meta']['failure_reason'] == 'partial_unpublished'

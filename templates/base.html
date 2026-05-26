@@ -3,6 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    {% if canonical_url %}<link rel="canonical" href="{{ canonical_url }}">{% endif %}
+    <meta name="description" content="{{ page_description | default('GTA Tennis Clubs is a public finder for comparing tennis clubs across the Toronto region.') }}">
     <title>{% block title %}GTA Tennis Clubs{% endblock %} - Club Finder</title>
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -579,8 +581,8 @@
                 </div>
                 <nav class="site-nav">
                     <ul>
-                        <li><a href="/" {% if request.path == '/' %}class="active"{% endif %}>Overview</a></li>
-                        <li><a href="/results" {% if request.path == '/results' or request.path == '/players' %}class="active"{% endif %}>Club Finder</a></li>
+                        <li><a href="{{ home_href | default('/') }}" {% if active_nav == 'overview' %}class="active"{% endif %}>Overview</a></li>
+                        <li><a href="{{ results_href | default('/results/') }}" {% if active_nav == 'results' %}class="active"{% endif %}>Club Finder</a></li>
                     </ul>
                 </nav>
             </div>

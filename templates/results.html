@@ -597,6 +597,13 @@
     </section>
 </section>
 
+{% if results_data_json %}
+<script>
+    window.__GTA_RESULTS_DATA__ = {{ results_data_json | safe }};
+    window.__GTA_STATIC_SITE__ = true;
+</script>
+{% endif %}
+
 <script>
 let allResults = [];
 let knownEmails = [];
@@ -632,6 +639,38 @@ function updateVisibleCounts(visibleCount) {
 }
 
 function loadResults() {
+    if (window.__GTA_RESULTS_DATA__) {
+        const data = window.__GTA_RESULTS_DATA__ || {};
+        if (data.results && data.results.length > 0) {
+            allResults = data.results;
+            knownEmails = data.known_emails || [];
+            renderKnownEmails(knownEmails);
+            updateSummary(allResults);
+            searchResults();
+        } else {
+            $('#results-body').html(`
+                <tr>
+                    <td colspan="10" class="no-results">
+                        <div class="icon">No records</div>
+                        <h3>No Results Yet</h3>
+                        <p>Data is loaded from the merged source dataset and scraper cache.</p>
+                    </td>
+                </tr>
+            `);
+            allResults = [];
+            knownEmails = [];
+            $('#results-summary').hide();
+            $('#email-summary').hide();
+            $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
+            $('#known-emails-help').text('No published email addresses yet.');
+            $('#known-emails-inline-panel').text('0 emails');
+            $('#known-emails-inline-mobile').text('0');
+            updateVisibleCounts(0);
+            $('#court-research-block').hide();
+            $('#known-emails-panel').hide();
+        }
+        return;
+    }
     $.get('/api/results', function(data) {
         if (data.results && data.results.length > 0) {
             allResults = data.results;
@@ -787,6 +826,11 @@ function copyKnownEmails() {
 }
 
 function researchMissingCourts() {
+    if (window.__GTA_STATIC_SITE__) {
+        $('#court-research-block').show();
+        $('#court-research-body').html('<p class="empty-state">Court-count research is available in the live app only.</p>');
+        return;
+    }
     const unresolved = allResults.filter(function(row) {
         const courts = String(row['Number of Courts'] || '').trim();
         return courts === '' || courts === 'N/A' || courts.toLowerCase() === 'unknown';
@@ -898,7 +942,9 @@ function exportJSON() {
 $(document).ready(function() {
     loadResults();
     $('#search-input').on('input', searchResults);
-    setInterval(loadResults, 5000);
+    if (!window.__GTA_STATIC_SITE__) {
+        setInterval(loadResults, 5000);
+    }
 });
 </script>
 {% endblock %}
