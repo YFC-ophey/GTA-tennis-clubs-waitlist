@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://yfc-ophey.github.io/GTA-tennis-clubs-waitlist/sitemap.xml

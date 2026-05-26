@@ -600,6 +600,14 @@ def _get_active_review_queue() -> list[dict]:
     return _load_persisted_review_queue()
 
 
+def _page_context(active_nav: str) -> dict[str, str]:
+    return {
+        "active_nav": active_nav,
+        "home_href": "/",
+        "results_href": "/results/",
+    }
+
+
 def _collect_known_emails(records: list[dict]) -> list[str]:
     emails = []
     seen = set()
@@ -1015,27 +1023,29 @@ def index():
     """Dashboard page"""
     active_records = _get_active_records()
     total_clubs = len(active_records)
-    return render_template("index.html", total_clubs=total_clubs)
+    return render_template("index.html", total_clubs=total_clubs, **_page_context("overview"))
 
 
 @app.route("/scraper")
 def scraper():
-    return render_template("scraper.html")
+    return render_template("scraper.html", **_page_context("scraper"))
 
 
 @app.route("/results")
+@app.route("/results/")
 def results():
-    return render_template("results.html")
+    return render_template("results.html", **_page_context("results"))
 
 
 @app.route("/players")
+@app.route("/players/")
 def players():
-    return render_template("results.html")
+    return render_template("results.html", **_page_context("results"))
 
 
 @app.route("/email")
 def email():
-    return render_template("email.html")
+    return render_template("email.html", **_page_context("email"))
 
 
 @app.route("/api/start-scraping", methods=["POST"])

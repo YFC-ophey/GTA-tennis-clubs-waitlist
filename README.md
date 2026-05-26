@@ -57,6 +57,23 @@ Open:
 
 The app runs on port `5001` to avoid common local conflicts.
 
+## 🌐 GitHub Pages Snapshot
+
+This branch also generates a static public snapshot in `docs/` for GitHub Pages.
+
+Published URL:
+
+- `https://yfc-ophey.github.io/GTA-tennis-clubs-waitlist/`
+
+To enable it in GitHub:
+
+1. Open repository settings.
+2. Go to **Pages**.
+3. Select the `main` branch and the `/docs` folder as the source.
+4. Save and wait for GitHub to publish the site.
+
+The Pages snapshot exposes the public dashboard and club finder. The scraping and email tools remain in the Flask app for local use.
+
 ## 🧭 Default Development Workflow
 
 See [`WORKFLOW.md`](/Users/opheliachen/projects/GTA%20Tennis%20Clubs/GTA-tennis-clubs-waitlist/.worktrees/codex-wimbledon-dashboard/WORKFLOW.md) for the required sequence.
