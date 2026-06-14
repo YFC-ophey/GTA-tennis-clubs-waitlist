@@ -566,40 +566,320 @@
     </style>
 
     
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
     .directory-shell {
         display: grid;
         gap: 18px;
     }
 
-    .directory-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 18px;
-        margin-bottom: 2px;
-        padding: 4px 0 8px;
+    .results-hero {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+        padding: 24px 26px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 28px;
+        align-items: center;
     }
 
-    .directory-header h1 {
+    .hero-ring {
+        position: relative;
+        width: 132px;
+        height: 132px;
+        flex: 0 0 auto;
+    }
+
+    .hero-ring .donut {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(var(--primary) 0 var(--cover-deg, 0deg), var(--line) var(--cover-deg, 0deg) 360deg);
+    }
+
+    .hero-ring .hole {
+        position: absolute;
+        inset: 13px;
+        border-radius: 50%;
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-ring .pct {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-strong);
+        line-height: 1;
+    }
+
+    .hero-ring .cap {
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-top: 3px;
+    }
+
+    .hero-body h1 {
         margin: 0;
     }
 
-    .directory-header__copy {
-        max-width: 720px;
+    .hero-chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
     }
 
-    .directory-header__meta {
-        color: var(--muted);
-        font-size: 0.9rem;
-        text-align: right;
-        white-space: nowrap;
+    .chip-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--surface);
+        font-size: 0.86rem;
+        font-weight: 650;
+        color: var(--secondary);
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
-    .directory-summary {
+    .chip-filter:hover {
+        border-color: var(--primary);
+    }
+
+    .chip-filter[aria-pressed="true"] {
+        background: var(--primary-soft);
+        border-color: var(--primary);
+        color: var(--primary-strong);
+    }
+
+    .chip-filter .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+    }
+
+    .chip-filter strong {
+        font-variant-numeric: tabular-nums;
+        color: var(--text-strong);
+    }
+
+    .map-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+        overflow: hidden;
+    }
+
+    .m1-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+        height: 460px;
+    }
+
+    .gta-map {
+        width: 100%;
+        height: 100%;
+        background: var(--surface-subtle);
+    }
+
+    .m1-list {
+        border-left: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .m1-list-head {
+        padding: 14px 18px 10px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .m1-list-head .t {
+        font-weight: 720;
+        color: var(--text-strong);
+        font-size: 0.95rem;
+    }
+
+    .m1-list-head .s {
+        font-size: 0.78rem;
+        color: var(--muted);
+    }
+
+    .m1-rows {
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .m1-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 18px;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.88rem;
+        color: var(--text);
+        text-align: left;
+    }
+
+    .m1-row:hover {
+        background: var(--primary-soft);
+    }
+
+    .m1-row .count {
+        flex: 0 0 auto;
+        min-width: 30px;
+        text-align: center;
+        font-weight: 740;
+        font-size: 0.78rem;
+        color: var(--primary-strong);
+        background: var(--primary-soft);
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .map-bubble {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 12px rgba(8, 75, 63, 0.35);
+        font-weight: 760;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+    }
+
+    .map-bubble--lone {
+        background: var(--primary-strong);
+    }
+
+    .map-bubble--approx {
+        background: var(--secondary);
+        border-style: dashed;
+        opacity: 0.92;
+    }
+
+    .map-dot {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--primary);
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(8, 75, 63, 0.45);
+    }
+
+    .map-pop-link {
+        display: inline-block;
+        margin-top: 6px;
+        color: var(--primary-strong);
+        font-weight: 680;
+        text-decoration: none;
+        border-bottom: 1px solid var(--primary-soft);
+    }
+
+    .map-pop-link:hover {
+        border-bottom-color: var(--primary);
+    }
+
+    .map-legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 9px 18px;
+        border-top: 1px solid var(--line);
+        font-size: 0.78rem;
+        color: var(--muted);
+        background: var(--surface-elevated);
+    }
+
+    .map-legend .demo-dot {
+        display: inline-block;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--primary);
+        border: 2px solid #fff;
+        box-shadow: 0 1px 4px rgba(8, 75, 63, 0.4);
+        vertical-align: -1px;
+        margin-right: 5px;
+    }
+
+    .map-legend .demo-bubble {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--secondary);
+        border: 2px dashed #fff;
+        vertical-align: -2px;
+        margin-right: 5px;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-2);
+    }
+
+    .leaflet-popup-content {
+        font-size: 0.84rem;
+        color: var(--text);
+        margin: 12px 14px;
+    }
+
+    .map-pop-title {
+        font-weight: 760;
+        color: var(--text-strong);
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+    }
+
+    .map-pop-count {
+        color: var(--primary-strong);
+        font-weight: 680;
+        font-size: 0.78rem;
+        margin-bottom: 6px;
+    }
+
+    .map-pop-list {
+        margin: 0;
+        padding-left: 16px;
+    }
+
+    .map-pop-list li {
+        margin: 1px 0;
+    }
+
+    .map-pop-more {
+        color: var(--muted);
+        font-size: 0.78rem;
+        margin-top: 4px;
     }
 
     .summary-card {
@@ -928,18 +1208,19 @@
     }
 
     @media (max-width: 980px) {
-        .directory-header {
-            align-items: flex-start;
-            flex-direction: column;
+        .m1-grid {
+            grid-template-columns: 1fr;
+            height: auto;
         }
 
-        .directory-header__meta {
-            text-align: left;
-            white-space: normal;
+        .m1-grid > div:first-child {
+            height: 320px;
         }
 
-        .directory-summary {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        .m1-list {
+            max-height: 280px;
+            border-left: 0;
+            border-top: 1px solid var(--line);
         }
 
         .directory-controls {
@@ -962,8 +1243,15 @@
             gap: 14px;
         }
 
-        .directory-summary {
+        .results-hero {
             grid-template-columns: 1fr;
+            justify-items: center;
+            text-align: center;
+            padding: 20px 18px;
+        }
+
+        .hero-chips {
+            justify-content: center;
         }
 
         .summary-card {
@@ -1065,31 +1353,43 @@
             <div class="container">
                 
 <section class="directory-shell">
-    <header class="directory-header">
-        <div class="directory-header__copy">
-            <h1 class="section-title">Club Directory</h1>
-            <p class="section-subtitle">Browse collected GTA tennis club records, inspect gaps, and export the current dataset.</p>
+    <section class="results-hero" id="results-hero" aria-live="polite">
+        <div class="hero-ring" aria-hidden="true">
+            <div class="donut" id="coverage-donut"></div>
+            <div class="hole">
+                <span class="pct" id="coverage-pct">&ndash;</span>
+                <span class="cap">email coverage</span>
+            </div>
         </div>
-        <div class="directory-header__meta">Public finder data surface</div>
-    </header>
+        <div class="hero-body">
+            <h1 class="section-title">Club Directory</h1>
+            <p class="section-subtitle">Browse collected GTA tennis club records, inspect gaps, and export the current dataset. Tap a chip to filter the table.</p>
+            <div class="hero-chips" role="group" aria-label="Filter clubs">
+                <button type="button" class="chip-filter" data-filter="all" aria-pressed="true"><span class="dot" style="background: var(--primary);"></span>All clubs&nbsp;<strong id="chip-count-all">0</strong></button>
+                <button type="button" class="chip-filter" data-filter="email" aria-pressed="false"><span class="dot" style="background: var(--success);"></span>Has email&nbsp;<strong id="chip-count-email">0</strong></button>
+                <button type="button" class="chip-filter" data-filter="complete" aria-pressed="false"><span class="dot" style="background: var(--secondary);"></span>Complete&nbsp;<strong id="chip-count-complete">0</strong></button>
+                <button type="button" class="chip-filter" data-filter="needs" aria-pressed="false"><span class="dot" style="background: var(--warning);"></span>Needs update&nbsp;<strong id="chip-count-needs">0</strong></button>
+            </div>
+        </div>
+    </section>
 
-    <section id="results-summary" class="directory-summary" style="display: none;" aria-live="polite">
-        <article class="summary-card">
-            <div class="label">Total clubs</div>
-            <div class="value" id="summary-total">0</div>
-        </article>
-        <article class="summary-card">
-            <div class="label">Successful scrapes</div>
-            <div class="value" id="summary-success" style="color: var(--success);">0</div>
-        </article>
-        <article class="summary-card">
-            <div class="label">Emails found</div>
-            <div class="value" id="summary-emails">0</div>
-        </article>
-        <article class="summary-card">
-            <div class="label">Complete records</div>
-            <div class="value" id="summary-complete">0</div>
-        </article>
+    <section id="map-block" style="display: none;" aria-label="club locations map">
+        <div class="map-card">
+            <div class="m1-grid">
+                <div><div id="club-map" class="gta-map"></div></div>
+                <div class="m1-list">
+                    <div class="m1-list-head">
+                        <div class="t">Clubs by locality</div>
+                        <div class="s" id="map-coverage-note">Loading map&hellip;</div>
+                    </div>
+                    <div class="m1-rows" id="locality-rows"></div>
+                </div>
+            </div>
+            <div class="map-legend">
+                <span><span class="demo-dot"></span>exact club location</span>
+                <span><span class="demo-bubble"></span>approximate (city-level), count of clubs</span>
+            </div>
+        </div>
     </section>
 
     <section class="summary-card summary-card--note" id="email-summary" style="display: none; margin-bottom: 4px;">
@@ -1099,11 +1399,6 @@
             <p class="summary-card__hint" id="known-emails-help">No published email addresses yet.</p>
         </div>
         <button class="btn btn--secondary" id="copy-known-emails-btn" onclick="copyKnownEmails()">Copy all addresses</button>
-    </section>
-
-    <section class="summary-guide">
-        <div><b>Status</b>: <span class="status-pill status-pill--success">Success</span> usable extraction / <span class="status-pill status-pill--warning">Needs Update</span> missing or low-confidence fields / <span class="status-pill status-pill--danger">Failed</span> no usable extraction</div>
-        <p class="inline-note">Exports include the full loaded dataset.</p>
     </section>
 
     <section class="known-emails-wrap">
@@ -1191,8 +1486,32 @@
 
 
 <script>
+    window.__GTA_MAP_MARKERS__ = [{"club_name": "10XTO", "court_bucket": "N/A", "courts": "N/A", "email": "info@10xto.com", "geo": "exact", "lat": 43.633795, "lng": -79.411957, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "10XTO", "taking_players_now": false, "website": "https://www.10xto.com/tennis"}, {"club_name": "A Love of Tennis", "court_bucket": "N/A", "courts": "N/A", "email": "admin@aloveoftennis.org", "geo": "exact", "lat": 45.398682, "lng": -75.640074, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "A Love of Tennis", "taking_players_now": false, "website": "http://www.aloveoftennis.org/"}, {"club_name": "Ace Tennis - Toronto", "court_bucket": "N/A", "courts": "N/A", "email": "info@torontotenniscity.com", "geo": "approx", "lat": 43.653225, "lng": -79.383186, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ace Tennis - Toronto", "taking_players_now": false, "website": "http://www.acetennis.ca/"}, {"club_name": "ACE Tennis- Burlington", "court_bucket": "N/A", "courts": "N/A", "email": "doug@acetennis.ca", "geo": "exact", "lat": 43.357115, "lng": -79.792986, "location": "Burlington", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "ACE Tennis- Burlington", "taking_players_now": false, "website": "http://www.acetennis.ca/"}, {"club_name": "Advantage Tennis International @ Veneto", "court_bucket": "N/A", "courts": "N/A", "email": "info@advantagetennis.ca", "geo": "exact", "lat": 43.770477, "lng": -79.595042, "location": "Woodbridge", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Advantage Tennis International @ Veneto", "taking_players_now": false, "website": "http://www.advantagetennis.ca/"}, {"club_name": "Agincourt Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "president@agincourttennisclub.ca", "geo": "exact", "lat": 43.78826, "lng": -79.274918, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Agincourt Tennis Club", "taking_players_now": true, "website": "http://www.agincourttennisclub.ca"}, {"club_name": "Ajax Winter Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "cameron@tennisclubs.ca", "geo": "exact", "lat": 43.839372, "lng": -79.02064, "location": "Ajax", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Ajax Winter Tennis Club", "taking_players_now": true, "website": "https://tennisclubs.ca/ajax/"}, {"club_name": "Aldershot Tennis", "court_bucket": "N/A", "courts": "N/A", "email": "info@aldershottennis.ca", "geo": "exact", "lat": 43.314379, "lng": -79.846756, "location": "Burlington", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Aldershot Tennis", "taking_players_now": true, "website": "http://www.aldershottennis.ca/"}, {"club_name": "All Canadian Tennis Centre at HSC", "court_bucket": "N/A", "courts": "N/A", "email": "shannon@acetennis.ca", "geo": "exact", "lat": 43.241125, "lng": -79.892099, "location": "Hamilton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "All Canadian Tennis Centre at HSC", "taking_players_now": false, "website": "http://www.acetennis.ca/"}, {"club_name": "Alliston Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "allistontennisclub@gmail.com", "geo": "exact", "lat": 44.153271, "lng": -79.856206, "location": "Alliston", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Alliston Tennis Club", "taking_players_now": false, "website": "https://allistontennisclub.blogspot.com/"}, {"club_name": "Almonte Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennisalmonte@gmail.com", "geo": "exact", "lat": 45.22158, "lng": -76.189031, "location": "Almonte", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Almonte Tennis Club", "taking_players_now": false, "website": "http://atc.sports.blog/"}, {"club_name": "AMA Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "ama_tennis.club@yahoo.ca", "geo": "exact", "lat": 42.237942, "lng": -83.102287, "location": "LaSalle", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "AMA Tennis Club", "taking_players_now": false, "website": "http://amatennisclub.wixsite.com/amatennisclub/tournament-results"}, {"club_name": "Applewood Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "forward09@gmail.com", "geo": "exact", "lat": 43.615928, "lng": -79.598446, "location": "Mississauga", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Applewood Tennis Club", "taking_players_now": true, "website": "http://www.applewoodtennis.com/"}, {"club_name": "Armadale Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "armadaletennis@gmail.com", "geo": "exact", "lat": 43.840792, "lng": -79.280813, "location": "Markham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Armadale Tennis Club", "taking_players_now": false, "website": "http://www.armadaletennisclub.ca/"}, {"club_name": "Aurora Community Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "board.actc@gmail.com", "geo": "exact", "lat": 44.003408, "lng": -79.464294, "location": "Aurora", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Aurora Community Tennis Club", "taking_players_now": true, "website": "http://www.auroratennis.ca/"}, {"club_name": "Badminton & Racquet Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@thebandr.com", "geo": "exact", "lat": 43.687826, "lng": -79.394276, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Badminton & Racquet Club", "taking_players_now": false, "website": "http://www.thebandr.com/"}, {"club_name": "Ballantrae Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@ballantraetennis.ca", "geo": "exact", "lat": 44.040636, "lng": -79.285329, "location": "Stouffville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ballantrae Tennis Club", "taking_players_now": false, "website": "http://www.ballantraetennis.ca/"}, {"club_name": "Banbury Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "banburytennisclub@gmail.com", "geo": "exact", "lat": 43.742774, "lng": -79.369873, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Banbury Tennis Club", "taking_players_now": true, "website": "http://www.banburytennisclub.net"}, {"club_name": "Barrhaven Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "barrhaventennisclub@gmail.com", "geo": "approx", "lat": 45.3349, "lng": -75.7241, "location": "Nepean", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Barrhaven Tennis Club", "taking_players_now": false, "website": "http://www.barrhaventennisclub.com/"}, {"club_name": "Barrie Community Tennis Club Inc.", "court_bucket": "N/A", "courts": "N/A", "email": "barrietennis@hotmail.com", "geo": "exact", "lat": 44.391343, "lng": -79.697984, "location": "Barrie", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Barrie Community Tennis Club Inc.", "taking_players_now": false, "website": "http://www.barrietennis.ca/"}, {"club_name": "Barrie North Winter Tennis", "court_bucket": "N/A", "courts": "N/A", "email": "info@barrienorthwintertennis.com", "geo": "exact", "lat": 44.442258, "lng": -79.732569, "location": "Midhurst", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Barrie North Winter Tennis", "taking_players_now": true, "website": "http://www.barrienorthwintertennis.com/"}, {"club_name": "Bayview Golf & Country Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@bayviewclub.com", "geo": "approx", "lat": 43.8157, "lng": -79.4234, "location": "Thornhill", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Bayview Golf & Country Club", "taking_players_now": true, "website": "http://www.bayviewclub.com/"}, {"club_name": "Bayview Village Tennis Camp", "court_bucket": "N/A", "courts": "N/A", "email": "pnielsen889@rogers.com", "geo": "exact", "lat": 43.770028, "lng": -79.383468, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Bayview Village Tennis Camp", "taking_players_now": false, "website": "https://bayviewvillagetenniscamp.ca/"}, {"club_name": "Bayview Village Tennis Club", "court_bucket": "5-9", "courts": "6", "email": "president@bvtc.ca", "geo": "exact", "lat": 43.770858, "lng": -79.383062, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Bayview Village Tennis Club", "taking_players_now": false, "website": "http://www.bayviewvillagetennis.com"}, {"club_name": "Beaver River Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "knute@knute.ca", "geo": "exact", "lat": 44.322923, "lng": -80.645321, "location": "Markdale", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Beaver River Tennis Club", "taking_players_now": false, "website": "https://beaverrivertennisclub.ca/"}, {"club_name": "Belfountain Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "cheryl@belfountaintennis.ca", "geo": "exact", "lat": 43.790625, "lng": -80.018191, "location": "Belfountain", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Belfountain Tennis Club", "taking_players_now": true, "website": "http://www.belfountaintennis.ca/"}, {"club_name": "Bellbury Tennis Club", "court_bucket": "5-9", "courts": "5", "email": "raphael.leong@supplyontario.ca", "geo": "exact", "lat": 43.783668, "lng": -79.361303, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Bellbury Tennis Club", "taking_players_now": true, "website": "http://www.bellburytennisclub.com"}, {"club_name": "Bennington Heights Tennis Club", "court_bucket": "2-4", "courts": "2", "email": "benningtonheightstennis@bell.net", "geo": "exact", "lat": 43.695005, "lng": -79.369566, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Bennington Heights Tennis Club", "taking_players_now": true, "website": "http://www.benningtonheightstennis.org"}, {"club_name": "Blackburn Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "blackburntennisclub@gmail.com", "geo": "exact", "lat": 45.418039, "lng": -75.59893, "location": "Gloucester", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Blackburn Tennis Club", "taking_players_now": false, "website": "http://www.blackburntennis.ca/"}, {"club_name": "Blackmore Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "adam@blackmoretennis.ca", "geo": "exact", "lat": 43.853862, "lng": -79.398092, "location": "Richmond Hill", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Blackmore Tennis Club", "taking_players_now": false, "website": "http://www.blackmoretennis.ca/"}, {"club_name": "Boulevard Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@boulevardclub.com", "geo": "exact", "lat": 43.63458, "lng": -79.41375, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Boulevard Club", "taking_players_now": false, "website": "http://www.boulevardclub.com/"}, {"club_name": "Bowmanville Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "bowmanvilletennis@hotmail.com", "geo": "exact", "lat": 43.916062, "lng": -78.68764, "location": "Bowmanville", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Bowmanville Tennis Club", "taking_players_now": true, "website": "http://www.bowmanvilletennisclub.com/"}, {"club_name": "Bramalea Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "trevtrini@hotmail.com", "geo": "exact", "lat": 43.747291, "lng": -79.779166, "location": "Brampton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Bramalea Tennis Club", "taking_players_now": false, "website": "https://bramaleatennisclub.org/"}, {"club_name": "Brampton Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@bramptontennisclub.ca", "geo": "exact", "lat": 43.687548, "lng": -79.759597, "location": "Brampton", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Brampton Tennis Club", "taking_players_now": true, "website": "http://www.bramptontennisclub.ca/"}, {"club_name": "BreakPoint Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@breakpointclub.org", "geo": "exact", "lat": 43.664842, "lng": -79.321724, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "BreakPoint Tennis Club", "taking_players_now": true, "website": "https://breakpointclub.org/"}, {"club_name": "Bridlewood Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "debkudjerski@gmail.com", "geo": "exact", "lat": 43.782918, "lng": -79.31624, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Bridlewood Tennis Club", "taking_players_now": true, "website": "http://www.bridlewoodtennis.ca"}, {"club_name": "Brighton Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "kmnodyer@gmail.com", "geo": "exact", "lat": 44.042357, "lng": -77.730911, "location": "Brighton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Brighton Tennis Club", "taking_players_now": false, "website": "http://www.facebook.com/BrightonTennisClub/"}, {"club_name": "Burlington Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president.burltc@gmail.com", "geo": "exact", "lat": 43.334041, "lng": -79.792376, "location": "Burlington", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Burlington Tennis Club", "taking_players_now": false, "website": "http://www.btc1.ca/"}, {"club_name": "Caledon East Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "caledoneasttennis@gmail.com", "geo": "approx", "lat": 43.8754, "lng": -79.859, "location": "Caledon", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Caledon East Tennis Club", "taking_players_now": true, "website": "http://caledoneasttennisclub.com/"}, {"club_name": "Caledon Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "lawrence5468@rogers.com", "geo": "exact", "lat": 43.859499, "lng": -79.994619, "location": "Caledon", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Caledon Tennis Club", "taking_players_now": false, "website": "https://clubspark.ca/caledontennisclub"}, {"club_name": "Cambridge Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@cambridgetennisclub.ca", "geo": "exact", "lat": 43.365718, "lng": -80.305573, "location": "Cambridge", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Cambridge Tennis Club", "taking_players_now": false, "website": "http://www.cambridgetennisclub.ca/"}, {"club_name": "Carleton Tennis Centre", "court_bucket": "N/A", "courts": "N/A", "email": "tonymilotennis@hotmail.com", "geo": "exact", "lat": 45.384326, "lng": -75.696361, "location": "Caledon", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Carleton Tennis Centre", "taking_players_now": false, "website": "http://www.carletontenniscentre.com/"}, {"club_name": "Carp Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "carptennisclub@gmail.com", "geo": "exact", "lat": 45.345644, "lng": -76.031293, "location": "Carp", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Carp Tennis Club", "taking_players_now": false, "website": "http://www.carptennis.com/"}, {"club_name": "Cedar Springs Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "membership@cedarspringsclub.com", "geo": "exact", "lat": 43.357115, "lng": -79.792986, "location": "Burlington", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Cedar Springs Tennis Club", "taking_players_now": false, "website": "http://www.cedarspringsclub.com/"}, {"club_name": "Central Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "president@centraltennisclub.com", "geo": "exact", "lat": 43.648457, "lng": -79.521779, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Central Tennis Club", "taking_players_now": true, "website": "http://www.centraltennisclub.com"}, {"club_name": "Charlottetown Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "dianneweatherby@bell.net", "geo": "exact", "lat": 43.781667, "lng": -79.140238, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Charlottetown Tennis Club", "taking_players_now": true, "website": "http://www.charlottetowntennis.com"}, {"club_name": "Chestnut Hill Developments Recreation Complex (formerly Pickering Rec)", "court_bucket": "N/A", "courts": "N/A", "email": "daveoch@rogers.com", "geo": "exact", "lat": 43.839235, "lng": -79.081457, "location": "Pickering", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Chestnut Hill Developments Recreation Complex (formerly Pickering Rec)", "taking_players_now": false, "website": "http://www.cityofpickering.com/"}, {"club_name": "City View Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@cityviewtennis.ca", "geo": "exact", "lat": 45.343107, "lng": -75.743153, "location": "Ottawa", "membership_status": "Open", "membership_status_normalized": "Open", "name": "City View Tennis Club", "taking_players_now": true, "website": "http://www.cityviewtennis.ca/"}, {"club_name": "CK Racquet Centre", "court_bucket": "N/A", "courts": "N/A", "email": "ckrc@tennisclubs.ca", "geo": "exact", "lat": 42.400415, "lng": -82.232785, "location": "Chatham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "CK Racquet Centre", "taking_players_now": false, "website": "https://tennisclubs.ca/chatham/"}, {"club_name": "Concord Tennis Academy (formerly Tessa Tennis)", "court_bucket": "N/A", "courts": "N/A", "email": "concordtennisacademy@gmail.com", "geo": "exact", "lat": 43.824931, "lng": -79.484285, "location": "Vaughan", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Concord Tennis Academy (formerly Tessa Tennis)", "taking_players_now": false, "website": "http://www.concordtennisacademy.com/"}, {"club_name": "Cottingham Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "membership@cottinghamtennis.ca", "geo": "exact", "lat": 43.679581, "lng": -79.39598, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Cottingham Tennis Club", "taking_players_now": false, "website": "http://www.cottinghamtennis.ca/"}, {"club_name": "Craig Henry Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@craighenrytennis.com", "geo": "approx", "lat": 45.4215, "lng": -75.6972, "location": "Ottawa", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Craig Henry Tennis Club", "taking_players_now": true, "website": "http://www.craighenrytennis.com/"}, {"club_name": "Credit Valley Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "creditvalleytennis@gmail.com", "geo": "exact", "lat": 43.559643, "lng": -79.631132, "location": "Mississauga", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Credit Valley Tennis Club", "taking_players_now": true, "website": "http://www.creditvalleytennis.com/"}, {"club_name": "Crystal Beach Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@crystalbeachtennis.org", "geo": "exact", "lat": 45.3472, "lng": -75.823565, "location": "Ottawa", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Crystal Beach Tennis Club", "taking_players_now": true, "website": "http://crystalbeachtennis.org/"}, {"club_name": "Curran Hall Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "rontmmoore@rogers.com", "geo": "exact", "lat": 43.777454, "lng": -79.210808, "location": "Scarborough", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Curran Hall Park Tennis Club", "taking_players_now": false, "website": "http://www.curranhalltennis.net/"}, {"club_name": "Cutten Fields Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennispro@cuttenfields.com", "geo": "exact", "lat": 43.537312, "lng": -80.226667, "location": "Guelph", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Cutten Fields Tennis Club", "taking_players_now": true, "website": "http://www.cuttenfields.com/"}, {"club_name": "Davisville Tennis Club", "court_bucket": "5-9", "courts": "6", "email": "president@davisvilletennisclub.com", "geo": "exact", "lat": 43.700694, "lng": -79.38853, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Davisville Tennis Club", "taking_players_now": true, "website": "http://www.davisvilletennisclub.com"}, {"club_name": "Dentonia Park Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "info@dentoniatennis.com", "geo": "exact", "lat": 43.691845, "lng": -79.295201, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Dentonia Park Tennis Club", "taking_players_now": true, "website": "https://www.dentoniatennis.com"}, {"club_name": "Don Mills Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "akooij1@gmail.com", "geo": "exact", "lat": 43.747295, "lng": -79.351382, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Don Mills Tennis Club", "taking_players_now": false, "website": "http://www.donmillstennisclub.com/"}, {"club_name": "Donalda Club", "court_bucket": "N/A", "courts": "N/A", "email": "lbradwell@donaldaclub.ca", "geo": "exact", "lat": 43.754636, "lng": -79.342187, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Donalda Club", "taking_players_now": false, "website": "http://www.donaldaclub.ca/"}, {"club_name": "Doug Philpott Inner City Children's Tennis", "court_bucket": "N/A", "courts": "N/A", "email": "ceciley.parker@philpottchildrenstennis.ca", "geo": "approx", "lat": 43.653225, "lng": -79.383186, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Doug Philpott Inner City Children's Tennis", "taking_players_now": false, "website": "http://www.philpottchildrenstennis.ca/"}, {"club_name": "Dunlace Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "general@dunlacetennis.com", "geo": "exact", "lat": 43.76266, "lng": -79.36859, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Dunlace Park Tennis Club", "taking_players_now": true, "website": "http://www.dunlacetennis.com/"}, {"club_name": "Dunmoore Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president.dunmooretennisclub@gmail.com", "geo": "approx", "lat": 43.8508, "lng": -79.087, "location": "Pickering", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Dunmoore Tennis Club", "taking_players_now": false, "website": "http://www.dunmooretennisclub.com/"}, {"club_name": "Edenbridge Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "boris@edenbridgetennis.com", "geo": "exact", "lat": 43.675747, "lng": -79.510647, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Edenbridge Tennis Club", "taking_players_now": true, "website": "https://edenbridgetennis.com/"}, {"club_name": "Eglinton Flats Winter Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "pnielsen889@rogers.com", "geo": "exact", "lat": 43.697781, "lng": -79.440532, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Eglinton Flats Winter Tennis Club", "taking_players_now": false, "website": "http://www.eglintonflats.com/"}, {"club_name": "Elmdale Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@elmdale.ca", "geo": "exact", "lat": 45.397399, "lng": -75.730926, "location": "Ottawa", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Elmdale Tennis Club", "taking_players_now": true, "website": "http://www.elmdale.ca/"}, {"club_name": "Elmridge Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "operations@elmridgetennis.com", "geo": "exact", "lat": 45.443098, "lng": -75.603858, "location": "Gloucester", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Elmridge Park Tennis Club", "taking_players_now": false, "website": "http://www.elmridgetennis.com/"}, {"club_name": "Erin Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "rachel.ingram@erintennis.com", "geo": "exact", "lat": 43.778942, "lng": -80.06778, "location": "Erin", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Erin Tennis Club", "taking_players_now": false, "website": "https://erintennisclub.com/"}, {"club_name": "Fenelon Falls Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "fenelonfallstennisclub@gmail.com", "geo": "exact", "lat": 44.532109, "lng": -78.742226, "location": "Fenelon Falls", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Fenelon Falls Tennis Club", "taking_players_now": false, "website": "http://www.fenelonfallstennisclub.com/"}, {"club_name": "Fergus Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@fergustennisclub.ca", "geo": "exact", "lat": 43.696601, "lng": -80.368347, "location": "Fergus", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Fergus Tennis Club", "taking_players_now": true, "website": "http://www.fergustennisclub.ca/"}, {"club_name": "Forest Hill Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "membership@foresthilltennisclub.ca", "geo": "exact", "lat": 43.70246, "lng": -79.420164, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Forest Hill Tennis Club", "taking_players_now": false, "website": "http://www.foresthilltennisclub.ca/"}, {"club_name": "Fort Erie Tennis Club Inc.", "court_bucket": "N/A", "courts": "N/A", "email": "millimeister@gmail.com", "geo": "exact", "lat": 42.881339, "lng": -79.033014, "location": "Ridgeway", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Fort Erie Tennis Club Inc.", "taking_players_now": true, "website": "http://www.forterietennis.ca/"}, {"club_name": "Fountainhead Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "piyang.cabs@gmail.com", "geo": "exact", "lat": 43.761153, "lng": -79.499845, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Fountainhead Tennis Club", "taking_players_now": false, "website": "http://www.fountainheadtennis.com/"}, {"club_name": "General Burns Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@generalburnstennis.ca", "geo": "exact", "lat": 45.352687, "lng": -75.718197, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "General Burns Tennis Club", "taking_players_now": false, "website": "http://www.generalburnstennis.ca/"}, {"club_name": "German Mills Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "executive@germanmillstennisclub.com", "geo": "approx", "lat": 43.8157, "lng": -79.4234, "location": "Thornhill", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "German Mills Tennis Club", "taking_players_now": false, "website": "http://www.germanmillstennis.com/"}, {"club_name": "Glen Cairn Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@glencairntennis.ca", "geo": "exact", "lat": 45.295003, "lng": -75.884323, "location": "Kanata", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Glen Cairn Tennis Club", "taking_players_now": false, "website": "http://www.glencairntennis.ca/"}, {"club_name": "Glendale Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "glendaleinfo1@gmail.com", "geo": "exact", "lat": 43.837467, "lng": -79.084451, "location": "Pickering", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Glendale Tennis Club", "taking_players_now": false, "website": "http://www.glendaletennis.org/"}, {"club_name": "Granite Club", "court_bucket": "N/A", "courts": "N/A", "email": "gcaron@graniteclub.com", "geo": "exact", "lat": 43.732711, "lng": -79.38202, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Granite Club", "taking_players_now": false, "website": "http://www.graniteclub.com/"}, {"club_name": "Grimsby Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "rmauro2122@gmail.com", "geo": "exact", "lat": 43.194911, "lng": -79.566822, "location": "Grimsby", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Grimsby Tennis Club", "taking_players_now": false, "website": "http://www.grimsbytennis.org/"}, {"club_name": "Guildwood Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "diane.lang@icloud.com", "geo": "exact", "lat": 43.739443, "lng": -79.204749, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Guildwood Tennis Club", "taking_players_now": true, "website": "http://www.guildwoodtennis.com"}, {"club_name": "Gwendolen Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "information@gwendolentennis.com", "geo": "exact", "lat": 43.751731, "lng": -79.420612, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Gwendolen Park Tennis Club", "taking_players_now": false, "website": "http://www.gwendolentennis.com/"}, {"club_name": "Halton Tennis Association", "court_bucket": "N/A", "courts": "N/A", "email": "tennishalton@gmail.com", "geo": "approx", "lat": 43.4675, "lng": -79.6877, "location": "Oakville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Halton Tennis Association", "taking_players_now": false, "website": "https://haltontennis.ca/"}, {"club_name": "Headwaters Racquet Club", "court_bucket": "N/A", "courts": "N/A", "email": "joann@headwatersracquetclub.com", "geo": "exact", "lat": 43.913756, "lng": -80.140546, "location": "Amaranth", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Headwaters Racquet Club", "taking_players_now": false, "website": "http://www.headwatersracquetclub.com/"}, {"club_name": "Henry Farm Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "info@henryfarmtennisclub.ca", "geo": "exact", "lat": 43.767712, "lng": -79.356629, "location": "North York", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Henry Farm Tennis Club", "taking_players_now": true, "website": "http://www.henryfarmtennisclub.ca"}, {"club_name": "Heron Park Tennis Club", "court_bucket": "5-9", "courts": "5", "email": "renalex@sympatico.ca", "geo": "exact", "lat": 43.769284, "lng": -79.177299, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Heron Park Tennis Club", "taking_players_now": true, "website": "http://www.heronparktennis.com"}, {"club_name": "Hespeler Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@hespelertennis.on.ca", "geo": "exact", "lat": 43.430216, "lng": -80.307022, "location": "Cambridge", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Hespeler Tennis Club", "taking_players_now": false, "website": "http://www.hespelertennis.on.ca/"}, {"club_name": "High Park Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@highparkclub.com", "geo": "exact", "lat": 43.642689, "lng": -79.453913, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "High Park Club", "taking_players_now": false, "website": "http://www.highparkclub.com/"}, {"club_name": "Hillcrest Tennis Camp", "court_bucket": "N/A", "courts": "N/A", "email": "info@hillcresttenniscamp.com", "geo": "exact", "lat": 43.79856, "lng": -79.36343, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Hillcrest Tennis Camp", "taking_players_now": false, "website": "http://hillcresttennisclub.ca/"}, {"club_name": "Hillcrest Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "hillcresttennisclub@gmail.com", "geo": "exact", "lat": 43.798988, "lng": -79.36326, "location": "North York", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Hillcrest Tennis Club", "taking_players_now": true, "website": "http://www.hillcresttennisclub.ca"}, {"club_name": "Howard Park Tennis Club", "court_bucket": "5-9", "courts": "7", "email": "president@howardparktennis.com", "geo": "exact", "lat": 43.646802, "lng": -79.462835, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Howard Park Tennis Club", "taking_players_now": true, "website": "http://www.howardparktennis.com"}, {"club_name": "Intercounty Tennis Association", "court_bucket": "N/A", "courts": "N/A", "email": "president@intercountytennis.com", "geo": "exact", "lat": 43.705412, "lng": -79.375034, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Intercounty Tennis Association", "taking_players_now": false, "website": "http://www.intercountytennis.com/"}, {"club_name": "Iroquois Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "Info@iroquoistennisclub.ca", "geo": "exact", "lat": 43.803748, "lng": -79.26732, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Iroquois Tennis Club", "taking_players_now": true, "website": "http://www.iroquoistennisclub.ca"}, {"club_name": "Jane/Finch Community Tennis Association", "court_bucket": "N/A", "courts": "N/A", "email": "programs@janefinchtennis.ca", "geo": "exact", "lat": 43.772338, "lng": -79.511568, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Jane/Finch Community Tennis Association", "taking_players_now": false, "website": "https://janefinchtennis.ca/"}, {"club_name": "Joshua Creek Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "cyoung@joshuacreek.ca", "geo": "exact", "lat": 43.517695, "lng": -79.72044, "location": "Oakville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Joshua Creek Tennis Club", "taking_players_now": false, "website": "http://www.joshuacreek.ca/"}, {"club_name": "Junior Rackets", "court_bucket": "N/A", "courts": "N/A", "email": "office@juniorrackets.com", "geo": "exact", "lat": 43.657824, "lng": -79.376916, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Junior Rackets", "taking_players_now": false, "website": "http://www.juniorrackets.com/"}, {"club_name": "Keith Davis Tennis Centre", "court_bucket": "N/A", "courts": "N/A", "email": "sswail@newmarket.ca", "geo": "exact", "lat": 44.023192, "lng": -79.474315, "location": "Newmarket", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Keith Davis Tennis Centre", "taking_players_now": false, "website": "https://www.newmarket.ca/tennis"}, {"club_name": "Kew Gardens Tennis Club", "court_bucket": "10-14", "courts": "10", "email": "president@kewgardenstennis.ca", "geo": "exact", "lat": 43.66613, "lng": -79.298509, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Kew Gardens Tennis Club", "taking_players_now": true, "website": "http://www.kewgardenstennis.ca"}, {"club_name": "Kincardine Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@kincardinetennisclub.com", "geo": "exact", "lat": 44.177774, "lng": -81.638574, "location": "Kincardine", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Kincardine Tennis Club", "taking_players_now": false, "website": "http://www.kincardinetennisclub.com/"}, {"club_name": "King City Tennis Association", "court_bucket": "N/A", "courts": "N/A", "email": "paul2017ward@gmail.com", "geo": "exact", "lat": 43.925795, "lng": -79.523866, "location": "King City", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "King City Tennis Association", "taking_players_now": false, "website": "http://kingcitytennis.com/"}, {"club_name": "Kingston Racquet Centre", "court_bucket": "N/A", "courts": "N/A", "email": "tony@tennisclubs.ca", "geo": "exact", "lat": 44.274654, "lng": -76.434602, "location": "Kingston", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Kingston Racquet Centre", "taking_players_now": false, "website": "http://www.tennisclubs.ca/kingston"}, {"club_name": "Kingston Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@kingstontennisclub.com", "geo": "exact", "lat": 44.228997, "lng": -76.50611, "location": "Kingston", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Kingston Tennis Club", "taking_players_now": false, "website": "http://www.kingstontennisclub.com/"}, {"club_name": "Kingsville Tennis Association", "court_bucket": "N/A", "courts": "N/A", "email": "rickstephenson@usa.net", "geo": "exact", "lat": 42.053561, "lng": -82.661429, "location": "Kingsville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Kingsville Tennis Association", "taking_players_now": false, "website": "https://www.facebook.com/KingsvilleTennisAssociation/"}, {"club_name": "Kourt", "court_bucket": "N/A", "courts": "N/A", "email": "kourtclub@gmail.com", "geo": "exact", "lat": 43.67803, "lng": -79.31215, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Kourt", "taking_players_now": false, "website": "http://www.kourt.ca/"}, {"club_name": "Lambton Golf and Country Club", "court_bucket": "N/A", "courts": "N/A", "email": "mpaklepa@lambtongolf.com", "geo": "exact", "lat": 43.66917, "lng": -79.50164, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Lambton Golf and Country Club", "taking_players_now": false, "website": "http://www.lambtongolf.com/"}, {"club_name": "Lamont Creek Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "lamontcreektennis@gmail.com", "geo": "exact", "lat": 44.466623, "lng": -80.065135, "location": "Wasaga Beach", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Lamont Creek Tennis Club", "taking_players_now": false, "website": "http://lamontcreektennisclub.ca/"}, {"club_name": "Lawrence Park Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "president@lawrenceparktennisclub.ca", "geo": "exact", "lat": 43.722206, "lng": -79.399972, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Lawrence Park Tennis Club", "taking_players_now": true, "website": "http://www.lawrenceparktennisclub.ca"}, {"club_name": "Leaside Tennis Club", "court_bucket": "5-9", "courts": "6", "email": "celebr8n@gmail.com", "geo": "exact", "lat": 43.70557, "lng": -79.36745, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Leaside Tennis Club", "taking_players_now": true, "website": "http://www.leasidetennis.org"}, {"club_name": "London Hunt Club", "court_bucket": "N/A", "courts": "N/A", "email": "abaranowski@londonhuntclub.com", "geo": "approx", "lat": 42.9849, "lng": -81.2453, "location": "London", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "London Hunt Club", "taking_players_now": false, "website": "http://www.londonhuntclub.com/"}, {"club_name": "Manotick Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@manoticktennisclub.com", "geo": "exact", "lat": 45.221736, "lng": -75.686326, "location": "Manotick", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Manotick Tennis Club", "taking_players_now": false, "website": "http://www.manoticktennisclub.com/"}, {"club_name": "Marilyn Redvers Tennis Centre", "court_bucket": "N/A", "courts": "N/A", "email": "mrtc@tennisclubs.ca", "geo": "approx", "lat": 44.0065, "lng": -79.4504, "location": "Aurora", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Marilyn Redvers Tennis Centre", "taking_players_now": false, "website": "http://www.tennisclubs.ca/"}, {"club_name": "Markham Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "markhamtennisclub905@gmail.com", "geo": "exact", "lat": 43.883292, "lng": -79.244011, "location": "Markham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Markham Tennis Club", "taking_players_now": false, "website": "http://www.markhamtennisclub.ca/"}, {"club_name": "Martingrove Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "info@martingrovetennis.com", "geo": "exact", "lat": 43.663999, "lng": -79.563494, "location": "Etobicoke", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Martingrove Tennis Club", "taking_players_now": true, "website": "http://www.martingrovetennis.com"}, {"club_name": "Maryvale Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "cjoltinjo@gmail.com", "geo": "exact", "lat": 43.753081, "lng": -79.306528, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Maryvale Tennis Club", "taking_players_now": true, "website": "http://www.maryvaletennis.blogspot.ca"}, {"club_name": "Matchpoint Tennis", "court_bucket": "N/A", "courts": "N/A", "email": "matchpoint.tennis@rogers.com", "geo": "approx", "lat": 43.8971, "lng": -78.9428, "location": "Whitby", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Matchpoint Tennis", "taking_players_now": false, "website": "http://www.matchpointtennis.ca/"}, {"club_name": "Mayfair East", "court_bucket": "N/A", "courts": "N/A", "email": "info@mayfairclubs.com", "geo": "exact", "lat": 43.825448, "lng": -79.337647, "location": "Markham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Mayfair East", "taking_players_now": false, "website": "http://www.mayfairclubs.com/"}, {"club_name": "Mayfair Lakeshore", "court_bucket": "N/A", "courts": "N/A", "email": "lakeshoretennis@mayfairclubs.com", "geo": "approx", "lat": 43.653225, "lng": -79.383186, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Mayfair Lakeshore", "taking_players_now": false, "website": "http://www.mayfairclubs.com/"}, {"club_name": "Mayfair Parkway", "court_bucket": "N/A", "courts": "N/A", "email": "parkwaytennis@mayfairclubs.com", "geo": "exact", "lat": 43.819668, "lng": -79.349817, "location": "Markham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Mayfair Parkway", "taking_players_now": false, "website": "http://www.mayfairclubs.com/"}, {"club_name": "Mayfair West", "court_bucket": "N/A", "courts": "N/A", "email": "kcrosina@mayfairclubs.com", "geo": "exact", "lat": 43.75745, "lng": -79.47333, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Mayfair West", "taking_players_now": false, "website": "http://www.mayfairclubs.com/"}, {"club_name": "McLevin Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "jackielabit@gmail.com", "geo": "exact", "lat": 45.255186, "lng": -76.289501, "location": "Scarborough", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "McLevin Park Tennis Club", "taking_players_now": false, "website": "http://www.mclevinpark.blogspot.com/"}, {"club_name": "Midhurst Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "midhursttennisclub@gmail.com", "geo": "exact", "lat": 44.44458, "lng": -79.73668, "location": "Midhurst", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Midhurst Tennis Club", "taking_players_now": false, "website": "https://midhursttennisclub.com/"}, {"club_name": "Milton Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "contact-mtc@miltontennis.com", "geo": "exact", "lat": 43.502846, "lng": -79.865226, "location": "Milton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Milton Tennis Club", "taking_players_now": false, "website": "http://www.miltontennis.com/"}, {"club_name": "Mimico Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "michaelparsonage@yahoo.com", "geo": "exact", "lat": 43.609814, "lng": -79.493668, "location": "Etobicoke", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Mimico Tennis Club", "taking_players_now": true, "website": "http://www.mimicotennisclub.org"}, {"club_name": "Moore Park Tennis Club", "court_bucket": "5-9", "courts": "5", "email": "president@mooretennis.com", "geo": "exact", "lat": 43.693504, "lng": -79.382252, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Moore Park Tennis Club", "taking_players_now": true, "website": "http://www.mooretennis.com"}, {"club_name": "Muskoka Lakes Golf and Country Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@mlgcc.com", "geo": "exact", "lat": 45.114598, "lng": -79.588497, "location": "Port Carling", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Muskoka Lakes Golf and Country Club", "taking_players_now": false, "website": "http://www.mlgcc.com/"}, {"club_name": "Nassagaweya Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "kimgregorywilson@gmail.com", "geo": "exact", "lat": 43.494094, "lng": -79.991211, "location": "Campbellville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Nassagaweya Tennis Club", "taking_players_now": false, "website": "http://www.nassagaweyatennisclub.com/"}, {"club_name": "NCTA (National Capital Tennis Association)", "court_bucket": "N/A", "courts": "N/A", "email": "info@ncta.ca", "geo": "approx", "lat": 45.4215, "lng": -75.6972, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "NCTA (National Capital Tennis Association)", "taking_players_now": false, "website": "https://ncta.ca/"}, {"club_name": "Newmarket Community Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennisnewmarket@gmail.com", "geo": "exact", "lat": 44.023192, "lng": -79.474315, "location": "Newmarket", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Newmarket Community Tennis Club", "taking_players_now": false, "website": "http://www.newmarkettennis.ca/"}, {"club_name": "Newtonbrook Community Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "giacomo.tonon53@gmail.com", "geo": "exact", "lat": 43.79722, "lng": -79.40692, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Newtonbrook Community Tennis Club", "taking_players_now": false, "website": "http://www.newtonbrooktennis.com/"}, {"club_name": "Niagara Academy of Tennis", "court_bucket": "N/A", "courts": "N/A", "email": "info@niagaraacademy.ca", "geo": "exact", "lat": 43.182033, "lng": -79.396651, "location": "Vineland", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Niagara Academy of Tennis", "taking_players_now": false, "website": "http://www.niagaraacademyoftennis.com/"}, {"club_name": "Niagara Falls Racquet Centre", "court_bucket": "N/A", "courts": "N/A", "email": "nfrc@tennisclubs.ca", "geo": "exact", "lat": 43.073565, "lng": -79.135337, "location": "Niagara Falls", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Niagara Falls Racquet Centre", "taking_players_now": false, "website": "http://tennisclubs.ca/"}, {"club_name": "Niagara Peninsula Tennis Community", "court_bucket": "N/A", "courts": "N/A", "email": "peter@peoplefirst.ca", "geo": "approx", "lat": 43.255, "lng": -79.071, "location": "Niagara-on-the-Lake", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Niagara Peninsula Tennis Community", "taking_players_now": false, "website": "http://www.niagarapeninsulatennis.ca/"}, {"club_name": "Niagara-on-the-Lake Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "askus@niagaratennis.ca", "geo": "exact", "lat": 43.234533, "lng": -79.092275, "location": "Niagara-on-the-Lake", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Niagara-on-the-Lake Tennis Club", "taking_players_now": false, "website": "http://niagaratennis.ca/"}, {"club_name": "Nobleton Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "karenwright@sympatico.ca", "geo": "exact", "lat": 43.901844, "lng": -79.651507, "location": "Nobleton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Nobleton Tennis Club", "taking_players_now": false, "website": "http://www.nobletontennisclub.com/"}, {"club_name": "North Bay Granite Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "frachmann@hotmail.com", "geo": "exact", "lat": 46.323913, "lng": -79.430037, "location": "North Bay", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "North Bay Granite Tennis Club", "taking_players_now": false, "website": "http://www.nipissingtennis.com/"}, {"club_name": "North Bendale Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "cashwoman61@gmail.com", "geo": "exact", "lat": 43.769708, "lng": -79.244795, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "North Bendale Tennis Club", "taking_players_now": true, "website": "http://www.northbendaletennisclub.org"}, {"club_name": "North Burlington Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@northburlingtontennisclub.com", "geo": "exact", "lat": 43.427923, "lng": -79.938511, "location": "Kilbride", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "North Burlington Tennis Club", "taking_players_now": false, "website": "http://www.northburlingtontennisclub.com/"}, {"club_name": "North London Optimist Community Centre", "court_bucket": "N/A", "courts": "N/A", "email": "recreation@london.ca", "geo": "exact", "lat": 43.014075, "lng": -81.212105, "location": "London", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "North London Optimist Community Centre", "taking_players_now": false, "website": "https://london.ca/living-london/parks-facilities/community-centres/north-london-optimist-community-centre"}, {"club_name": "North Toronto Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "mark@northtorontotennis.com", "geo": "approx", "lat": 43.653225, "lng": -79.383186, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "North Toronto Tennis Club", "taking_players_now": false, "website": "http://www.northtorontotennis.com/"}, {"club_name": "North York Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "president@nytc.ca", "geo": "exact", "lat": 43.766386, "lng": -79.407279, "location": "North York", "membership_status": "Open", "membership_status_normalized": "Open", "name": "North York Tennis Club", "taking_players_now": true, "website": "http://www.nytc.ca"}, {"club_name": "NYTA Winter Tennis Club East", "court_bucket": "N/A", "courts": "N/A", "email": "don.thomson27@gmail.com", "geo": "exact", "lat": 43.754265, "lng": -79.313862, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "NYTA Winter Tennis Club East", "taking_players_now": false, "website": "http://www.nyta.org/"}, {"club_name": "NYTA Winter Tennis Club North", "court_bucket": "N/A", "courts": "N/A", "email": "dave@nyta.org", "geo": "exact", "lat": 43.769105, "lng": -79.34647, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "NYTA Winter Tennis Club North", "taking_players_now": false, "website": "http://www.nyta.org/"}, {"club_name": "NYTA Winter Tennis Club South", "court_bucket": "N/A", "courts": "N/A", "email": "dave@nyta.org", "geo": "exact", "lat": 43.747295, "lng": -79.351382, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "NYTA Winter Tennis Club South", "taking_players_now": false, "website": "http://www.nyta.org/"}, {"club_name": "O'Connor Hills Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "prez@oconnorhillstennis.com", "geo": "exact", "lat": 43.745913, "lng": -79.321292, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "O'Connor Hills Tennis Club", "taking_players_now": true, "website": "http://www.oconnorhillstennis.com"}, {"club_name": "Ontario Racquet Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@ontarioracquetclub.com", "geo": "exact", "lat": 43.507796, "lng": -79.627538, "location": "Mississauga", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ontario Racquet Club", "taking_players_now": false, "website": "http://www.ontarioracquetclub.com/"}, {"club_name": "Ontario Tennis Association", "court_bucket": "N/A", "courts": "N/A", "email": "achappell@tennisontario.com", "geo": "exact", "lat": 43.772338, "lng": -79.511568, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ontario Tennis Association", "taking_players_now": false, "website": "http://www.tennisontario.com/"}, {"club_name": "Ontario Tennis Association Office", "court_bucket": "N/A", "courts": "N/A", "email": "achappell@tennisontario.com", "geo": "exact", "lat": 43.772338, "lng": -79.511568, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ontario Tennis Association Office", "taking_players_now": false, "website": "http://www.tennisontario.com/"}, {"club_name": "Orangeville Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "orangevilletennisclub@gmail.com", "geo": "exact", "lat": 43.924763, "lng": -80.089667, "location": "Orangeville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Orangeville Tennis Club", "taking_players_now": false, "website": "http://www.orangevilletennisclub.com/"}, {"club_name": "Orillia Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "theorilliatennisclub@gmail.com", "geo": "exact", "lat": 44.595534, "lng": -79.454894, "location": "Orillia", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Orillia Tennis Club", "taking_players_now": false, "website": "http://orilliatennisclub.wordpress.com/"}, {"club_name": "Oro Medonte Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "omtc.tennis@gmail.com", "geo": "exact", "lat": 44.443461, "lng": -79.607264, "location": "Oro-Medonte(Horseshoe Valley)", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Oro Medonte Tennis Club", "taking_players_now": false, "website": "http://www.omtctennis.com/"}, {"club_name": "Ottawa New Edinburgh Club", "court_bucket": "N/A", "courts": "N/A", "email": "andre.barnes@parl.gc.ca", "geo": "exact", "lat": 45.455832, "lng": -75.677405, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ottawa New Edinburgh Club", "taking_players_now": false, "website": "http://www.onec.ca/"}, {"club_name": "Ottawa Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "mike@otlbc.com", "geo": "exact", "lat": 45.38817, "lng": -75.686368, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Ottawa Tennis Club", "taking_players_now": false, "website": "https://www.ottawatennisclub.ca/"}, {"club_name": "Palgrave Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "michellebiase@outlook.com", "geo": "exact", "lat": 43.952578, "lng": -79.836872, "location": "Palgrave", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Palgrave Tennis Club", "taking_players_now": false, "website": "http://www.palgravetennisclub.com/"}, {"club_name": "Paris Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@theparisclub.ca", "geo": "exact", "lat": 43.204968, "lng": -80.385033, "location": "Paris", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Paris Tennis Club", "taking_players_now": false, "website": "http://www.theparisclub.ca/"}, {"club_name": "Parkway Valley Tennis Club", "court_bucket": "2-4", "courts": "2", "email": "president@pvtc.ca", "geo": "exact", "lat": 43.750597, "lng": -79.339444, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Parkway Valley Tennis Club", "taking_players_now": true, "website": "http://www.pvtc.ca"}, {"club_name": "Peak Performance Tennis Academy", "court_bucket": "N/A", "courts": "N/A", "email": "eddiejbrisbois@gmail.com", "geo": "exact", "lat": 43.75745, "lng": -79.47333, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Peak Performance Tennis Academy", "taking_players_now": false, "website": "http://www.ppatennis.com/"}, {"club_name": "Pelham Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "peter@peoplefirst.ca", "geo": "exact", "lat": 43.026187, "lng": -79.375425, "location": "Fenwick", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Pelham Tennis Club", "taking_players_now": false, "website": "http://www.pelhamtennis.ca/"}, {"club_name": "Perth Tay Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "steven@welchnerresearch.ca", "geo": "exact", "lat": 44.891446, "lng": -76.250248, "location": "Perth", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Perth Tay Tennis Club", "taking_players_now": false, "website": "http://www.perthtaytennis.ca/"}, {"club_name": "Pinafore Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "marcsopoco@royallepage.ca", "geo": "exact", "lat": 42.764161, "lng": -81.190956, "location": "St. Thomas", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Pinafore Tennis Club", "taking_players_now": false, "website": "https://www.pinaforetennisclub.com/about"}, {"club_name": "Pine Point Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "info@pinepointtennis.com", "geo": "exact", "lat": 43.716159, "lng": -79.544131, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Pine Point Tennis Club", "taking_players_now": true, "website": "http://www.pinepointtennis.com"}, {"club_name": "Pleasantview Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "qh_test@hotmail.com", "geo": "exact", "lat": 43.783223, "lng": -79.329425, "location": "North York", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Pleasantview Tennis Club", "taking_players_now": true, "website": "http://www.pleasantviewtennis.com"}, {"club_name": "Port Dover Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "swains@amtelecom.net", "geo": "exact", "lat": 42.791909, "lng": -80.213188, "location": "Port Dover", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Port Dover Tennis Club", "taking_players_now": false, "website": "http://www.portdovertennisclub.com/"}, {"club_name": "Port Hope Racquet Club", "court_bucket": "N/A", "courts": "N/A", "email": "admin@phrc.ca", "geo": "exact", "lat": 43.955459, "lng": -78.287484, "location": "Port Hope", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Port Hope Racquet Club", "taking_players_now": false, "website": "http://www.phrc.ca/"}, {"club_name": "Port Perry Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "portperrytennisclub@gmail.com", "geo": "exact", "lat": 44.103549, "lng": -78.940841, "location": "Port Perry", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Port Perry Tennis Club", "taking_players_now": false, "website": "http://www.portperrytennisclub.ca/"}, {"club_name": "Premier Racquet Clubs", "court_bucket": "N/A", "courts": "N/A", "email": "info@premierracquetclubs.com", "geo": "exact", "lat": 43.885546, "lng": -79.24643, "location": "Markham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Premier Racquet Clubs", "taking_players_now": false, "website": "https://www.premierracquetclubs.com/"}, {"club_name": "Premier Racquet Clubs Brampton", "court_bucket": "N/A", "courts": "N/A", "email": "nnaderi@premierracquetclubs.com", "geo": "exact", "lat": 43.687548, "lng": -79.759597, "location": "Brampton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Premier Racquet Clubs Brampton", "taking_players_now": false, "website": "https://www.premierracquetclubs.com/"}, {"club_name": "Premier Racquet Clubs Mississauga", "court_bucket": "N/A", "courts": "N/A", "email": "infomiss@premierracquetclubs.com", "geo": "exact", "lat": 43.54158, "lng": -79.743598, "location": "Mississauga", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Premier Racquet Clubs Mississauga", "taking_players_now": false, "website": "https://www.premierracquetclubs.com/home-mississauga"}, {"club_name": "Prime League Inc", "court_bucket": "N/A", "courts": "N/A", "email": "niagaratournaments@gmail.com", "geo": "exact", "lat": 43.127053, "lng": -79.243059, "location": "St Catharines", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Prime League Inc", "taking_players_now": false, "website": "http://www.tennisontario.com/"}, {"club_name": "Queens Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@queensclub.ca", "geo": "exact", "lat": 43.672758, "lng": -79.418128, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Queens Club", "taking_players_now": false, "website": "http://www.queensclub.ca/"}, {"club_name": "Quinte Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@quintetennis.ca", "geo": "exact", "lat": 44.168568, "lng": -77.368733, "location": "Belleville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Quinte Tennis Club", "taking_players_now": false, "website": "http://www.quintetennis.ca/"}, {"club_name": "Richmond Hill Country Club", "court_bucket": "N/A", "courts": "N/A", "email": "mmann@richmondhillcountryclub.com", "geo": "exact", "lat": 43.83723, "lng": -79.4561, "location": "Richmond Hill", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Richmond Hill Country Club", "taking_players_now": false, "website": "http://www.richmondhillcountryclub.com/"}, {"club_name": "Richmond Hill Lawn Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@rhltc.ca", "geo": "exact", "lat": 43.882987, "lng": -79.429156, "location": "Richmond Hill", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Richmond Hill Lawn Tennis Club", "taking_players_now": false, "website": "http://www.rhltc.ca/"}, {"club_name": "Rideau Sports Centre", "court_bucket": "N/A", "courts": "N/A", "email": "pierre@rideausportscentre.com", "geo": "exact", "lat": 45.427515, "lng": -75.668887, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Rideau Sports Centre", "taking_players_now": false, "website": "http://www.rideausportscentre.com/"}, {"club_name": "Rockcliffe Lawn Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@rltennis.ca", "geo": "exact", "lat": 45.452433, "lng": -75.67264, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Rockcliffe Lawn Tennis Club", "taking_players_now": false, "website": "http://www.rltennis.ca/"}, {"club_name": "Rosebank Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "catalin@rosebanktennis.ca", "geo": "exact", "lat": 43.807252, "lng": -79.121062, "location": "Pickering", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Rosebank Tennis Club", "taking_players_now": false, "website": "http://www.rosebanktennis.ca/"}, {"club_name": "Rosedale Tennis Club (Hamilton)", "court_bucket": "N/A", "courts": "N/A", "email": "manager@rosedaletennis.ca", "geo": "approx", "lat": 43.5168, "lng": -79.8827, "location": "Hamilton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Rosedale Tennis Club (Hamilton)", "taking_players_now": false, "website": "http://www.rosedaletennis.ca/"}, {"club_name": "Rosedale Tennis Club (Toronto)", "court_bucket": "N/A", "courts": "N/A", "email": "rosedaletennisclub@gmail.com", "geo": "exact", "lat": 43.682516, "lng": -79.377551, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Rosedale Tennis Club (Toronto)", "taking_players_now": false, "website": "http://www.rosedaletennis.com/"}, {"club_name": "Royal Canadian Yacht Club", "court_bucket": "N/A", "courts": "N/A", "email": "racquets@rcyc.ca", "geo": "exact", "lat": 43.668582, "lng": -79.399762, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Royal Canadian Yacht Club", "taking_players_now": false, "website": "http://www.rcyc.ca/"}, {"club_name": "Royal City Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "rctc@bellnet.ca", "geo": "exact", "lat": 43.527176, "lng": -80.250454, "location": "Guelph", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Royal City Tennis Club", "taking_players_now": false, "website": "http://www.rctc.ca/"}, {"club_name": "Sarnia Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennissarnia@gmail.com", "geo": "exact", "lat": 42.972667, "lng": -82.40721, "location": "Sarnia", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Sarnia Tennis Club", "taking_players_now": false, "website": "http://www.sarniatennisclub.com/"}, {"club_name": "Scarborough Bluffs Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "info@sbtennis.org", "geo": "exact", "lat": 43.703806, "lng": -79.241818, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Scarborough Bluffs Tennis Club", "taking_players_now": true, "website": "http://www.sbtennis.org"}, {"club_name": "Scarborough Tennis Federation", "court_bucket": "N/A", "courts": "N/A", "email": "debkudjerski@gmail.com", "geo": "exact", "lat": 43.786872, "lng": -79.302473, "location": "Scarborough", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Scarborough Tennis Federation", "taking_players_now": false, "website": "http://scarboroughtennis.com/"}, {"club_name": "Scarborough Winter Tennis Club", "court_bucket": "5-9", "courts": "5", "email": "president@swtc.ca", "geo": "exact", "lat": 43.805449, "lng": -79.305027, "location": "Scarborough", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Scarborough Winter Tennis Club", "taking_players_now": false, "website": "http://www.swtc.ca"}, {"club_name": "Score Tennis Academy", "court_bucket": "N/A", "courts": "N/A", "email": "sean.sweeney@scoretennisacademy.com", "geo": "exact", "lat": 45.551388, "lng": -75.285374, "location": "Rockland", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Score Tennis Academy", "taking_players_now": false, "website": "https://scoretennisacademy.com/"}, {"club_name": "Seven Oaks Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "eplantado@gmail.com", "geo": "exact", "lat": 43.788251, "lng": -79.210584, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Seven Oaks Tennis Club", "taking_players_now": true, "website": "http://www.sevenoakstennis.com/"}, {"club_name": "Sir Winston Churchill Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@winstonchurchilltennis.ca", "geo": "approx", "lat": 43.653225, "lng": -79.383186, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Sir Winston Churchill Park Tennis Club", "taking_players_now": false, "website": "http://www.winstonchurchilltennis.ca/"}, {"club_name": "SmartVMC Racquetsports by Ace", "court_bucket": "N/A", "courts": "N/A", "email": "info@acetennis.ca", "geo": "exact", "lat": 43.797364, "lng": -79.531699, "location": "Vaughan", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "SmartVMC Racquetsports by Ace", "taking_players_now": false, "website": "https://ace-allcanadianenterprises.ca/vaughan-home"}, {"club_name": "Southampton Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "admin@southamptontennisclub.ca", "geo": "exact", "lat": 44.492055, "lng": -81.381091, "location": "Southampton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Southampton Tennis Club", "taking_players_now": false, "website": "http://www.southamptontennisclub.ca/"}, {"club_name": "St. Catharines Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "stcatharinestennisclub@gmail.com", "geo": "exact", "lat": 43.142084, "lng": -79.208946, "location": "St. Catharines", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "St. Catharines Tennis Club", "taking_players_now": false, "website": "https://www.stcatharinestennisclub.com/"}, {"club_name": "St. Davids Community Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "rosemarygoodwin@mac.com", "geo": "exact", "lat": 43.234533, "lng": -79.092275, "location": "Niagara-on-the-Lake", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "St. Davids Community Tennis Club", "taking_players_now": false, "website": "https://clubspark.ca/stdavidstennisclub"}, {"club_name": "Stephen Leacock Tennis club", "court_bucket": "2-4", "courts": "4", "email": "stephenleacocktennisclub@gmail.com", "geo": "exact", "lat": 43.787216, "lng": -79.302486, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Stephen Leacock Tennis club", "taking_players_now": true, "website": "http://www.stephenleacock-tennis.ca"}, {"club_name": "Sudbury Indoor Tennis Centre", "court_bucket": "N/A", "courts": "N/A", "email": "president@sudburytennis.ca", "geo": "exact", "lat": 46.491903, "lng": -81.00555, "location": "Sudbury", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Sudbury Indoor Tennis Centre", "taking_players_now": false, "website": "http://www.sudburyindoortennis.ca/"}, {"club_name": "Swansea Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@swanseatennis.com", "geo": "exact", "lat": 43.644445, "lng": -79.473334, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Swansea Tennis Club", "taking_players_now": false, "website": "http://www.swanseatennis.com/"}, {"club_name": "Tam Heather Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@tamheather.ca", "geo": "exact", "lat": 43.791168, "lng": -79.199176, "location": "Scarborough", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Tam Heather Tennis Club", "taking_players_now": false, "website": "http://www.tamheather.ca/"}, {"club_name": "Tennis By Dennis/The Swing School", "court_bucket": "N/A", "courts": "N/A", "email": "tennisbydennisacademy@gmail.com", "geo": "exact", "lat": 43.864002, "lng": -79.503301, "location": "Maple", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Tennis By Dennis/The Swing School", "taking_players_now": false, "website": "http://www.tennisbydennis.com/"}, {"club_name": "Tennis Centre West Ottawa", "court_bucket": "N/A", "courts": "N/A", "email": "tcwo@bellnet.ca", "geo": "exact", "lat": 45.363897, "lng": -75.801439, "location": "Ottawa", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Tennis Centre West Ottawa", "taking_players_now": false, "website": "http://www.tcwo.ca/"}, {"club_name": "The Supreme Court", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@thesupremecourt.ca", "geo": "exact", "lat": 43.765249, "lng": -79.368261, "location": "North York", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "The Supreme Court", "taking_players_now": false, "website": "http://www.thesupremecourt.ca/"}, {"club_name": "The Tennis School", "court_bucket": "N/A", "courts": "N/A", "email": "ken@thetennisschool.ca", "geo": "exact", "lat": 43.457292, "lng": -79.769372, "location": "Mississauga", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "The Tennis School", "taking_players_now": false, "website": "http://www.thetennisschool.ca/"}, {"club_name": "The Thornhill Club", "court_bucket": "N/A", "courts": "N/A", "email": "djinks@thornhillgcc.com", "geo": "exact", "lat": 43.819971, "lng": -79.434539, "location": "Vaughan", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "The Thornhill Club", "taking_players_now": false, "website": "http://www.thethornhillclub.ca/"}, {"club_name": "Thomson Park Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "tsupelov@rogers.com", "geo": "exact", "lat": 43.757579, "lng": -79.253371, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Thomson Park Tennis Club", "taking_players_now": true, "website": "https://www.scarboroughtennis.com/thomson-park"}, {"club_name": "Thorncliffe Park Tennis Club", "court_bucket": "5-9", "courts": "6", "email": "info@tptc.ca", "geo": "exact", "lat": 43.702196, "lng": -79.350098, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Thorncliffe Park Tennis Club", "taking_players_now": true, "website": "http://www.tptc.ca"}, {"club_name": "Thornhill Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@thornhillparktennisclub.ca", "geo": "exact", "lat": 43.817426, "lng": -79.425513, "location": "Thornhill", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Thornhill Park Tennis Club", "taking_players_now": false, "website": "http://www.thornhillparktennisclub.ca/"}, {"club_name": "Toronto Athletic Camps Inc.", "court_bucket": "N/A", "courts": "N/A", "email": "info.tascamps@gmail.com", "geo": "approx", "lat": 43.8157, "lng": -79.4234, "location": "Thornhill", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Toronto Athletic Camps Inc.", "taking_players_now": false, "website": "http://www.tacsports.ca/"}, {"club_name": "Toronto Cricket Skating & Curling Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@torontocricketclub.com", "geo": "exact", "lat": 43.739826, "lng": -79.418975, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Toronto Cricket Skating & Curling Club", "taking_players_now": false, "website": "http://www.torontocricketclub.com/"}, {"club_name": "Toronto Lawn Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "sbartram@torontolawn.com", "geo": "exact", "lat": 43.680465, "lng": -79.388672, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Toronto Lawn Tennis Club", "taking_players_now": false, "website": "http://www.torontolawn.com/"}, {"club_name": "Toronto Tennis Academy", "court_bucket": "N/A", "courts": "N/A", "email": "thekerns@rogers.com", "geo": "exact", "lat": 43.75745, "lng": -79.47333, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Toronto Tennis Academy", "taking_players_now": false, "website": "http://www.torontotennisacademy.com/"}, {"club_name": "Toronto Tennis City", "court_bucket": "N/A", "courts": "N/A", "email": "info@torontotenniscity.com", "geo": "exact", "lat": 43.698115, "lng": -79.390678, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Toronto Tennis City", "taking_players_now": false, "website": "http://www.torontotenniscity.com/"}, {"club_name": "Tottenham Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tottenhamtennisclub@gmail.com", "geo": "exact", "lat": 44.022522, "lng": -79.805201, "location": "Tottenham", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Tottenham Tennis Club", "taking_players_now": false, "website": "http://www.simcoetennis.ca/tottenham-tottenham-tennis-club"}, {"club_name": "Tournament Park Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "tennis@tournamentpark.com", "geo": "exact", "lat": 43.751534, "lng": -79.399698, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Tournament Park Tennis Club", "taking_players_now": true, "website": "http://www.tournamentpark.com"}, {"club_name": "Trenton Racquet Club", "court_bucket": "N/A", "courts": "N/A", "email": "trentonracquetclub1@gmail.com", "geo": "exact", "lat": 44.098872, "lng": -77.588718, "location": "Trenton", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Trenton Racquet Club", "taking_players_now": false, "website": "http://www.trentonracquetclub.ca/"}, {"club_name": "Tyandaga Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennisrock71@gmail.com", "geo": "exact", "lat": 43.34701, "lng": -79.841537, "location": "Burlington", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Tyandaga Tennis Club", "taking_players_now": false, "website": "http://www.tyandagatennis.com/"}, {"club_name": "Unionville Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@unionvilletennisclub.ca", "geo": "exact", "lat": 43.871826, "lng": -79.299612, "location": "Unionville", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Unionville Tennis Club", "taking_players_now": false, "website": "http://www.unionvilletennisclub.ca/"}, {"club_name": "University of Toronto Scarborough Campus", "court_bucket": "N/A", "courts": "N/A", "email": "crozier@utsc.utoronto.ca", "geo": "exact", "lat": 43.78145, "lng": -79.18694, "location": "Scarborough", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "University of Toronto Scarborough Campus", "taking_players_now": false, "website": "http://www.utsc.utoronto.ca/athletics/tennis-club"}, {"club_name": "Upper Canada College", "court_bucket": "N/A", "courts": "N/A", "email": "amacdougall@ucc.on.ca", "geo": "exact", "lat": 43.693055, "lng": -79.404095, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Upper Canada College", "taking_players_now": false, "website": "https://www.ucc.on.ca/athletics"}, {"club_name": "Uxbridge Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "sandyturney12@gmail.com", "geo": "exact", "lat": 44.10759, "lng": -79.134162, "location": "Uxbridge", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Uxbridge Tennis Club", "taking_players_now": false, "website": "http://www.uxbridgetennisclub.com/"}, {"club_name": "Valan Tennis Academy", "court_bucket": "N/A", "courts": "N/A", "email": "valantennisacademy@gmail.com", "geo": "approx", "lat": 43.7762, "lng": -79.6093, "location": "Woodbridge", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Valan Tennis Academy", "taking_players_now": false, "website": "http://www.valantennis.com/"}, {"club_name": "Valley Tennis Club", "court_bucket": "5-9", "courts": "5", "email": "info@valleytennisclub.com", "geo": "exact", "lat": 43.740483, "lng": -79.405313, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Valley Tennis Club", "taking_players_now": true, "website": "http://www.valleytennisclub.com"}, {"club_name": "Vaughan Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "president@vaughantennisclub.com", "geo": "exact", "lat": 43.846355, "lng": -79.642568, "location": "Kleinburg", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Vaughan Tennis Club", "taking_players_now": false, "website": "https://vaughantennisclub.com/"}, {"club_name": "Veneto Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "tennis@venetocentre.com", "geo": "exact", "lat": 43.770477, "lng": -79.595042, "location": "Woodbridge", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Veneto Tennis Club", "taking_players_now": false, "website": "http://www.venetotennisclub.com/"}, {"club_name": "Viewmount Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "john.schiavo64@gmail.com", "geo": "exact", "lat": 43.708256, "lng": -79.437696, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Viewmount Tennis Club", "taking_players_now": false, "website": "http://www.viewmounttennis.com/"}, {"club_name": "Wanless Park Tennis Club", "court_bucket": "5-9", "courts": "5", "email": "president@wanlesstennis.com", "geo": "exact", "lat": 43.728932, "lng": -79.392057, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Wanless Park Tennis Club", "taking_players_now": true, "website": "http://www.wanlesstennis.com"}, {"club_name": "Waterloo Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@waterlootennis.com", "geo": "exact", "lat": 43.470157, "lng": -80.52818, "location": "Waterloo", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Waterloo Tennis Club", "taking_players_now": false, "website": "http://www.waterlootennis.com/"}, {"club_name": "Welland Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "info@wellandtennisclub.com", "geo": "exact", "lat": 42.988926, "lng": -79.255152, "location": "Welland", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Welland Tennis Club", "taking_players_now": false, "website": "http://www.wellandtennisclub.com/"}, {"club_name": "West Rouge Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "info@wrtctennis.com", "geo": "exact", "lat": 43.79159, "lng": -79.125464, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "West Rouge Tennis Club", "taking_players_now": true, "website": "https://wrtctennis.com/"}, {"club_name": "Westmount Golf and CC", "court_bucket": "N/A", "courts": "N/A", "email": "accounting@westmountgolf.com", "geo": "exact", "lat": 43.449658, "lng": -80.536601, "location": "Kitchener", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Westmount Golf and CC", "taking_players_now": false, "website": "https://www.westmountgolf.com/login.aspx?ReturnUrl=%2fTEST.aspx"}, {"club_name": "Whitby Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "wtc@whitbytennisclub.ca", "geo": "exact", "lat": 43.862363, "lng": -78.943231, "location": "Whitby", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Whitby Tennis Club", "taking_players_now": false, "website": "http://www.whitbytennisclub.ca/"}, {"club_name": "White Oaks Resort & SPA", "court_bucket": "N/A", "courts": "N/A", "email": "grodriguez@whiteoaksresort.com", "geo": "exact", "lat": 43.156514, "lng": -79.166772, "location": "Niagara-on-the-Lake", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "White Oaks Resort & SPA", "taking_players_now": false, "website": "http://www.whiteoaksresort.com/"}, {"club_name": "Whiteoaks Park Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "wo.board@gmail.com", "geo": "exact", "lat": 43.526623, "lng": -79.628797, "location": "Mississauga", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Whiteoaks Park Tennis Club", "taking_players_now": false, "website": "http://www.whiteoaksparktennis.com/"}, {"club_name": "Wishing Well Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "billedward@rogers.com", "geo": "exact", "lat": 43.769868, "lng": -79.31662, "location": "Scarborough", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Wishing Well Tennis Club", "taking_players_now": true, "website": "http://www.wwtc.sprinterweb.net"}, {"club_name": "Wychwood Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "club@wychwoodtennis.ca", "geo": "exact", "lat": 43.675984, "lng": -79.424526, "location": "Toronto", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Wychwood Tennis Club", "taking_players_now": true, "website": "http://www.wychwoodtennis.ca"}, {"club_name": "York Old Mill Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "president@oldmilltennis.com", "geo": "exact", "lat": 43.650855, "lng": -79.490239, "location": "Toronto", "membership_status": "Open", "membership_status_normalized": "Open", "name": "York Old Mill Tennis Club", "taking_players_now": true, "website": "http://www.oldmilltennis.com"}, {"club_name": "York Racquets", "court_bucket": "N/A", "courts": "N/A", "email": "rnicolson@yorkracquets.com", "geo": "exact", "lat": 43.679642, "lng": -79.393305, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "York Racquets", "taking_players_now": false, "website": "http://www.yorkracquets.com/"}, {"club_name": "York Weston Tennis Club", "court_bucket": "N/A", "courts": "N/A", "email": "ywtc@ywtc.ca", "geo": "exact", "lat": 43.698586, "lng": -79.518122, "location": "Toronto", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "York Weston Tennis Club", "taking_players_now": false, "website": "http://www.ywtc.ca/"}, {"club_name": "Youngs Sportsplex, Welland", "court_bucket": "N/A", "courts": "N/A", "email": "marko.petkovic@spectraxp.com", "geo": "exact", "lat": 43.009724, "lng": -79.234604, "location": "Welland", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Youngs Sportsplex, Welland", "taking_players_now": false, "website": "http://www.youngssportsplex.com/"}, {"club_name": "Zekelman Tennis Centre", "court_bucket": "N/A", "courts": "N/A", "email": "mike@saintstennis.ca", "geo": "exact", "lat": 42.244357, "lng": -83.015955, "location": "Windsor", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Zekelman Tennis Centre", "taking_players_now": false, "website": "http://www.saintstennis.ca/"}, {"club_name": "Bridlebrook Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.781088, "lng": -79.369558, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Bridlebrook Tennis Club", "taking_players_now": true, "website": "http://www.nyta.org"}, {"club_name": "Nyta Winter Tennis Club,The Don Mills Tennis Club", "court_bucket": "5-9", "courts": "6", "email": "N/A", "geo": "exact", "lat": 43.746415, "lng": -79.35125, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Nyta Winter Tennis Club,The Don Mills Tennis Club", "taking_players_now": true, "website": "http://www.nywintertennisclub.com"}, {"club_name": "Dunlace Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.762755, "lng": -79.368497, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Dunlace Tennis Club", "taking_players_now": true, "website": "http://www.dunlacetennis.com"}, {"club_name": "Fountainhead Community Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.76196, "lng": -79.498978, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Fountainhead Community Tennis Club", "taking_players_now": true, "website": "http://www.nyta.org/fountainhead_new.html"}, {"club_name": "Gwendolen Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.751319, "lng": -79.419987, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Gwendolen Tennis Club", "taking_players_now": true, "website": "http://www.gwendolentennis.com"}, {"club_name": "Newtonbrook Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.797688, "lng": -79.40794, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Newtonbrook Tennis Club", "taking_players_now": true, "website": "http://www.newtonbrooktennis.com"}, {"club_name": "Lytton Park", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.714921, "lng": -79.410823, "location": "N/A", "membership_status": "N/A", "membership_status_normalized": "Unknown", "name": "Lytton Park", "taking_players_now": false, "website": "http://www.lyttonparktennis.com"}, {"club_name": "The Swansea Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "N/A", "geo": "exact", "lat": 43.642587, "lng": -79.472249, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "The Swansea Tennis Club", "taking_players_now": true, "website": "http://www.swanseatennis.com"}, {"club_name": "The Rosedale Tennis Club", "court_bucket": "5-9", "courts": "8", "email": "N/A", "geo": "exact", "lat": 43.682779, "lng": -79.378931, "location": "N/A", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "The Rosedale Tennis Club", "taking_players_now": true, "website": "http://www.rosedaletennis.com"}, {"club_name": "The Rosethorn Tennis Club", "court_bucket": "2-4", "courts": "3", "email": "N/A", "geo": "exact", "lat": 43.658443, "lng": -79.539126, "location": "N/A", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "The Rosethorn Tennis Club", "taking_players_now": true, "website": "https://www.rosethorntennisclub.com/"}, {"club_name": "Seneca Hill Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "N/A", "geo": "exact", "lat": 43.791505, "lng": -79.351732, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Seneca Hill Tennis Club", "taking_players_now": true, "website": "https://senecahilltennisclub.com/"}, {"club_name": "Sir Winston Churchill Tennis Club", "court_bucket": "5-9", "courts": "7", "email": "N/A", "geo": "exact", "lat": 43.682881, "lng": -79.408861, "location": "N/A", "membership_status": "Waitlist", "membership_status_normalized": "Waitlist", "name": "Sir Winston Churchill Tennis Club", "taking_players_now": true, "website": "http://www.winstonchurchilltennis.ca"}, {"club_name": "Viewmount Park Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "N/A", "geo": "exact", "lat": 43.707029, "lng": -79.437459, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "Viewmount Park Tennis Club", "taking_players_now": true, "website": "https://viewmount.ca"}, {"club_name": "York Weston Lions Tennis Club", "court_bucket": "2-4", "courts": "4", "email": "N/A", "geo": "exact", "lat": 43.698558, "lng": -79.518098, "location": "N/A", "membership_status": "Open", "membership_status_normalized": "Open", "name": "York Weston Lions Tennis Club", "taking_players_now": true, "website": "http://www.ywtc.ca"}];
+</script>
+
+
+<script>
 let allResults = [];
 let knownEmails = [];
+let activeFilter = 'all';
+
+function recordHasEmail(club) {
+    const email = String(club.Email || '').trim();
+    return Boolean(email && email !== 'N/A' && email !== 'Contact form available');
+}
+
+function recordIsComplete(club) {
+    return recordHasEmail(club) &&
+        Boolean(club['Waitlist Length'] && club['Waitlist Length'] !== 'N/A') &&
+        Boolean(club['Membership Status'] && club['Membership Status'] !== 'N/A');
+}
+
+function matchesActiveFilter(club) {
+    if (activeFilter === 'email') return recordHasEmail(club);
+    if (activeFilter === 'complete') return recordIsComplete(club);
+    if (activeFilter === 'needs') return !recordIsComplete(club);
+    return true;
+}
 
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, function(character) {
@@ -1245,7 +1564,7 @@ function loadResults() {
             `);
             allResults = [];
             knownEmails = [];
-            $('#results-summary').hide();
+            $('#chip-count-all, #chip-count-email, #chip-count-complete, #chip-count-needs').text('0');
             $('#email-summary').hide();
             $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
             $('#known-emails-help').text('No published email addresses yet.');
@@ -1276,7 +1595,7 @@ function loadResults() {
             `);
             allResults = [];
             knownEmails = [];
-            $('#results-summary').hide();
+            $('#chip-count-all, #chip-count-email, #chip-count-complete, #chip-count-needs').text('0');
             $('#email-summary').hide();
             $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
             $('#known-emails-help').text('No published email addresses yet.');
@@ -1350,24 +1669,22 @@ function displayResults(results) {
 
 function updateSummary(results) {
     const total = results.length;
-    const successfulScrapes = results.filter(r => r['Scrape Status'] === 'Success').length;
-    const emailsFound = results.filter(r => r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available').length;
-    const completeRecords = results.filter(r =>
-        r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available' &&
-        r['Waitlist Length'] && r['Waitlist Length'] !== 'N/A' &&
-        r['Membership Status'] && r['Membership Status'] !== 'N/A'
-    ).length;
+    const emailsFound = results.filter(recordHasEmail).length;
+    const completeRecords = results.filter(recordIsComplete).length;
+    const coverage = total ? Math.round((emailsFound / total) * 100) : 0;
 
-    $('#summary-total').text(total);
-    $('#summary-success').text(successfulScrapes + ' (' + Math.round((successfulScrapes/total) * 100) + '%)');
-    $('#summary-emails').text(emailsFound);
+    $('#chip-count-all').text(total);
+    $('#chip-count-email').text(emailsFound);
+    $('#chip-count-complete').text(completeRecords);
+    $('#chip-count-needs').text(total - completeRecords);
+    $('#coverage-pct').text(coverage + '%');
+    document.getElementById('coverage-donut').style.setProperty('--cover-deg', Math.round(coverage * 3.6) + 'deg');
+
     $('#summary-known-emails').text(knownEmails.length);
-    $('#summary-complete').text(completeRecords);
     $('#known-emails-inline-panel').text(knownEmails.length + ' emails');
     $('#known-emails-inline-mobile').text(knownEmails.length);
     $('#email-summary').show();
     $('#known-emails-panel').toggle(knownEmails.length > 0);
-    $('#results-summary').show();
     updateVisibleCounts(results.length);
 }
 
@@ -1465,12 +1782,13 @@ function researchMissingCourts() {
 function searchResults() {
     const searchTerm = $('#search-input').val().toLowerCase();
 
-    if (!searchTerm) {
-        displayResults(allResults);
-        return;
-    }
-
     const filtered = allResults.filter(function(club) {
+        if (!matchesActiveFilter(club)) {
+            return false;
+        }
+        if (!searchTerm) {
+            return true;
+        }
         return (
             String(club['Club Name'] || '').toLowerCase().includes(searchTerm) ||
             String(club.Location || '').toLowerCase().includes(searchTerm) ||
@@ -1525,9 +1843,158 @@ function exportJSON() {
     a.click();
 }
 
+let clubMapReady = false;
+
+function bubbleSize(count) {
+    return Math.max(26, Math.min(56, Math.round(18 + Math.sqrt(count) * 5)));
+}
+
+function localityPopupHtml(group) {
+    let html = '<div class="map-pop-title">' + escapeHtml(group.loc || 'Unknown locality') + '</div>' +
+        '<div class="map-pop-count">' + group.names.length + (group.names.length === 1 ? ' club' : ' clubs') + '</div>' +
+        '<ul class="map-pop-list">';
+    group.names.slice(0, 8).forEach(function(name) {
+        html += '<li>' + escapeHtml(name) + '</li>';
+    });
+    html += '</ul>';
+    if (group.names.length > 8) {
+        html += '<div class="map-pop-more">+ ' + (group.names.length - 8) + ' more in the directory table</div>';
+    }
+    return html;
+}
+
+function clubPopupHtml(m) {
+    let html = '<div class="map-pop-title">' + escapeHtml(m.name || m.club_name || 'Unknown club') + '</div>' +
+        '<div class="map-pop-count">' + escapeHtml(m.location || '') + '</div>';
+    const email = String(m.email || '').trim();
+    if (email && email !== 'N/A' && email !== 'Contact form available') {
+        html += '<div><a class="map-pop-link" href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></div>';
+    }
+    const website = String(m.website || '').trim();
+    if (website && website !== 'N/A') {
+        html += '<div><a class="map-pop-link" href="' + escapeHtml(website) + '" target="_blank" rel="noopener">Website</a></div>';
+    }
+    return html;
+}
+
+function initClubMap(markers) {
+    if (clubMapReady || typeof L === 'undefined') {
+        return;
+    }
+    const mappable = (markers || []).filter(function(m) { return m.lat && m.lng; });
+    if (!mappable.length) {
+        return;
+    }
+    clubMapReady = true;
+
+    const exact = mappable.filter(function(m) { return m.geo === 'exact'; });
+    const approx = mappable.filter(function(m) { return m.geo !== 'exact'; });
+
+    $('#map-block').show();
+    const map = L.map('club-map', { scrollWheelZoom: false }).setView([43.72, -79.42], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Individual pins for clubs with exact coordinates; nudge stacked
+    // duplicates apart so every club stays clickable.
+    const seenCoords = {};
+    const dotIcon = L.divIcon({
+        className: '',
+        html: '<div class="map-dot"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+    const localityMarkers = {};
+    exact.forEach(function(m) {
+        const key = m.lat.toFixed(5) + ',' + m.lng.toFixed(5);
+        const bump = seenCoords[key] || 0;
+        seenCoords[key] = bump + 1;
+        const lat = m.lat + bump * 0.00045;
+        const lng = m.lng + bump * 0.00045;
+        const marker = L.marker([lat, lng], { icon: dotIcon }).addTo(map).bindPopup(clubPopupHtml(m));
+        const loc = m.location || 'Unknown locality';
+        (localityMarkers[loc] = localityMarkers[loc] || []).push(marker);
+    });
+
+    // City-level fallback: one dashed bubble per locality with a count.
+    const approxGroups = {};
+    approx.forEach(function(m) {
+        const key = m.lat.toFixed(4) + ',' + m.lng.toFixed(4);
+        if (!approxGroups[key]) {
+            approxGroups[key] = { lat: m.lat, lng: m.lng, loc: m.location || '', names: [] };
+        }
+        approxGroups[key].names.push(m.name || m.club_name || 'Unknown club');
+    });
+    Object.values(approxGroups).forEach(function(group) {
+        const count = group.names.length;
+        const size = bubbleSize(count);
+        const icon = L.divIcon({
+            className: '',
+            html: '<div class="map-bubble map-bubble--approx" style="font-size:' + (count >= 10 ? '0.95rem' : '0.8rem') + ';">' + count + '</div>',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2]
+        });
+        const marker = L.marker([group.lat, group.lng], { icon: icon }).addTo(map)
+            .bindPopup(localityPopupHtml(group) + '<div class="map-pop-more">Approximate position (no published address)</div>');
+        const loc = group.loc || 'Unknown locality';
+        (localityMarkers[loc] = localityMarkers[loc] || []).push(marker);
+    });
+
+    // Locality list: every mapped club grouped by its Location field.
+    const localityCounts = {};
+    mappable.forEach(function(m) {
+        const loc = m.location || 'Unknown locality';
+        localityCounts[loc] = (localityCounts[loc] || 0) + 1;
+    });
+    const rows = document.getElementById('locality-rows');
+    Object.keys(localityCounts)
+        .sort(function(a, b) { return localityCounts[b] - localityCounts[a] || a.localeCompare(b); })
+        .forEach(function(loc) {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'm1-row';
+            row.innerHTML = '<span>' + escapeHtml(loc) + '</span><span class="count">' + localityCounts[loc] + '</span>';
+            row.addEventListener('click', function() {
+                const group = L.featureGroup(localityMarkers[loc] || []);
+                const bounds = group.getBounds();
+                if (bounds.isValid()) {
+                    map.flyToBounds(bounds.pad(0.25), { duration: 0.8, maxZoom: 14 });
+                }
+            });
+            rows.appendChild(row);
+        });
+
+    const totalLoaded = allResults.length || mappable.length;
+    $('#map-coverage-note').text(
+        exact.length + ' exact locations · ' + approx.length + ' city-level · ' +
+        (totalLoaded - mappable.length) + ' unmapped'
+    );
+}
+
+function loadClubMap() {
+    if (window.__GTA_MAP_MARKERS__) {
+        initClubMap(window.__GTA_MAP_MARKERS__);
+        return;
+    }
+    if (!window.__GTA_STATIC_SITE__) {
+        $.get('/api/dashboard-data', function(data) {
+            initClubMap(((data || {}).map_data || {}).markers || []);
+        });
+    }
+}
+
 $(document).ready(function() {
     loadResults();
+    loadClubMap();
     $('#search-input').on('input', searchResults);
+    $('.chip-filter').on('click', function() {
+        activeFilter = $(this).data('filter');
+        $('.chip-filter').attr('aria-pressed', 'false');
+        $(this).attr('aria-pressed', 'true');
+        searchResults();
+    });
     if (!window.__GTA_STATIC_SITE__) {
         setInterval(loadResults, 5000);
     }

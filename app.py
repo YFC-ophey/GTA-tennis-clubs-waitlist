@@ -35,8 +35,21 @@ except ImportError:
 BASE_DIR = Path(__file__).resolve().parent
 STATE_FILE = BASE_DIR / "data" / "current_club_state.json"
 REVIEW_QUEUE_FILE = BASE_DIR / "data" / "current_review_queue.json"
+GEOCODES_FILE = BASE_DIR / "data" / "club_geocodes.json"
 FIRECRAWL_API_KEY = os.getenv("FIRECRAWL_API_KEY", "").strip()
 REQUEST_TIMEOUT = 12
+
+
+def _load_club_geocodes() -> dict:
+    """Per-club coordinates produced by scripts/geocode_clubs.py."""
+    try:
+        payload = json.loads(GEOCODES_FILE.read_text(encoding="utf-8"))
+        return payload if isinstance(payload, dict) else {}
+    except Exception:  # noqa: BLE001
+        return {}
+
+
+CLUB_GEOCODES = _load_club_geocodes()
 
 CITY_COORDINATES = {
     "Toronto": (43.653225, -79.383186),
@@ -472,11 +485,18 @@ def _normalize_city(value: object) -> str:
 
 
 def _build_marker(record: dict) -> dict | None:
-    city = _normalize_city(record.get("Location", ""))
-    if not city:
-        return None
+    name_key = re.sub(r"\s+", " ", str(record.get("Club Name", "")).strip()).lower()
+    geocode = CLUB_GEOCODES.get(name_key)
+    if geocode:
+        lat, lng = geocode["lat"], geocode["lng"]
+        precision = "exact"
+    else:
+        city = _normalize_city(record.get("Location", ""))
+        if not city:
+            return None
+        lat, lng = CITY_COORDINATES[city]
+        precision = "approx"
 
-    lat, lng = CITY_COORDINATES[city]
     courts = _parse_int(record.get("Number of Courts", "N/A"))
     return {
         "name": record.get("Club Name", "Unknown"),
@@ -497,6 +517,7 @@ def _build_marker(record: dict) -> dict | None:
         "court_bucket": _court_bucket(courts if isinstance(courts, int) else _parse_int(courts)),
         "lat": lat,
         "lng": lng,
+        "geo": precision,
     }
 
 

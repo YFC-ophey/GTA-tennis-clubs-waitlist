@@ -3,40 +3,320 @@
 {% block title %}Results{% endblock %}
 
 {% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
     .directory-shell {
         display: grid;
         gap: 18px;
     }
 
-    .directory-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        gap: 18px;
-        margin-bottom: 2px;
-        padding: 4px 0 8px;
+    .results-hero {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+        padding: 24px 26px;
+        display: grid;
+        grid-template-columns: auto 1fr;
+        gap: 28px;
+        align-items: center;
     }
 
-    .directory-header h1 {
+    .hero-ring {
+        position: relative;
+        width: 132px;
+        height: 132px;
+        flex: 0 0 auto;
+    }
+
+    .hero-ring .donut {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: conic-gradient(var(--primary) 0 var(--cover-deg, 0deg), var(--line) var(--cover-deg, 0deg) 360deg);
+    }
+
+    .hero-ring .hole {
+        position: absolute;
+        inset: 13px;
+        border-radius: 50%;
+        background: var(--surface);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .hero-ring .pct {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: var(--text-strong);
+        line-height: 1;
+    }
+
+    .hero-ring .cap {
+        font-size: 0.64rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--muted);
+        margin-top: 3px;
+    }
+
+    .hero-body h1 {
         margin: 0;
     }
 
-    .directory-header__copy {
-        max-width: 720px;
+    .hero-chips {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 14px;
     }
 
-    .directory-header__meta {
-        color: var(--muted);
-        font-size: 0.9rem;
-        text-align: right;
-        white-space: nowrap;
+    .chip-filter {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 14px;
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        background: var(--surface);
+        font-size: 0.86rem;
+        font-weight: 650;
+        color: var(--secondary);
+        font-family: inherit;
+        cursor: pointer;
+        transition: background-color 0.15s ease, border-color 0.15s ease;
     }
 
-    .directory-summary {
+    .chip-filter:hover {
+        border-color: var(--primary);
+    }
+
+    .chip-filter[aria-pressed="true"] {
+        background: var(--primary-soft);
+        border-color: var(--primary);
+        color: var(--primary-strong);
+    }
+
+    .chip-filter .dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        flex: 0 0 auto;
+    }
+
+    .chip-filter strong {
+        font-variant-numeric: tabular-nums;
+        color: var(--text-strong);
+    }
+
+    .map-card {
+        background: var(--surface);
+        border: 1px solid var(--line);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-1);
+        overflow: hidden;
+    }
+
+    .m1-grid {
         display: grid;
-        grid-template-columns: repeat(4, minmax(0, 1fr));
-        gap: 12px;
+        grid-template-columns: minmax(0, 1.5fr) minmax(280px, 1fr);
+        height: 460px;
+    }
+
+    .gta-map {
+        width: 100%;
+        height: 100%;
+        background: var(--surface-subtle);
+    }
+
+    .m1-list {
+        border-left: 1px solid var(--line);
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+
+    .m1-list-head {
+        padding: 14px 18px 10px;
+        border-bottom: 1px solid var(--line);
+    }
+
+    .m1-list-head .t {
+        font-weight: 720;
+        color: var(--text-strong);
+        font-size: 0.95rem;
+    }
+
+    .m1-list-head .s {
+        font-size: 0.78rem;
+        color: var(--muted);
+    }
+
+    .m1-rows {
+        overflow-y: auto;
+        flex: 1;
+    }
+
+    .m1-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 10px;
+        width: 100%;
+        padding: 10px 18px;
+        border: 0;
+        border-bottom: 1px solid var(--line);
+        background: transparent;
+        cursor: pointer;
+        font-family: inherit;
+        font-size: 0.88rem;
+        color: var(--text);
+        text-align: left;
+    }
+
+    .m1-row:hover {
+        background: var(--primary-soft);
+    }
+
+    .m1-row .count {
+        flex: 0 0 auto;
+        min-width: 30px;
+        text-align: center;
+        font-weight: 740;
+        font-size: 0.78rem;
+        color: var(--primary-strong);
+        background: var(--primary-soft);
+        border: 1px solid var(--line-strong);
+        border-radius: 999px;
+        padding: 2px 8px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .map-bubble {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--primary);
+        color: #fff;
+        border: 2px solid #fff;
+        box-shadow: 0 4px 12px rgba(8, 75, 63, 0.35);
+        font-weight: 760;
+        font-variant-numeric: tabular-nums;
+        line-height: 1;
+    }
+
+    .map-bubble--lone {
+        background: var(--primary-strong);
+    }
+
+    .map-bubble--approx {
+        background: var(--secondary);
+        border-style: dashed;
+        opacity: 0.92;
+    }
+
+    .map-dot {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: var(--primary);
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(8, 75, 63, 0.45);
+    }
+
+    .map-pop-link {
+        display: inline-block;
+        margin-top: 6px;
+        color: var(--primary-strong);
+        font-weight: 680;
+        text-decoration: none;
+        border-bottom: 1px solid var(--primary-soft);
+    }
+
+    .map-pop-link:hover {
+        border-bottom-color: var(--primary);
+    }
+
+    .map-legend {
+        display: flex;
+        gap: 14px;
+        flex-wrap: wrap;
+        align-items: center;
+        padding: 9px 18px;
+        border-top: 1px solid var(--line);
+        font-size: 0.78rem;
+        color: var(--muted);
+        background: var(--surface-elevated);
+    }
+
+    .map-legend .demo-dot {
+        display: inline-block;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--primary);
+        border: 2px solid #fff;
+        box-shadow: 0 1px 4px rgba(8, 75, 63, 0.4);
+        vertical-align: -1px;
+        margin-right: 5px;
+    }
+
+    .map-legend .demo-bubble {
+        display: inline-block;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--secondary);
+        border: 2px dashed #fff;
+        vertical-align: -2px;
+        margin-right: 5px;
+    }
+
+    .leaflet-popup-content-wrapper {
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-2);
+    }
+
+    .leaflet-popup-content {
+        font-size: 0.84rem;
+        color: var(--text);
+        margin: 12px 14px;
+    }
+
+    .map-pop-title {
+        font-weight: 760;
+        color: var(--text-strong);
+        font-size: 0.95rem;
+        margin-bottom: 2px;
+    }
+
+    .map-pop-count {
+        color: var(--primary-strong);
+        font-weight: 680;
+        font-size: 0.78rem;
+        margin-bottom: 6px;
+    }
+
+    .map-pop-list {
+        margin: 0;
+        padding-left: 16px;
+    }
+
+    .map-pop-list li {
+        margin: 1px 0;
+    }
+
+    .map-pop-more {
+        color: var(--muted);
+        font-size: 0.78rem;
+        margin-top: 4px;
     }
 
     .summary-card {
@@ -365,18 +645,19 @@
     }
 
     @media (max-width: 980px) {
-        .directory-header {
-            align-items: flex-start;
-            flex-direction: column;
+        .m1-grid {
+            grid-template-columns: 1fr;
+            height: auto;
         }
 
-        .directory-header__meta {
-            text-align: left;
-            white-space: normal;
+        .m1-grid > div:first-child {
+            height: 320px;
         }
 
-        .directory-summary {
-            grid-template-columns: repeat(2, minmax(0, 1fr));
+        .m1-list {
+            max-height: 280px;
+            border-left: 0;
+            border-top: 1px solid var(--line);
         }
 
         .directory-controls {
@@ -399,8 +680,15 @@
             gap: 14px;
         }
 
-        .directory-summary {
+        .results-hero {
             grid-template-columns: 1fr;
+            justify-items: center;
+            text-align: center;
+            padding: 20px 18px;
+        }
+
+        .hero-chips {
+            justify-content: center;
         }
 
         .summary-card {
@@ -479,31 +767,43 @@
 
 {% block content %}
 <section class="directory-shell">
-    <header class="directory-header">
-        <div class="directory-header__copy">
-            <h1 class="section-title">Club Directory</h1>
-            <p class="section-subtitle">Browse collected GTA tennis club records, inspect gaps, and export the current dataset.</p>
+    <section class="results-hero" id="results-hero" aria-live="polite">
+        <div class="hero-ring" aria-hidden="true">
+            <div class="donut" id="coverage-donut"></div>
+            <div class="hole">
+                <span class="pct" id="coverage-pct">&ndash;</span>
+                <span class="cap">email coverage</span>
+            </div>
         </div>
-        <div class="directory-header__meta">Public finder data surface</div>
-    </header>
+        <div class="hero-body">
+            <h1 class="section-title">Club Directory</h1>
+            <p class="section-subtitle">Browse collected GTA tennis club records, inspect gaps, and export the current dataset. Tap a chip to filter the table.</p>
+            <div class="hero-chips" role="group" aria-label="Filter clubs">
+                <button type="button" class="chip-filter" data-filter="all" aria-pressed="true"><span class="dot" style="background: var(--primary);"></span>All clubs&nbsp;<strong id="chip-count-all">0</strong></button>
+                <button type="button" class="chip-filter" data-filter="email" aria-pressed="false"><span class="dot" style="background: var(--success);"></span>Has email&nbsp;<strong id="chip-count-email">0</strong></button>
+                <button type="button" class="chip-filter" data-filter="complete" aria-pressed="false"><span class="dot" style="background: var(--secondary);"></span>Complete&nbsp;<strong id="chip-count-complete">0</strong></button>
+                <button type="button" class="chip-filter" data-filter="needs" aria-pressed="false"><span class="dot" style="background: var(--warning);"></span>Needs update&nbsp;<strong id="chip-count-needs">0</strong></button>
+            </div>
+        </div>
+    </section>
 
-    <section id="results-summary" class="directory-summary" style="display: none;" aria-live="polite">
-        <article class="summary-card">
-            <div class="label">Total clubs</div>
-            <div class="value" id="summary-total">0</div>
-        </article>
-        <article class="summary-card">
-            <div class="label">Successful scrapes</div>
-            <div class="value" id="summary-success" style="color: var(--success);">0</div>
-        </article>
-        <article class="summary-card">
-            <div class="label">Emails found</div>
-            <div class="value" id="summary-emails">0</div>
-        </article>
-        <article class="summary-card">
-            <div class="label">Complete records</div>
-            <div class="value" id="summary-complete">0</div>
-        </article>
+    <section id="map-block" style="display: none;" aria-label="club locations map">
+        <div class="map-card">
+            <div class="m1-grid">
+                <div><div id="club-map" class="gta-map"></div></div>
+                <div class="m1-list">
+                    <div class="m1-list-head">
+                        <div class="t">Clubs by locality</div>
+                        <div class="s" id="map-coverage-note">Loading map&hellip;</div>
+                    </div>
+                    <div class="m1-rows" id="locality-rows"></div>
+                </div>
+            </div>
+            <div class="map-legend">
+                <span><span class="demo-dot"></span>exact club location</span>
+                <span><span class="demo-bubble"></span>approximate (city-level), count of clubs</span>
+            </div>
+        </div>
     </section>
 
     <section class="summary-card summary-card--note" id="email-summary" style="display: none; margin-bottom: 4px;">
@@ -513,11 +813,6 @@
             <p class="summary-card__hint" id="known-emails-help">No published email addresses yet.</p>
         </div>
         <button class="btn btn--secondary" id="copy-known-emails-btn" onclick="copyKnownEmails()">Copy all addresses</button>
-    </section>
-
-    <section class="summary-guide">
-        <div><b>Status</b>: <span class="status-pill status-pill--success">Success</span> usable extraction / <span class="status-pill status-pill--warning">Needs Update</span> missing or low-confidence fields / <span class="status-pill status-pill--danger">Failed</span> no usable extraction</div>
-        <p class="inline-note">Exports include the full loaded dataset.</p>
     </section>
 
     <section class="known-emails-wrap">
@@ -603,10 +898,34 @@
     window.__GTA_STATIC_SITE__ = true;
 </script>
 {% endif %}
+{% if map_markers_json %}
+<script>
+    window.__GTA_MAP_MARKERS__ = {{ map_markers_json | safe }};
+</script>
+{% endif %}
 
 <script>
 let allResults = [];
 let knownEmails = [];
+let activeFilter = 'all';
+
+function recordHasEmail(club) {
+    const email = String(club.Email || '').trim();
+    return Boolean(email && email !== 'N/A' && email !== 'Contact form available');
+}
+
+function recordIsComplete(club) {
+    return recordHasEmail(club) &&
+        Boolean(club['Waitlist Length'] && club['Waitlist Length'] !== 'N/A') &&
+        Boolean(club['Membership Status'] && club['Membership Status'] !== 'N/A');
+}
+
+function matchesActiveFilter(club) {
+    if (activeFilter === 'email') return recordHasEmail(club);
+    if (activeFilter === 'complete') return recordIsComplete(club);
+    if (activeFilter === 'needs') return !recordIsComplete(club);
+    return true;
+}
 
 function escapeHtml(value) {
     return String(value ?? '').replace(/[&<>"']/g, function(character) {
@@ -659,7 +978,7 @@ function loadResults() {
             `);
             allResults = [];
             knownEmails = [];
-            $('#results-summary').hide();
+            $('#chip-count-all, #chip-count-email, #chip-count-complete, #chip-count-needs').text('0');
             $('#email-summary').hide();
             $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
             $('#known-emails-help').text('No published email addresses yet.');
@@ -690,7 +1009,7 @@ function loadResults() {
             `);
             allResults = [];
             knownEmails = [];
-            $('#results-summary').hide();
+            $('#chip-count-all, #chip-count-email, #chip-count-complete, #chip-count-needs').text('0');
             $('#email-summary').hide();
             $('#known-emails').html('<p class="empty-state">No published email addresses yet.</p>');
             $('#known-emails-help').text('No published email addresses yet.');
@@ -764,24 +1083,22 @@ function displayResults(results) {
 
 function updateSummary(results) {
     const total = results.length;
-    const successfulScrapes = results.filter(r => r['Scrape Status'] === 'Success').length;
-    const emailsFound = results.filter(r => r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available').length;
-    const completeRecords = results.filter(r =>
-        r.Email && r.Email !== 'N/A' && r.Email !== 'Contact form available' &&
-        r['Waitlist Length'] && r['Waitlist Length'] !== 'N/A' &&
-        r['Membership Status'] && r['Membership Status'] !== 'N/A'
-    ).length;
+    const emailsFound = results.filter(recordHasEmail).length;
+    const completeRecords = results.filter(recordIsComplete).length;
+    const coverage = total ? Math.round((emailsFound / total) * 100) : 0;
 
-    $('#summary-total').text(total);
-    $('#summary-success').text(successfulScrapes + ' (' + Math.round((successfulScrapes/total) * 100) + '%)');
-    $('#summary-emails').text(emailsFound);
+    $('#chip-count-all').text(total);
+    $('#chip-count-email').text(emailsFound);
+    $('#chip-count-complete').text(completeRecords);
+    $('#chip-count-needs').text(total - completeRecords);
+    $('#coverage-pct').text(coverage + '%');
+    document.getElementById('coverage-donut').style.setProperty('--cover-deg', Math.round(coverage * 3.6) + 'deg');
+
     $('#summary-known-emails').text(knownEmails.length);
-    $('#summary-complete').text(completeRecords);
     $('#known-emails-inline-panel').text(knownEmails.length + ' emails');
     $('#known-emails-inline-mobile').text(knownEmails.length);
     $('#email-summary').show();
     $('#known-emails-panel').toggle(knownEmails.length > 0);
-    $('#results-summary').show();
     updateVisibleCounts(results.length);
 }
 
@@ -879,12 +1196,13 @@ function researchMissingCourts() {
 function searchResults() {
     const searchTerm = $('#search-input').val().toLowerCase();
 
-    if (!searchTerm) {
-        displayResults(allResults);
-        return;
-    }
-
     const filtered = allResults.filter(function(club) {
+        if (!matchesActiveFilter(club)) {
+            return false;
+        }
+        if (!searchTerm) {
+            return true;
+        }
         return (
             String(club['Club Name'] || '').toLowerCase().includes(searchTerm) ||
             String(club.Location || '').toLowerCase().includes(searchTerm) ||
@@ -939,9 +1257,158 @@ function exportJSON() {
     a.click();
 }
 
+let clubMapReady = false;
+
+function bubbleSize(count) {
+    return Math.max(26, Math.min(56, Math.round(18 + Math.sqrt(count) * 5)));
+}
+
+function localityPopupHtml(group) {
+    let html = '<div class="map-pop-title">' + escapeHtml(group.loc || 'Unknown locality') + '</div>' +
+        '<div class="map-pop-count">' + group.names.length + (group.names.length === 1 ? ' club' : ' clubs') + '</div>' +
+        '<ul class="map-pop-list">';
+    group.names.slice(0, 8).forEach(function(name) {
+        html += '<li>' + escapeHtml(name) + '</li>';
+    });
+    html += '</ul>';
+    if (group.names.length > 8) {
+        html += '<div class="map-pop-more">+ ' + (group.names.length - 8) + ' more in the directory table</div>';
+    }
+    return html;
+}
+
+function clubPopupHtml(m) {
+    let html = '<div class="map-pop-title">' + escapeHtml(m.name || m.club_name || 'Unknown club') + '</div>' +
+        '<div class="map-pop-count">' + escapeHtml(m.location || '') + '</div>';
+    const email = String(m.email || '').trim();
+    if (email && email !== 'N/A' && email !== 'Contact form available') {
+        html += '<div><a class="map-pop-link" href="mailto:' + escapeHtml(email) + '">' + escapeHtml(email) + '</a></div>';
+    }
+    const website = String(m.website || '').trim();
+    if (website && website !== 'N/A') {
+        html += '<div><a class="map-pop-link" href="' + escapeHtml(website) + '" target="_blank" rel="noopener">Website</a></div>';
+    }
+    return html;
+}
+
+function initClubMap(markers) {
+    if (clubMapReady || typeof L === 'undefined') {
+        return;
+    }
+    const mappable = (markers || []).filter(function(m) { return m.lat && m.lng; });
+    if (!mappable.length) {
+        return;
+    }
+    clubMapReady = true;
+
+    const exact = mappable.filter(function(m) { return m.geo === 'exact'; });
+    const approx = mappable.filter(function(m) { return m.geo !== 'exact'; });
+
+    $('#map-block').show();
+    const map = L.map('club-map', { scrollWheelZoom: false }).setView([43.72, -79.42], 9);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    // Individual pins for clubs with exact coordinates; nudge stacked
+    // duplicates apart so every club stays clickable.
+    const seenCoords = {};
+    const dotIcon = L.divIcon({
+        className: '',
+        html: '<div class="map-dot"></div>',
+        iconSize: [14, 14],
+        iconAnchor: [7, 7]
+    });
+    const localityMarkers = {};
+    exact.forEach(function(m) {
+        const key = m.lat.toFixed(5) + ',' + m.lng.toFixed(5);
+        const bump = seenCoords[key] || 0;
+        seenCoords[key] = bump + 1;
+        const lat = m.lat + bump * 0.00045;
+        const lng = m.lng + bump * 0.00045;
+        const marker = L.marker([lat, lng], { icon: dotIcon }).addTo(map).bindPopup(clubPopupHtml(m));
+        const loc = m.location || 'Unknown locality';
+        (localityMarkers[loc] = localityMarkers[loc] || []).push(marker);
+    });
+
+    // City-level fallback: one dashed bubble per locality with a count.
+    const approxGroups = {};
+    approx.forEach(function(m) {
+        const key = m.lat.toFixed(4) + ',' + m.lng.toFixed(4);
+        if (!approxGroups[key]) {
+            approxGroups[key] = { lat: m.lat, lng: m.lng, loc: m.location || '', names: [] };
+        }
+        approxGroups[key].names.push(m.name || m.club_name || 'Unknown club');
+    });
+    Object.values(approxGroups).forEach(function(group) {
+        const count = group.names.length;
+        const size = bubbleSize(count);
+        const icon = L.divIcon({
+            className: '',
+            html: '<div class="map-bubble map-bubble--approx" style="font-size:' + (count >= 10 ? '0.95rem' : '0.8rem') + ';">' + count + '</div>',
+            iconSize: [size, size],
+            iconAnchor: [size / 2, size / 2]
+        });
+        const marker = L.marker([group.lat, group.lng], { icon: icon }).addTo(map)
+            .bindPopup(localityPopupHtml(group) + '<div class="map-pop-more">Approximate position (no published address)</div>');
+        const loc = group.loc || 'Unknown locality';
+        (localityMarkers[loc] = localityMarkers[loc] || []).push(marker);
+    });
+
+    // Locality list: every mapped club grouped by its Location field.
+    const localityCounts = {};
+    mappable.forEach(function(m) {
+        const loc = m.location || 'Unknown locality';
+        localityCounts[loc] = (localityCounts[loc] || 0) + 1;
+    });
+    const rows = document.getElementById('locality-rows');
+    Object.keys(localityCounts)
+        .sort(function(a, b) { return localityCounts[b] - localityCounts[a] || a.localeCompare(b); })
+        .forEach(function(loc) {
+            const row = document.createElement('button');
+            row.type = 'button';
+            row.className = 'm1-row';
+            row.innerHTML = '<span>' + escapeHtml(loc) + '</span><span class="count">' + localityCounts[loc] + '</span>';
+            row.addEventListener('click', function() {
+                const group = L.featureGroup(localityMarkers[loc] || []);
+                const bounds = group.getBounds();
+                if (bounds.isValid()) {
+                    map.flyToBounds(bounds.pad(0.25), { duration: 0.8, maxZoom: 14 });
+                }
+            });
+            rows.appendChild(row);
+        });
+
+    const totalLoaded = allResults.length || mappable.length;
+    $('#map-coverage-note').text(
+        exact.length + ' exact locations · ' + approx.length + ' city-level · ' +
+        (totalLoaded - mappable.length) + ' unmapped'
+    );
+}
+
+function loadClubMap() {
+    if (window.__GTA_MAP_MARKERS__) {
+        initClubMap(window.__GTA_MAP_MARKERS__);
+        return;
+    }
+    if (!window.__GTA_STATIC_SITE__) {
+        $.get('/api/dashboard-data', function(data) {
+            initClubMap(((data || {}).map_data || {}).markers || []);
+        });
+    }
+}
+
 $(document).ready(function() {
     loadResults();
+    loadClubMap();
     $('#search-input').on('input', searchResults);
+    $('.chip-filter').on('click', function() {
+        activeFilter = $(this).data('filter');
+        $('.chip-filter').attr('aria-pressed', 'false');
+        $(this).attr('aria-pressed', 'true');
+        searchResults();
+    });
     if (!window.__GTA_STATIC_SITE__) {
         setInterval(loadResults, 5000);
     }

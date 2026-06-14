@@ -66,6 +66,9 @@ def main() -> None:
         canonical_url=urljoin(PUBLIC_BASE_URL, "results/"),
     )
     results_context["results_data_json"] = results_json
+    results_context["map_markers_json"] = json.dumps(
+        dashboard_payload.get("map_data", {}).get("markers", []), ensure_ascii=False
+    )
     results_context["page_description"] = (
         "Browse GTA tennis club records, published contact details, and membership signals in a searchable directory."
     )

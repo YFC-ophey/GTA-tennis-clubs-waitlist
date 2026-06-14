@@ -1,0 +1,1682 @@
+{
+ "10xto": {
+  "address": "107 Princes' Boulevard Toronto M6K3C3 CA",
+  "lat": 43.633795,
+  "lng": -79.411957,
+  "name": "10XTO",
+  "source": "nominatim_address"
+ },
+ "a love of tennis": {
+  "address": "1900 Dauphin Road Ottawa K1G 2L7 CA",
+  "lat": 45.398682,
+  "lng": -75.640074,
+  "name": "A Love of Tennis",
+  "source": "nominatim_address"
+ },
+ "ace tennis- burlington": {
+  "address": "960 Cumberland Avenue Burlington L7N 3J6 CA",
+  "lat": 43.357115,
+  "lng": -79.792986,
+  "name": "ACE Tennis- Burlington",
+  "source": "nominatim_address"
+ },
+ "advantage tennis international @ veneto": {
+  "address": "7465 Kipling Ave. Woodbridge L4L 1Y5 CA",
+  "lat": 43.770477,
+  "lng": -79.595042,
+  "name": "Advantage Tennis International @ Veneto",
+  "source": "nominatim_address"
+ },
+ "agincourt tennis club": {
+  "address": "Agincourt Park",
+  "lat": 43.78826,
+  "lng": -79.274918,
+  "name": "Agincourt Tennis Club",
+  "source": "toronto_csv"
+ },
+ "ajax winter tennis club": {
+  "address": "75 Centennial Road Ajax L1S 4S4 CA",
+  "lat": 43.839372,
+  "lng": -79.02064,
+  "name": "Ajax Winter Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "aldershot tennis": {
+  "address": "1071 Gallagher Rd. Burlington L7T 2M7 CA",
+  "lat": 43.314379,
+  "lng": -79.846756,
+  "name": "Aldershot Tennis",
+  "source": "nominatim_address"
+ },
+ "all canadian tennis centre at hsc": {
+  "address": "299 Fennell Avenue West Hamilton L9C 1G3 CA",
+  "lat": 43.241125,
+  "lng": -79.892099,
+  "name": "All Canadian Tennis Centre at HSC",
+  "source": "nominatim_address"
+ },
+ "alliston tennis club": {
+  "address": "251 Albert Street East Alliston L9R 1J9 CA",
+  "lat": 44.153271,
+  "lng": -79.856206,
+  "name": "Alliston Tennis Club",
+  "source": "nominatim_address"
+ },
+ "almonte tennis club": {
+  "address": "Almonte and District Tennis Club Almonte K0A1A0 CA",
+  "lat": 45.22158,
+  "lng": -76.189031,
+  "name": "Almonte Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "ama tennis club": {
+  "address": "1010 Front Rd LaSalle N9J 1Z9 CA",
+  "lat": 42.237942,
+  "lng": -83.102287,
+  "name": "AMA Tennis Club",
+  "source": "nominatim_address"
+ },
+ "applewood tennis club": {
+  "address": "3505 Golden Orchard Dr Mississauga L4Y 3H7 CA",
+  "lat": 43.615928,
+  "lng": -79.598446,
+  "name": "Applewood Tennis Club",
+  "source": "nominatim_address"
+ },
+ "armadale tennis club": {
+  "address": "2401 Denison Street, Markham L3S 1G3 CA",
+  "lat": 43.840792,
+  "lng": -79.280813,
+  "name": "Armadale Tennis Club",
+  "source": "nominatim_address"
+ },
+ "aurora community tennis club": {
+  "address": "76 Maple St. Aurora L4G 1L2 CA",
+  "lat": 44.003408,
+  "lng": -79.464294,
+  "name": "Aurora Community Tennis Club",
+  "source": "nominatim_address"
+ },
+ "badminton & racquet club": {
+  "address": "25 Saint Clair Avenue West Toronto M4V 1K6 CA",
+  "lat": 43.687826,
+  "lng": -79.394276,
+  "name": "Badminton & Racquet Club",
+  "source": "nominatim_postal"
+ },
+ "ballantrae tennis club": {
+  "address": "5592 Aurora Road Stouffville L4A 7X4 CA",
+  "lat": 44.040636,
+  "lng": -79.285329,
+  "name": "Ballantrae Tennis Club",
+  "source": "nominatim_address"
+ },
+ "banbury tennis club": {
+  "address": "Banbury Park",
+  "lat": 43.742774,
+  "lng": -79.369873,
+  "name": "Banbury Tennis Club",
+  "source": "toronto_csv"
+ },
+ "barrie community tennis club inc.": {
+  "address": "Queen's Park, Ross Street, Barrie Barrie L4N 1G3 CA",
+  "lat": 44.391343,
+  "lng": -79.697984,
+  "name": "Barrie Community Tennis Club Inc.",
+  "source": "nominatim_postal"
+ },
+ "barrie north winter tennis": {
+  "address": "41A Spence Av Midhurst L9X 0P2 CA",
+  "lat": 44.442258,
+  "lng": -79.732569,
+  "name": "Barrie North Winter Tennis",
+  "source": "nominatim_address"
+ },
+ "bayview village tennis camp": {
+  "address": "30 Elkhorn Drive North York M2K 1J3 CA",
+  "lat": 43.770028,
+  "lng": -79.383468,
+  "name": "Bayview Village Tennis Camp",
+  "source": "nominatim_address"
+ },
+ "bayview village tennis club": {
+  "address": "Hawksbury Park",
+  "lat": 43.770858,
+  "lng": -79.383062,
+  "name": "Bayview Village Tennis Club",
+  "source": "toronto_csv"
+ },
+ "beaver river tennis club": {
+  "address": "c/o 28 Queen St, P.O. Box 564 Markdale N0C 1H0 CA",
+  "lat": 44.322923,
+  "lng": -80.645321,
+  "name": "Beaver River Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "belfountain tennis club": {
+  "address": "593 Bush Street Belfountain L7K 0E8 CA",
+  "lat": 43.790625,
+  "lng": -80.018191,
+  "name": "Belfountain Tennis Club",
+  "source": "nominatim_address"
+ },
+ "bellbury tennis club": {
+  "address": "Bellbury Park",
+  "lat": 43.783668,
+  "lng": -79.361303,
+  "name": "Bellbury Tennis Club",
+  "source": "toronto_csv"
+ },
+ "bennington heights tennis club": {
+  "address": "Bennington Heights Park",
+  "lat": 43.695005,
+  "lng": -79.369566,
+  "name": "Bennington Heights Tennis Club",
+  "source": "toronto_csv"
+ },
+ "blackburn tennis club": {
+  "address": "2669 Innes Road Gloucester K1B 4Z5 CA",
+  "lat": 45.418039,
+  "lng": -75.59893,
+  "name": "Blackburn Tennis Club",
+  "source": "nominatim_address"
+ },
+ "blackmore tennis club": {
+  "address": "114 Blackmore Ave Richmond Hill L4B 2B1 CA",
+  "lat": 43.853862,
+  "lng": -79.398092,
+  "name": "Blackmore Tennis Club",
+  "source": "nominatim_address"
+ },
+ "botany hill park": {
+  "address": "Botany Hill Park",
+  "lat": 43.778101,
+  "lng": -79.211504,
+  "name": "Botany Hill Park",
+  "source": "toronto_csv"
+ },
+ "boulevard club": {
+  "address": "1491 Lake Shore Blvd W Toronto M6K 3C3 CA",
+  "lat": 43.63458,
+  "lng": -79.41375,
+  "name": "Boulevard Club",
+  "source": "nominatim_postal"
+ },
+ "bowmanville tennis club": {
+  "address": "26 Beech Avenue Bowmanville L1C 3A2 CA",
+  "lat": 43.916062,
+  "lng": -78.68764,
+  "name": "Bowmanville Tennis Club",
+  "source": "nominatim_address"
+ },
+ "bramalea tennis club": {
+  "address": "18 Alisma Trail Brampton L6S 6G7 CA",
+  "lat": 43.747291,
+  "lng": -79.779166,
+  "name": "Bramalea Tennis Club",
+  "source": "nominatim_address"
+ },
+ "brampton tennis club": {
+  "address": "38 Union Street Brampton L6V 1C9 CA",
+  "lat": 43.687548,
+  "lng": -79.759597,
+  "name": "Brampton Tennis Club",
+  "source": "nominatim_address"
+ },
+ "breakpoint tennis club": {
+  "address": "1457 Queen St E Toronto M4L1E2 CA",
+  "lat": 43.664842,
+  "lng": -79.321724,
+  "name": "BreakPoint Tennis Club",
+  "source": "nominatim_address"
+ },
+ "bridlebrook tennis club": {
+  "address": "Alamosa Park",
+  "lat": 43.781088,
+  "lng": -79.369558,
+  "name": "Bridlebrook Tennis Club",
+  "source": "toronto_csv"
+ },
+ "bridlewood tennis club": {
+  "address": "Bridlewood Park",
+  "lat": 43.782918,
+  "lng": -79.31624,
+  "name": "Bridlewood Tennis Club",
+  "source": "toronto_csv"
+ },
+ "brighton tennis club": {
+  "address": "King Edward Park Brighton K0K1H0 CA",
+  "lat": 44.042357,
+  "lng": -77.730911,
+  "name": "Brighton Tennis Club",
+  "source": "nominatim_address"
+ },
+ "burlington tennis club": {
+  "address": "501 Drury Lane Burlington L7R 2X3 CA",
+  "lat": 43.334041,
+  "lng": -79.792376,
+  "name": "Burlington Tennis Club",
+  "source": "nominatim_address"
+ },
+ "caledon tennis club": {
+  "address": "18357 Hurontario Street Caledon L7K 0X7 CA",
+  "lat": 43.859499,
+  "lng": -79.994619,
+  "name": "Caledon Tennis Club",
+  "source": "nominatim_address"
+ },
+ "cambridge tennis club": {
+  "address": "307 Dundas Street N Cambridge N1R 5S2 CA",
+  "lat": 43.365718,
+  "lng": -80.305573,
+  "name": "Cambridge Tennis Club",
+  "source": "nominatim_address"
+ },
+ "cameron shores tennis club": {
+  "address": "200 Peel St. Thornbury N0H 2P0 CA",
+  "lat": 44.568771,
+  "lng": -80.461468,
+  "name": "Cameron Shores Tennis Club",
+  "source": "nominatim_address"
+ },
+ "carleton tennis centre": {
+  "address": "1125 Colonel By Dr Caledon K1S 5B6 CA",
+  "lat": 45.384326,
+  "lng": -75.696361,
+  "name": "Carleton Tennis Centre",
+  "source": "nominatim_postal"
+ },
+ "carp tennis club": {
+  "address": "242 Langstaff Drive Carp K0A 1L0 CA",
+  "lat": 45.345644,
+  "lng": -76.031293,
+  "name": "Carp Tennis Club",
+  "source": "nominatim_address"
+ },
+ "cedar springs tennis club": {
+  "address": "960 Cumberland Ave Burlington L7N 3J6 CA",
+  "lat": 43.357115,
+  "lng": -79.792986,
+  "name": "Cedar Springs Tennis Club",
+  "source": "nominatim_address"
+ },
+ "centennial tennis club": {
+  "address": "Confederation Park",
+  "lat": 43.77392,
+  "lng": -79.236147,
+  "name": "Centennial Tennis Club",
+  "source": "toronto_csv"
+ },
+ "central tennis club": {
+  "address": "Tom Riley Park",
+  "lat": 43.648457,
+  "lng": -79.521779,
+  "name": "Central Tennis Club",
+  "source": "toronto_csv"
+ },
+ "charlottetown tennis club": {
+  "address": "Charlottetown Park",
+  "lat": 43.781667,
+  "lng": -79.140238,
+  "name": "Charlottetown Tennis Club",
+  "source": "toronto_csv"
+ },
+ "chestnut hill developments recreation complex (formerly pickering rec)": {
+  "address": "1867 Valley Farm Rd Pickering L1V 6K7 CA",
+  "lat": 43.839235,
+  "lng": -79.081457,
+  "name": "Chestnut Hill Developments Recreation Complex (formerly Pickering Rec)",
+  "source": "nominatim_address"
+ },
+ "city view tennis club": {
+  "address": "60 Fieldrow Street Ottawa K2G 2Y7 CA",
+  "lat": 45.343107,
+  "lng": -75.743153,
+  "name": "City View Tennis Club",
+  "source": "nominatim_address"
+ },
+ "ck racquet centre": {
+  "address": "23580 Bear Line Road Chatham N7M 5J7 CA",
+  "lat": 42.400415,
+  "lng": -82.232785,
+  "name": "CK Racquet Centre",
+  "source": "nominatim_address"
+ },
+ "concord tennis academy (formerly tessa tennis)": {
+  "address": "209 Citation Dr. Vaughan L4E4X5 CA",
+  "lat": 43.824931,
+  "lng": -79.484285,
+  "name": "Concord Tennis Academy (formerly Tessa Tennis)",
+  "source": "nominatim_address"
+ },
+ "cottingham tennis club": {
+  "address": "107 Cottingham St Toronto M4V 1B9 CA",
+  "lat": 43.679581,
+  "lng": -79.39598,
+  "name": "Cottingham Tennis Club",
+  "source": "nominatim_address"
+ },
+ "credit valley tennis club": {
+  "address": "830 Paisley Blvd W Mississauga L5C 3P5 CA",
+  "lat": 43.559643,
+  "lng": -79.631132,
+  "name": "Credit Valley Tennis Club",
+  "source": "nominatim_address"
+ },
+ "crescent harbour racquet club": {
+  "address": "Crescent Harbour Road Innisfil L9S 3A4 CA",
+  "lat": 44.372967,
+  "lng": -79.531033,
+  "name": "Crescent Harbour Racquet Club",
+  "source": "nominatim_address"
+ },
+ "crystal beach tennis club": {
+  "address": "71 Corkstown Road Ottawa K2H 7V4 CA",
+  "lat": 45.3472,
+  "lng": -75.823565,
+  "name": "Crystal Beach Tennis Club",
+  "source": "nominatim_address"
+ },
+ "curran hall park tennis club": {
+  "address": "277 Orton Park Road Scarborough M1G 3T4 CA",
+  "lat": 43.777454,
+  "lng": -79.210808,
+  "name": "Curran Hall Park Tennis Club",
+  "source": "nominatim_address"
+ },
+ "cutten fields tennis club": {
+  "address": "190 College Ave E Guelph N1H 6L3 CA",
+  "lat": 43.537312,
+  "lng": -80.226667,
+  "name": "Cutten Fields Tennis Club",
+  "source": "nominatim_address"
+ },
+ "davisville tennis club": {
+  "address": "June Rowlands Park",
+  "lat": 43.700694,
+  "lng": -79.38853,
+  "name": "Davisville Tennis Club",
+  "source": "toronto_csv"
+ },
+ "dentonia park tennis club": {
+  "address": "Maryland Park",
+  "lat": 43.691845,
+  "lng": -79.295201,
+  "name": "Dentonia Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "don mills tennis club": {
+  "address": "Bond Park Toronto . CA",
+  "lat": 43.747295,
+  "lng": -79.351382,
+  "name": "Don Mills Tennis Club",
+  "source": "nominatim_address"
+ },
+ "donalda club": {
+  "address": "12 Bushbury Drive Toronto M3A 2Z7 CA",
+  "lat": 43.754636,
+  "lng": -79.342187,
+  "name": "Donalda Club",
+  "source": "nominatim_address"
+ },
+ "dunlace park tennis club": {
+  "address": "28 Dunlace Dr Toronto, M2L 2S1 CA",
+  "lat": 43.76266,
+  "lng": -79.36859,
+  "name": "Dunlace Park Tennis Club",
+  "source": "nominatim_address"
+ },
+ "dunlace tennis club": {
+  "address": "Dunlace Park",
+  "lat": 43.762755,
+  "lng": -79.368497,
+  "name": "Dunlace Tennis Club",
+  "source": "toronto_csv"
+ },
+ "edenbridge tennis club": {
+  "address": "Scarlett Mills Park",
+  "lat": 43.675747,
+  "lng": -79.510647,
+  "name": "Edenbridge Tennis Club",
+  "source": "toronto_csv"
+ },
+ "eglinton flats winter tennis club": {
+  "address": "3601 Eglinton Ave W Toronto M6M 1V7 CA",
+  "lat": 43.697781,
+  "lng": -79.440532,
+  "name": "Eglinton Flats Winter Tennis Club",
+  "source": "nominatim_address"
+ },
+ "elmdale tennis club": {
+  "address": "184 Holland Ave Ottawa K1Y 0Y5 CA",
+  "lat": 45.397399,
+  "lng": -75.730926,
+  "name": "Elmdale Tennis Club",
+  "source": "nominatim_address"
+ },
+ "elmridge park tennis club": {
+  "address": "1841 Elmridge Drive Gloucester K1J 6R8 CA",
+  "lat": 45.443098,
+  "lng": -75.603858,
+  "name": "Elmridge Park Tennis Club",
+  "source": "nominatim_address"
+ },
+ "erin tennis club": {
+  "address": "14 Boland Drive Erin N0B 1T0 CA",
+  "lat": 43.778942,
+  "lng": -80.06778,
+  "name": "Erin Tennis Club",
+  "source": "nominatim_address"
+ },
+ "fenelon falls tennis club": {
+  "address": "17 Eva Street Fenelon Falls K0M 1N0 CA",
+  "lat": 44.532109,
+  "lng": -78.742226,
+  "name": "Fenelon Falls Tennis Club",
+  "source": "nominatim_address"
+ },
+ "fergus tennis club": {
+  "address": "275 Tower Street South Fergus N1M 2P4 CA",
+  "lat": 43.696601,
+  "lng": -80.368347,
+  "name": "Fergus Tennis Club",
+  "source": "nominatim_address"
+ },
+ "forest hill tennis club": {
+  "address": "666 Eglinton Ave W Toronto M5N 1B9 CA",
+  "lat": 43.70246,
+  "lng": -79.420164,
+  "name": "Forest Hill Tennis Club",
+  "source": "nominatim_address"
+ },
+ "fort erie tennis club inc.": {
+  "address": "373 Central Ave. Ridgeway L0S 1N0 CA",
+  "lat": 42.881339,
+  "lng": -79.033014,
+  "name": "Fort Erie Tennis Club Inc.",
+  "source": "nominatim_postal"
+ },
+ "fountainhead community tennis club": {
+  "address": "Fountainhead Park",
+  "lat": 43.76196,
+  "lng": -79.498978,
+  "name": "Fountainhead Community Tennis Club",
+  "source": "toronto_csv"
+ },
+ "fountainhead tennis club": {
+  "address": "445 Sentinel Road Toronto .M3J 2T6 CA",
+  "lat": 43.761153,
+  "lng": -79.499845,
+  "name": "Fountainhead Tennis Club",
+  "source": "nominatim_address"
+ },
+ "general burns tennis club": {
+  "address": "86 Argue Dr. Ottawa K2E 6S1 CA",
+  "lat": 45.352687,
+  "lng": -75.718197,
+  "name": "General Burns Tennis Club",
+  "source": "nominatim_address"
+ },
+ "glen cairn tennis club": {
+  "address": "70 Castlefrank Rd Kanata K2L 2E7 CA",
+  "lat": 45.295003,
+  "lng": -75.884323,
+  "name": "Glen Cairn Tennis Club",
+  "source": "nominatim_address"
+ },
+ "glendale tennis club": {
+  "address": "1150 Glenanna Road Pickering L1V 2X5 CA",
+  "lat": 43.837467,
+  "lng": -79.084451,
+  "name": "Glendale Tennis Club",
+  "source": "nominatim_address"
+ },
+ "granite club": {
+  "address": "2350 Bayview Ave North York M2L 1E4 CA",
+  "lat": 43.732711,
+  "lng": -79.38202,
+  "name": "Granite Club",
+  "source": "nominatim_postal"
+ },
+ "grimsby tennis club": {
+  "address": "46 St. Andrew’s Avenue Grimsby L3M 4G5 CA",
+  "lat": 43.194911,
+  "lng": -79.566822,
+  "name": "Grimsby Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "guildwood tennis club": {
+  "address": "Elizabeth Simcoe Park",
+  "lat": 43.739443,
+  "lng": -79.204749,
+  "name": "Guildwood Tennis Club",
+  "source": "toronto_csv"
+ },
+ "gwendolen park tennis club": {
+  "address": "3 Gwendolen Crescent North York M2N 1A1 CA",
+  "lat": 43.751731,
+  "lng": -79.420612,
+  "name": "Gwendolen Park Tennis Club",
+  "source": "nominatim_address"
+ },
+ "gwendolen tennis club": {
+  "address": "Gwendolen Park",
+  "lat": 43.751319,
+  "lng": -79.419987,
+  "name": "Gwendolen Tennis Club",
+  "source": "toronto_csv"
+ },
+ "headwaters racquet club": {
+  "address": "205467 County Road 109 Amaranth L9W 0V1 CA",
+  "lat": 43.913756,
+  "lng": -80.140546,
+  "name": "Headwaters Racquet Club",
+  "source": "nominatim_address"
+ },
+ "henry farm tennis club": {
+  "address": "Havenbrook Park",
+  "lat": 43.767712,
+  "lng": -79.356629,
+  "name": "Henry Farm Tennis Club",
+  "source": "toronto_csv"
+ },
+ "heron park tennis club": {
+  "address": "Heron Park",
+  "lat": 43.769284,
+  "lng": -79.177299,
+  "name": "Heron Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "hespeler tennis club": {
+  "address": "23 Forbes St Cambridge N3C 2E1 CA",
+  "lat": 43.430216,
+  "lng": -80.307022,
+  "name": "Hespeler Tennis Club",
+  "source": "nominatim_address"
+ },
+ "high park club": {
+  "address": "100 Indian Rd Toronto M6R 2V4 CA",
+  "lat": 43.642689,
+  "lng": -79.453913,
+  "name": "High Park Club",
+  "source": "nominatim_address"
+ },
+ "hillcrest tennis camp": {
+  "address": "37 Cresthaven Dr, North York M2H 3R9 CA",
+  "lat": 43.79856,
+  "lng": -79.36343,
+  "name": "Hillcrest Tennis Camp",
+  "source": "nominatim_address"
+ },
+ "hillcrest tennis club": {
+  "address": "Cresthaven Park",
+  "lat": 43.798988,
+  "lng": -79.36326,
+  "name": "Hillcrest Tennis Club",
+  "source": "toronto_csv"
+ },
+ "howard park tennis club": {
+  "address": "High Park",
+  "lat": 43.646802,
+  "lng": -79.462835,
+  "name": "Howard Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "inglewood racquet club": {
+  "address": "15825 Mclaughlin Road Caledon L7C0J3 CA",
+  "lat": 43.799656,
+  "lng": -79.937157,
+  "name": "Inglewood Racquet Club",
+  "source": "nominatim_address"
+ },
+ "intercounty tennis association": {
+  "address": "Bayview Avenue Toronto M4G 3B5 CA",
+  "lat": 43.705412,
+  "lng": -79.375034,
+  "name": "Intercounty Tennis Association",
+  "source": "nominatim_address"
+ },
+ "iroquois tennis club": {
+  "address": "Iroquois Park",
+  "lat": 43.803748,
+  "lng": -79.26732,
+  "name": "Iroquois Tennis Club",
+  "source": "toronto_csv"
+ },
+ "jane/finch community tennis association": {
+  "address": "1 Shoreham Dr. North York M3N 3A6 CA",
+  "lat": 43.772338,
+  "lng": -79.511568,
+  "name": "Jane/Finch Community Tennis Association",
+  "source": "nominatim_address"
+ },
+ "joshua creek tennis club": {
+  "address": "1330 Burnhamthorpe Rd E Oakville L6J 7B1 CA",
+  "lat": 43.517695,
+  "lng": -79.72044,
+  "name": "Joshua Creek Tennis Club",
+  "source": "nominatim_address"
+ },
+ "junior rackets": {
+  "address": "155 Dalhousie St Toronto M5B 2P7 CA",
+  "lat": 43.657824,
+  "lng": -79.376916,
+  "name": "Junior Rackets",
+  "source": "nominatim_address"
+ },
+ "keith davis tennis centre": {
+  "address": "50 Bennington Road Newmarket L3X 2Z2 CA",
+  "lat": 44.023192,
+  "lng": -79.474315,
+  "name": "Keith Davis Tennis Centre",
+  "source": "nominatim_address"
+ },
+ "kew gardens tennis club": {
+  "address": "Beaches Park",
+  "lat": 43.66613,
+  "lng": -79.298509,
+  "name": "Kew Gardens Tennis Club",
+  "source": "toronto_csv"
+ },
+ "kincardine tennis club": {
+  "address": "215 Harbour St. Kincardine N2Z2X9 CA",
+  "lat": 44.177774,
+  "lng": -81.638574,
+  "name": "Kincardine Tennis Club",
+  "source": "nominatim_address"
+ },
+ "king city tennis association": {
+  "address": "95 Kingslynn Drive King City L7B 1G2 CA",
+  "lat": 43.925795,
+  "lng": -79.523866,
+  "name": "King City Tennis Association",
+  "source": "nominatim_address"
+ },
+ "kingston racquet centre": {
+  "address": "1025 Innovation Dr, Kingston K7K 7G2 CA",
+  "lat": 44.274654,
+  "lng": -76.434602,
+  "name": "Kingston Racquet Centre",
+  "source": "nominatim_address"
+ },
+ "kingston tennis club": {
+  "address": "45 Napier St Kingston K7L 4X1 CA",
+  "lat": 44.228997,
+  "lng": -76.50611,
+  "name": "Kingston Tennis Club",
+  "source": "nominatim_address"
+ },
+ "kingsville tennis association": {
+  "address": "1741 Jasperson Rd. Kingsville N9Y 2E4 CA",
+  "lat": 42.053561,
+  "lng": -82.661429,
+  "name": "Kingsville Tennis Association",
+  "source": "nominatim_postal"
+ },
+ "kourt": {
+  "address": "92 Kingsmount Park Road Toronto M4L 3L4 CA",
+  "lat": 43.67803,
+  "lng": -79.31215,
+  "name": "Kourt",
+  "source": "nominatim_address"
+ },
+ "lambton golf and country club": {
+  "address": "100 Scarlett Road Toronto M6N 4K2 CA",
+  "lat": 43.66917,
+  "lng": -79.50164,
+  "name": "Lambton Golf and Country Club",
+  "source": "nominatim_address"
+ },
+ "lamont creek tennis club": {
+  "address": "10 Club Court Wasaga Beach L9Z 1J8 CA",
+  "lat": 44.466623,
+  "lng": -80.065135,
+  "name": "Lamont Creek Tennis Club",
+  "source": "nominatim_address"
+ },
+ "lawrence park tennis club": {
+  "address": "Lawrence Park Ravine",
+  "lat": 43.722206,
+  "lng": -79.399972,
+  "name": "Lawrence Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "leaside tennis club": {
+  "address": "Trace Manes Park",
+  "lat": 43.70557,
+  "lng": -79.36745,
+  "name": "Leaside Tennis Club",
+  "source": "toronto_csv"
+ },
+ "lytton park": {
+  "address": "Lytton Park",
+  "lat": 43.714921,
+  "lng": -79.410823,
+  "name": "Lytton Park",
+  "source": "toronto_csv"
+ },
+ "major abbas ali park": {
+  "address": "Major Abbas Ali Park",
+  "lat": 43.804848,
+  "lng": -79.230693,
+  "name": "Major Abbas Ali Park",
+  "source": "toronto_csv"
+ },
+ "manotick tennis club": {
+  "address": "5572 Dr. Leach Dr. Manotick K4M 1C8 CA",
+  "lat": 45.221736,
+  "lng": -75.686326,
+  "name": "Manotick Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "markham tennis club": {
+  "address": "73 Wootten Way N Markham L3P 2Y5 CA",
+  "lat": 43.883292,
+  "lng": -79.244011,
+  "name": "Markham Tennis Club",
+  "source": "nominatim_address"
+ },
+ "martingrove tennis club": {
+  "address": "West Deane Park",
+  "lat": 43.663999,
+  "lng": -79.563494,
+  "name": "Martingrove Tennis Club",
+  "source": "toronto_csv"
+ },
+ "maryvale tennis club": {
+  "address": "Maryvale Park",
+  "lat": 43.753081,
+  "lng": -79.306528,
+  "name": "Maryvale Tennis Club",
+  "source": "toronto_csv"
+ },
+ "mayfair east": {
+  "address": "160 Esna Park Dr Markham L3R 1E3 CA",
+  "lat": 43.825448,
+  "lng": -79.337647,
+  "name": "Mayfair East",
+  "source": "nominatim_address"
+ },
+ "mayfair parkway": {
+  "address": "50 Steelcase Rd. E Markham L3R 1E8 CA",
+  "lat": 43.819668,
+  "lng": -79.349817,
+  "name": "Mayfair Parkway",
+  "source": "nominatim_address"
+ },
+ "mayfair west": {
+  "address": "3855 Chesswood Drive North York M3J 2P6 CA",
+  "lat": 43.75745,
+  "lng": -79.47333,
+  "name": "Mayfair West",
+  "source": "nominatim_address"
+ },
+ "mclevin park tennis club": {
+  "address": "McLevin Park Scarborough M1B 1Z2 CA",
+  "lat": 45.255186,
+  "lng": -76.289501,
+  "name": "McLevin Park Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "midhurst tennis club": {
+  "address": "41 Spence Ave Midhurst L9X 0P2 CA",
+  "lat": 44.44458,
+  "lng": -79.73668,
+  "name": "Midhurst Tennis Club",
+  "source": "nominatim_address"
+ },
+ "milton tennis club": {
+  "address": "800 Santa Maria Boulevard Milton L9T 6W2 CA",
+  "lat": 43.502846,
+  "lng": -79.865226,
+  "name": "Milton Tennis Club",
+  "source": "nominatim_address"
+ },
+ "mimico tennis club": {
+  "address": "Mimico Memorial Park",
+  "lat": 43.609814,
+  "lng": -79.493668,
+  "name": "Mimico Tennis Club",
+  "source": "toronto_csv"
+ },
+ "mississaugua gcc": {
+  "address": "1725 Mississauga Rd Mississauga L5H 2K4 CA",
+  "lat": 43.553438,
+  "lng": -79.62082,
+  "name": "Mississaugua GCC",
+  "source": "nominatim_address"
+ },
+ "moore park tennis club": {
+  "address": "Moorevale Park",
+  "lat": 43.693504,
+  "lng": -79.382252,
+  "name": "Moore Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "muskoka lakes golf and country club": {
+  "address": "1072 Shamrock Road Port Carling P0B 1J0 CA",
+  "lat": 45.114598,
+  "lng": -79.588497,
+  "name": "Muskoka Lakes Golf and Country Club",
+  "source": "nominatim_postal"
+ },
+ "nassagaweya tennis club": {
+  "address": "9267 Guelph Line Campbellville L0P1B0 CA",
+  "lat": 43.494094,
+  "lng": -79.991211,
+  "name": "Nassagaweya Tennis Club",
+  "source": "nominatim_address"
+ },
+ "newmarket community tennis club": {
+  "address": "50 Bennington Rd Newmarket L3X 2Z2 CA",
+  "lat": 44.023192,
+  "lng": -79.474315,
+  "name": "Newmarket Community Tennis Club",
+  "source": "nominatim_address"
+ },
+ "newtonbrook community tennis club": {
+  "address": "231 Otonabee Ave North York M2M 2S9 CA",
+  "lat": 43.79722,
+  "lng": -79.40692,
+  "name": "Newtonbrook Community Tennis Club",
+  "source": "nominatim_address"
+ },
+ "newtonbrook tennis club": {
+  "address": "Lillian Park",
+  "lat": 43.797688,
+  "lng": -79.40794,
+  "name": "Newtonbrook Tennis Club",
+  "source": "toronto_csv"
+ },
+ "niagara academy of tennis": {
+  "address": "3373 First Ave Vineland L0R 2E0 CA",
+  "lat": 43.182033,
+  "lng": -79.396651,
+  "name": "Niagara Academy of Tennis",
+  "source": "nominatim_postal"
+ },
+ "niagara falls racquet centre": {
+  "address": "6980 Kalar Road Niagara Falls L2H 2T7 CA",
+  "lat": 43.073565,
+  "lng": -79.135337,
+  "name": "Niagara Falls Racquet Centre",
+  "source": "nominatim_address"
+ },
+ "niagara-on-the-lake tennis club": {
+  "address": "Memorial Park Niagara-on-the-Lake L0S1J0 CA",
+  "lat": 43.234533,
+  "lng": -79.092275,
+  "name": "Niagara-on-the-Lake Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "nobleton tennis club": {
+  "address": "I5 Old King Road Nobleton L0G1N0 CA",
+  "lat": 43.901844,
+  "lng": -79.651507,
+  "name": "Nobleton Tennis Club",
+  "source": "nominatim_address"
+ },
+ "north bay granite tennis club": {
+  "address": "2524 Trout Lake Rd North Bay P1B7S7 CA",
+  "lat": 46.323913,
+  "lng": -79.430037,
+  "name": "North Bay Granite Tennis Club",
+  "source": "nominatim_address"
+ },
+ "north bendale tennis club": {
+  "address": "North Bendale Park",
+  "lat": 43.769708,
+  "lng": -79.244795,
+  "name": "North Bendale Tennis Club",
+  "source": "toronto_csv"
+ },
+ "north burlington tennis club": {
+  "address": "2175 Blessington St Kilbride L7P 0J7 CA",
+  "lat": 43.427923,
+  "lng": -79.938511,
+  "name": "North Burlington Tennis Club",
+  "source": "nominatim_address"
+ },
+ "north london optimist community centre": {
+  "address": "1345 Cheapside Street London N5V3N9 CA",
+  "lat": 43.014075,
+  "lng": -81.212105,
+  "name": "North London Optimist Community Centre",
+  "source": "nominatim_address"
+ },
+ "north london optomist": {
+  "address": "1345 Cheapside Street London N5V 3N9 CA",
+  "lat": 43.015113,
+  "lng": -81.208542,
+  "name": "North London Optomist",
+  "source": "nominatim_address"
+ },
+ "north york tennis club": {
+  "address": "Willowdale Park",
+  "lat": 43.766386,
+  "lng": -79.407279,
+  "name": "North York Tennis Club",
+  "source": "toronto_csv"
+ },
+ "nyta winter tennis club east": {
+  "address": "Cassandra Park North York . CA",
+  "lat": 43.754265,
+  "lng": -79.313862,
+  "name": "NYTA Winter Tennis Club East",
+  "source": "nominatim_address"
+ },
+ "nyta winter tennis club north": {
+  "address": "2975 Don Mills Road North York . CA",
+  "lat": 43.769105,
+  "lng": -79.34647,
+  "name": "NYTA Winter Tennis Club North",
+  "source": "nominatim_address"
+ },
+ "nyta winter tennis club south": {
+  "address": "Bond Park Toronto . CA",
+  "lat": 43.747295,
+  "lng": -79.351382,
+  "name": "NYTA Winter Tennis Club South",
+  "source": "nominatim_address"
+ },
+ "nyta winter tennis club,the don mills tennis club": {
+  "address": "Bond Park",
+  "lat": 43.746415,
+  "lng": -79.35125,
+  "name": "Nyta Winter Tennis Club,The Don Mills Tennis Club",
+  "source": "toronto_csv"
+ },
+ "o'connor hills tennis club": {
+  "address": "Broadlands Park",
+  "lat": 43.745913,
+  "lng": -79.321292,
+  "name": "O'Connor Hills Tennis Club",
+  "source": "toronto_csv"
+ },
+ "ontario racquet club": {
+  "address": "884 Southdown Rd Mississauga L5J 2Y4 CA",
+  "lat": 43.507796,
+  "lng": -79.627538,
+  "name": "Ontario Racquet Club",
+  "source": "nominatim_address"
+ },
+ "ontario tennis association": {
+  "address": "1 Shoreham Dr Toronto M3N 3A7 CA",
+  "lat": 43.772338,
+  "lng": -79.511568,
+  "name": "Ontario Tennis Association",
+  "source": "nominatim_address"
+ },
+ "ontario tennis association office": {
+  "address": "1 Shoreham Drive Toronto M3N 3A7 CA",
+  "lat": 43.772338,
+  "lng": -79.511568,
+  "name": "Ontario Tennis Association Office",
+  "source": "nominatim_address"
+ },
+ "orangeville tennis club": {
+  "address": "Rotary Park Orangeville L9W 3H5 CA",
+  "lat": 43.924763,
+  "lng": -80.089667,
+  "name": "Orangeville Tennis Club",
+  "source": "nominatim_address"
+ },
+ "orillia tennis club": {
+  "address": "100 University Ave Orillia L3V 6H2 CA",
+  "lat": 44.595534,
+  "lng": -79.454894,
+  "name": "Orillia Tennis Club",
+  "source": "nominatim_address"
+ },
+ "oriole park - north york": {
+  "address": "Oriole Park - North York",
+  "lat": 43.781491,
+  "lng": -79.351007,
+  "name": "Oriole Park - North York",
+  "source": "toronto_csv"
+ },
+ "oro medonte tennis club": {
+  "address": "3375 Line 4 North Oro-Medonte(Horseshoe Valley) L0L 2L0 CA",
+  "lat": 44.443461,
+  "lng": -79.607264,
+  "name": "Oro Medonte Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "ottawa new edinburgh club": {
+  "address": "504 Sir George-Étienne Cartier Parkway Ottawa K1K 4Y5 CA",
+  "lat": 45.455832,
+  "lng": -75.677405,
+  "name": "Ottawa New Edinburgh Club",
+  "source": "nominatim_address"
+ },
+ "ottawa tennis club": {
+  "address": "176 Cameron Ave. Ottawa K1S 0X5 CA",
+  "lat": 45.38817,
+  "lng": -75.686368,
+  "name": "Ottawa Tennis Club",
+  "source": "nominatim_address"
+ },
+ "palgrave tennis club": {
+  "address": "42 Birch Avenue Palgrave L7E 0K2 CA",
+  "lat": 43.952578,
+  "lng": -79.836872,
+  "name": "Palgrave Tennis Club",
+  "source": "nominatim_address"
+ },
+ "paris tennis club": {
+  "address": "231 Grand River St N Paris N3L 2N6 CA",
+  "lat": 43.204968,
+  "lng": -80.385033,
+  "name": "Paris Tennis Club",
+  "source": "nominatim_address"
+ },
+ "parkway valley tennis club": {
+  "address": "Three Valleys Park",
+  "lat": 43.750597,
+  "lng": -79.339444,
+  "name": "Parkway Valley Tennis Club",
+  "source": "toronto_csv"
+ },
+ "peak performance tennis academy": {
+  "address": "3855 Chesswood Dr Toronto North York M3J 2P6 CA",
+  "lat": 43.75745,
+  "lng": -79.47333,
+  "name": "Peak Performance Tennis Academy",
+  "source": "nominatim_address"
+ },
+ "pelham tennis club": {
+  "address": "Centennial Park Fenwick L0S 1C0 CA",
+  "lat": 43.026187,
+  "lng": -79.375425,
+  "name": "Pelham Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "perth tay tennis club": {
+  "address": "127 Smith Drive Perth K7H 3M3 CA",
+  "lat": 44.891446,
+  "lng": -76.250248,
+  "name": "Perth Tay Tennis Club",
+  "source": "nominatim_address"
+ },
+ "pickering tennis": {
+  "address": "1064 Salk Rd Pickering L1W 4B5 CA",
+  "lat": 43.835536,
+  "lng": -79.071743,
+  "name": "Pickering Tennis",
+  "source": "nominatim_address"
+ },
+ "pinafore tennis club": {
+  "address": "95 Elm St St. Thomas N5R 1H7 CA",
+  "lat": 42.764161,
+  "lng": -81.190956,
+  "name": "Pinafore Tennis Club",
+  "source": "nominatim_address"
+ },
+ "pine point tennis club": {
+  "address": "Pine Point Park",
+  "lat": 43.716159,
+  "lng": -79.544131,
+  "name": "Pine Point Tennis Club",
+  "source": "toronto_csv"
+ },
+ "pleasantview tennis club": {
+  "address": "Clydesdale Park",
+  "lat": 43.783223,
+  "lng": -79.329425,
+  "name": "Pleasantview Tennis Club",
+  "source": "toronto_csv"
+ },
+ "port dover tennis club": {
+  "address": "809 St George St Port Dover N0A 1N0 CA",
+  "lat": 42.791909,
+  "lng": -80.213188,
+  "name": "Port Dover Tennis Club",
+  "source": "nominatim_address"
+ },
+ "port hope racquet club": {
+  "address": "62 McCaul Street Port Hope L1A 4H2 CA",
+  "lat": 43.955459,
+  "lng": -78.287484,
+  "name": "Port Hope Racquet Club",
+  "source": "nominatim_address"
+ },
+ "port perry tennis club": {
+  "address": "57 Water Street Port Perry L9L 1A5 CA",
+  "lat": 44.103549,
+  "lng": -78.940841,
+  "name": "Port Perry Tennis Club",
+  "source": "nominatim_address"
+ },
+ "premier racquet clubs": {
+  "address": "73 Wooten Way N. Markham L3P 2Y5 CA",
+  "lat": 43.885546,
+  "lng": -79.24643,
+  "name": "Premier Racquet Clubs",
+  "source": "nominatim_postal"
+ },
+ "premier racquet clubs brampton": {
+  "address": "38 Union St. Brampton L6V 1C9 CA",
+  "lat": 43.687548,
+  "lng": -79.759597,
+  "name": "Premier Racquet Clubs Brampton",
+  "source": "nominatim_address"
+ },
+ "premier racquet clubs mississauga": {
+  "address": "5320 Ninth Line, Churchill Meadows Mississauga L5M 0R5 CA",
+  "lat": 43.54158,
+  "lng": -79.743598,
+  "name": "Premier Racquet Clubs Mississauga",
+  "source": "nominatim_address"
+ },
+ "prime league inc": {
+  "address": "109 Marsdale dr St Catharines L2T 3T3 CA",
+  "lat": 43.127053,
+  "lng": -79.243059,
+  "name": "Prime League Inc",
+  "source": "nominatim_address"
+ },
+ "queens club": {
+  "address": "568 Dupont St Toronto M6G 1Y9 CA",
+  "lat": 43.672758,
+  "lng": -79.418128,
+  "name": "Queens Club",
+  "source": "nominatim_address"
+ },
+ "quinte tennis club": {
+  "address": "219 Dufferin Ave. Belleville K8N 4L1 CA",
+  "lat": 44.168568,
+  "lng": -77.368733,
+  "name": "Quinte Tennis Club",
+  "source": "nominatim_address"
+ },
+ "richmond hill country club": {
+  "address": "8905 Bathurst Street Richmond Hill L4C 0H4 CA",
+  "lat": 43.83723,
+  "lng": -79.4561,
+  "name": "Richmond Hill Country Club",
+  "source": "nominatim_address"
+ },
+ "richmond hill lawn tennis club": {
+  "address": "161 Newkirk Rd Richmond Hill L4C 3G6 CA",
+  "lat": 43.882987,
+  "lng": -79.429156,
+  "name": "Richmond Hill Lawn Tennis Club",
+  "source": "nominatim_address"
+ },
+ "rideau sports centre": {
+  "address": "1 Donald St Ottawa K1K 4E6 CA",
+  "lat": 45.427515,
+  "lng": -75.668887,
+  "name": "Rideau Sports Centre",
+  "source": "nominatim_address"
+ },
+ "rockcliffe lawn tennis club": {
+  "address": "465 Lansdowne Rd. N Ottawa K1M 0Y1 CA",
+  "lat": 45.452433,
+  "lng": -75.67264,
+  "name": "Rockcliffe Lawn Tennis Club",
+  "source": "nominatim_address"
+ },
+ "rosebank tennis club": {
+  "address": "593 Rosebank Rd Pickering L1W2N6 CA",
+  "lat": 43.807252,
+  "lng": -79.121062,
+  "name": "Rosebank Tennis Club",
+  "source": "nominatim_address"
+ },
+ "rosedale tennis club (toronto)": {
+  "address": "Rosedale Park Toronto M9W2Y3 CA",
+  "lat": 43.682516,
+  "lng": -79.377551,
+  "name": "Rosedale Tennis Club (Toronto)",
+  "source": "nominatim_address"
+ },
+ "royal canadian yacht club": {
+  "address": "141 St. George St. Toronto M5R 2L8 CA",
+  "lat": 43.668582,
+  "lng": -79.399762,
+  "name": "Royal Canadian Yacht Club",
+  "source": "nominatim_address"
+ },
+ "royal city tennis club": {
+  "address": "70 Municipal St Guelph N1G 4P9 CA",
+  "lat": 43.527176,
+  "lng": -80.250454,
+  "name": "Royal City Tennis Club",
+  "source": "nominatim_address"
+ },
+ "sarnia tennis club": {
+  "address": "700 Christina St N Sarnia N7V 3C2 CA",
+  "lat": 42.972667,
+  "lng": -82.40721,
+  "name": "Sarnia Tennis Club",
+  "source": "nominatim_address"
+ },
+ "scarborough bluffs tennis club": {
+  "address": "Scarboro Crescent Park",
+  "lat": 43.703806,
+  "lng": -79.241818,
+  "name": "Scarborough Bluffs Tennis Club",
+  "source": "toronto_csv"
+ },
+ "scarborough tennis federation": {
+  "address": "2520 Birchmount Road Scarborough M1T 2M5 CA",
+  "lat": 43.786872,
+  "lng": -79.302473,
+  "name": "Scarborough Tennis Federation",
+  "source": "nominatim_address"
+ },
+ "scarborough winter tennis club": {
+  "address": "L'Amoreaux Tennis Centre",
+  "lat": 43.805449,
+  "lng": -79.305027,
+  "name": "Scarborough Winter Tennis Club",
+  "source": "toronto_csv"
+ },
+ "score tennis academy": {
+  "address": "1450 Du Parc Ave Rockland K4K 1C3 CA",
+  "lat": 45.551388,
+  "lng": -75.285374,
+  "name": "Score Tennis Academy",
+  "source": "nominatim_address"
+ },
+ "seneca hill tennis club": {
+  "address": "Seneca Hill Park",
+  "lat": 43.791505,
+  "lng": -79.351732,
+  "name": "Seneca Hill Tennis Club",
+  "source": "toronto_csv"
+ },
+ "seven oaks tennis club": {
+  "address": "Seven Oaks Park",
+  "lat": 43.788251,
+  "lng": -79.210584,
+  "name": "Seven Oaks Tennis Club",
+  "source": "toronto_csv"
+ },
+ "silver creek seniors tennis club": {
+  "address": "Silver Creek Park",
+  "lat": 43.682701,
+  "lng": -79.543404,
+  "name": "Silver Creek Seniors Tennis Club",
+  "source": "toronto_csv"
+ },
+ "sir winston churchill tennis club": {
+  "address": "Sir Winston Churchill Park",
+  "lat": 43.682881,
+  "lng": -79.408861,
+  "name": "Sir Winston Churchill Tennis Club",
+  "source": "toronto_csv"
+ },
+ "smartvmc racquetsports by ace": {
+  "address": "775 Applewood Crescent Vaughan L4K 5C7 CA",
+  "lat": 43.797364,
+  "lng": -79.531699,
+  "name": "SmartVMC Racquetsports by Ace",
+  "source": "nominatim_address"
+ },
+ "southampton tennis club": {
+  "address": "165 Lake Street Southampton N0H 2L0 CA",
+  "lat": 44.492055,
+  "lng": -81.381091,
+  "name": "Southampton Tennis Club",
+  "source": "nominatim_address"
+ },
+ "st. catharines tennis club": {
+  "address": "7 Park Avenue St. Catharines L2P 1P9 CA",
+  "lat": 43.142084,
+  "lng": -79.208946,
+  "name": "St. Catharines Tennis Club",
+  "source": "nominatim_address"
+ },
+ "st. davids community tennis club": {
+  "address": "1462 York Road (St Davids Lions Park) Niagara-on-the-Lake L0S 1J0 CA",
+  "lat": 43.234533,
+  "lng": -79.092275,
+  "name": "St. Davids Community Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "stephen leacock tennis club": {
+  "address": "Stephen Leacock Park",
+  "lat": 43.787216,
+  "lng": -79.302486,
+  "name": "Stephen Leacock Tennis Club",
+  "source": "toronto_csv"
+ },
+ "sudbury indoor tennis centre": {
+  "address": "30 Cypress St. Sudbury P3C 4J3 CA",
+  "lat": 46.491903,
+  "lng": -81.00555,
+  "name": "Sudbury Indoor Tennis Centre",
+  "source": "nominatim_address"
+ },
+ "swansea tennis club": {
+  "address": "1 Rennie Terrace Toronto M6S 3C6 CA",
+  "lat": 43.644445,
+  "lng": -79.473334,
+  "name": "Swansea Tennis Club",
+  "source": "nominatim_address"
+ },
+ "tam heather tennis club": {
+  "address": "730 Military Trl Scarborough M1E 4P7 CA",
+  "lat": 43.791168,
+  "lng": -79.199176,
+  "name": "Tam Heather Tennis Club",
+  "source": "nominatim_address"
+ },
+ "tennis by dennis/the swing school": {
+  "address": "225 McNaughton Road Maple L6A 3Y9 CA",
+  "lat": 43.864002,
+  "lng": -79.503301,
+  "name": "Tennis By Dennis/The Swing School",
+  "source": "nominatim_address"
+ },
+ "tennis centre west ottawa": {
+  "address": "120 Greenview Ave Ottawa K2B 8J8 CA",
+  "lat": 45.363897,
+  "lng": -75.801439,
+  "name": "Tennis Centre West Ottawa",
+  "source": "nominatim_address"
+ },
+ "tennis farm": {
+  "address": "Highway 9 Orangeville L0G 1W0 CA",
+  "lat": 43.925162,
+  "lng": -80.069919,
+  "name": "Tennis Farm",
+  "source": "nominatim_address"
+ },
+ "the rosedale tennis club": {
+  "address": "Rosedale Park",
+  "lat": 43.682779,
+  "lng": -79.378931,
+  "name": "The Rosedale Tennis Club",
+  "source": "toronto_csv"
+ },
+ "the rosethorn tennis club": {
+  "address": "Rosethorn Park",
+  "lat": 43.658443,
+  "lng": -79.539126,
+  "name": "The Rosethorn Tennis Club",
+  "source": "toronto_csv"
+ },
+ "the supreme court": {
+  "address": "2235 Sheppard Ave. E. North York M2J 5B5 CA",
+  "lat": 43.765249,
+  "lng": -79.368261,
+  "name": "The Supreme Court",
+  "source": "nominatim_postal"
+ },
+ "the swansea tennis club": {
+  "address": "Rennie Park",
+  "lat": 43.642587,
+  "lng": -79.472249,
+  "name": "The Swansea Tennis Club",
+  "source": "toronto_csv"
+ },
+ "the tennis school": {
+  "address": "3091 Ninth Line Rd Mississauga L5L 5Z6 CA",
+  "lat": 43.457292,
+  "lng": -79.769372,
+  "name": "The Tennis School",
+  "source": "nominatim_postal"
+ },
+ "the thornhill club": {
+  "address": "7994 Yonge St Vaughan L4J 1W3 CA",
+  "lat": 43.819971,
+  "lng": -79.434539,
+  "name": "The Thornhill Club",
+  "source": "nominatim_address"
+ },
+ "thomson park tennis club": {
+  "address": "Thomson Memorial Park",
+  "lat": 43.757579,
+  "lng": -79.253371,
+  "name": "Thomson Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "thorncliffe park tennis club": {
+  "address": "Leaside Park",
+  "lat": 43.702196,
+  "lng": -79.350098,
+  "name": "Thorncliffe Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "thornhill park tennis club": {
+  "address": "26A Old Yonge St. Thornhill L4J 8C5 CA",
+  "lat": 43.817426,
+  "lng": -79.425513,
+  "name": "Thornhill Park Tennis Club",
+  "source": "nominatim_address"
+ },
+ "toronto cricket skating & curling club": {
+  "address": "141 Wilson Avenue Toronto M5M 3A3 CA",
+  "lat": 43.739826,
+  "lng": -79.418975,
+  "name": "Toronto Cricket Skating & Curling Club",
+  "source": "nominatim_address"
+ },
+ "toronto lawn tennis club": {
+  "address": "44 Price St Toronto M4W 1Z1 CA",
+  "lat": 43.680465,
+  "lng": -79.388672,
+  "name": "Toronto Lawn Tennis Club",
+  "source": "nominatim_address"
+ },
+ "toronto tennis academy": {
+  "address": "3855 Chesswood Drive Toronto M3J 2P6 CA",
+  "lat": 43.75745,
+  "lng": -79.47333,
+  "name": "Toronto Tennis Academy",
+  "source": "nominatim_address"
+ },
+ "toronto tennis city": {
+  "address": "185 Balliol St Toronto M4S 1C2 CA",
+  "lat": 43.698115,
+  "lng": -79.390678,
+  "name": "Toronto Tennis City",
+  "source": "nominatim_address"
+ },
+ "tottenham tennis club": {
+  "address": "Mill St East Tottenham L0G 1W0 CA",
+  "lat": 44.022522,
+  "lng": -79.805201,
+  "name": "Tottenham Tennis Club",
+  "source": "nominatim_address"
+ },
+ "tournament park tennis club": {
+  "address": "Tournament Park",
+  "lat": 43.751534,
+  "lng": -79.399698,
+  "name": "Tournament Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "trenton racquet club": {
+  "address": "290 King St Trenton K8V 3X4 CA",
+  "lat": 44.098872,
+  "lng": -77.588718,
+  "name": "Trenton Racquet Club",
+  "source": "nominatim_address"
+ },
+ "tyandaga tennis club": {
+  "address": "1265 Tyandaga Park Drive Burlington L7P 0A4 CA",
+  "lat": 43.34701,
+  "lng": -79.841537,
+  "name": "Tyandaga Tennis Club",
+  "source": "nominatim_address"
+ },
+ "unionville tennis club": {
+  "address": "73 Carlton Road Unionville L3R 2B1 CA",
+  "lat": 43.871826,
+  "lng": -79.299612,
+  "name": "Unionville Tennis Club",
+  "source": "nominatim_address"
+ },
+ "university of toronto scarborough campus": {
+  "address": "130 Old Kingston Road Scarborough M1E 3J5 CA",
+  "lat": 43.78145,
+  "lng": -79.18694,
+  "name": "University of Toronto Scarborough Campus",
+  "source": "nominatim_address"
+ },
+ "upper canada college": {
+  "address": "200 Lonsdale Road Toronto M4V 1W6 CA",
+  "lat": 43.693055,
+  "lng": -79.404095,
+  "name": "Upper Canada College",
+  "source": "nominatim_address"
+ },
+ "uxbridge tennis club": {
+  "address": "Uxbridge Arena Uxbridge L9P 1G1 CA",
+  "lat": 44.10759,
+  "lng": -79.134162,
+  "name": "Uxbridge Tennis Club",
+  "source": "nominatim_address"
+ },
+ "valley tennis club": {
+  "address": "York Mills Valley Park",
+  "lat": 43.740483,
+  "lng": -79.405313,
+  "name": "Valley Tennis Club",
+  "source": "toronto_csv"
+ },
+ "vaughan tennis club": {
+  "address": "299 Stegman’s Mill Kleinburg L0J 1C0 CA",
+  "lat": 43.846355,
+  "lng": -79.642568,
+  "name": "Vaughan Tennis Club",
+  "source": "nominatim_postal"
+ },
+ "veneto tennis club": {
+  "address": "7465 Kipling Ave Woodbridge L4L 1Y5 CA",
+  "lat": 43.770477,
+  "lng": -79.595042,
+  "name": "Veneto Tennis Club",
+  "source": "nominatim_address"
+ },
+ "viewmount park tennis club": {
+  "address": "Viewmount Park",
+  "lat": 43.707029,
+  "lng": -79.437459,
+  "name": "Viewmount Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "viewmount tennis club": {
+  "address": "169 Viewmount Ave Toronto M6B 1T5 CA",
+  "lat": 43.708256,
+  "lng": -79.437696,
+  "name": "Viewmount Tennis Club",
+  "source": "nominatim_address"
+ },
+ "wanless park tennis club": {
+  "address": "Wanless Park",
+  "lat": 43.728932,
+  "lng": -79.392057,
+  "name": "Wanless Park Tennis Club",
+  "source": "toronto_csv"
+ },
+ "waterloo tennis club": {
+  "address": "50 Central St Waterloo N2L 3B6 CA",
+  "lat": 43.470157,
+  "lng": -80.52818,
+  "name": "Waterloo Tennis Club",
+  "source": "nominatim_address"
+ },
+ "welland tennis club": {
+  "address": "45 Hooker Street Welland L3C 5H2 CA",
+  "lat": 42.988926,
+  "lng": -79.255152,
+  "name": "Welland Tennis Club",
+  "source": "nominatim_address"
+ },
+ "west rouge tennis club": {
+  "address": "West Rouge Park",
+  "lat": 43.79159,
+  "lng": -79.125464,
+  "name": "West Rouge Tennis Club",
+  "source": "toronto_csv"
+ },
+ "westmount golf and cc": {
+  "address": "50 Inverness Dr. Kitchener N2M 4Z9 CA",
+  "lat": 43.449658,
+  "lng": -80.536601,
+  "name": "Westmount Golf and CC",
+  "source": "nominatim_address"
+ },
+ "whitby tennis club": {
+  "address": "Iroquois Park Whitby L1N 9G4 CA",
+  "lat": 43.862363,
+  "lng": -78.943231,
+  "name": "Whitby Tennis Club",
+  "source": "nominatim_address"
+ },
+ "white oaks resort & spa": {
+  "address": "253 Taylor Rd Niagara-on-the-Lake L0S 1J0 CA",
+  "lat": 43.156514,
+  "lng": -79.166772,
+  "name": "White Oaks Resort & SPA",
+  "source": "nominatim_address"
+ },
+ "whiteoaks park tennis club": {
+  "address": "1608 Birchwood Dr Mississauga L5J 1T5 CA",
+  "lat": 43.526623,
+  "lng": -79.628797,
+  "name": "Whiteoaks Park Tennis Club",
+  "source": "nominatim_address"
+ },
+ "wishing well tennis club": {
+  "address": "Wishing Well Park",
+  "lat": 43.769868,
+  "lng": -79.31662,
+  "name": "Wishing Well Tennis Club",
+  "source": "toronto_csv"
+ },
+ "wychwood tennis club": {
+  "address": "Hillcrest Park",
+  "lat": 43.675984,
+  "lng": -79.424526,
+  "name": "Wychwood Tennis Club",
+  "source": "toronto_csv"
+ },
+ "york old mill tennis club": {
+  "address": "Old Mill Site Park",
+  "lat": 43.650855,
+  "lng": -79.490239,
+  "name": "York Old Mill Tennis Club",
+  "source": "toronto_csv"
+ },
+ "york racquets": {
+  "address": "50 Marlborough Ave Toronto M5R 1X6 CA",
+  "lat": 43.679642,
+  "lng": -79.393305,
+  "name": "York Racquets",
+  "source": "nominatim_address"
+ },
+ "york weston lions tennis club": {
+  "address": "Weston Lions Park",
+  "lat": 43.698558,
+  "lng": -79.518098,
+  "name": "York Weston Lions Tennis Club",
+  "source": "toronto_csv"
+ },
+ "york weston tennis club": {
+  "address": "2125 Lawrence Ave. W. Toronto M9N 1H7 CA",
+  "lat": 43.698586,
+  "lng": -79.518122,
+  "name": "York Weston Tennis Club",
+  "source": "nominatim_address"
+ },
+ "youngs sportsplex, welland": {
+  "address": "570 RIVER ROAD Welland L3B 5N4 CA",
+  "lat": 43.009724,
+  "lng": -79.234604,
+  "name": "Youngs Sportsplex, Welland",
+  "source": "nominatim_address"
+ },
+ "zekelman tennis centre": {
+  "address": "2000 Talbot Rd. Windsor N9G3C3 CA",
+  "lat": 42.244357,
+  "lng": -83.015955,
+  "name": "Zekelman Tennis Centre",
+  "source": "nominatim_address"
+ }
+}

@@ -7,3 +7,4 @@ beautifulsoup4==4.12.2
 python-dotenv==1.0.0
 urllib3==2.1.0
 playwright==1.49.1
+certifi==2024.2.2
